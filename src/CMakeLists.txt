@@ -3,6 +3,7 @@ find_package(LAPACK REQUIRED)
 
 add_library(trlib SHARED ${CMAKE_SOURCE_DIR}/src/trlib.c ${CMAKE_SOURCE_DIR}/src/trlib_driver.c)
 target_include_directories(trlib PUBLIC "${CMAKE_BINARY_DIR}/include")
+target_link_libraries(trlib ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES})
 set_property(TARGET trlib PROPERTY C_STANDARD 11)
 install(TARGETS trlib DESTINATION ${CMAKE_BINARY_DIR}/lib)
 
