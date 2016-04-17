@@ -1,0 +1,7 @@
+message trlib_matrix_message {
+    required int32 id = 1;
+    optional string comment = 2;
+    required int32 m = 3;
+    required int32 n = 4;
+    repeated double data = 5 [packed=true];
+}

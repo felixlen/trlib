@@ -1,0 +1,146 @@
+#ifndef TRLIB_TEST_H
+#define TRLIB_TEST_H
+
+#cmakedefine TRLIB_TEST_OUTPUT 1
+#cmakedefine TRLIB_TEST_PLOT 1
+#include <check.h>
+#include "trlib.h"
+#include "trlib_driver.h"
+#if TRLIB_TEST_PLOT
+    #include <zmq.h>
+    #include "trlib_test_matrix_msg.pb-c.h"
+#endif
+
+#if TRLIB_TEST_OUTPUT
+    #define TRLIB_TEST_SHOW_CLEANUP_STREAM() { fflush(stream); printf("%s", bp); fclose(stream); }
+    #define TRLIB_TEST_VERBOSE(X) X
+    #define TRLIB_TEST_UNICODE 1
+    #define TRLIB_TEST_FOUT(X) X
+#else
+    #define TRLIB_TEST_SHOW_CLEANUP_STREAM()
+    #define TRLIB_TEST_VERBOSE(X) 0
+    #define TRLIB_TEST_UNICODE 0
+    #define TRLIB_TEST_FOUT(X) NULL
+#endif
+
+void trlib_test_solve_check_qp(struct trlib_driver_qp *qp, char *name, double tol, double lanczos_tol) {
+    #if TRLIB_TEST_OUTPUT
+        char *bp; size_t size; FILE *stream = open_memstream(&bp, &size);
+    #endif
+    qp->verbose = TRLIB_TEST_VERBOSE(qp->verbose);
+    qp->unicode = TRLIB_TEST_UNICODE;
+    qp->stream = TRLIB_TEST_FOUT(stream);
+    trlib_driver_solve_qp(qp);
+    TRLIB_TEST_SHOW_CLEANUP_STREAM()
+
+    trlib_driver_check_optimality(qp);
+
+    #if TRLIB_TEST_OUTPUT
+        printf("\n*************************************************************\n");
+        printf("* Test Case   %-46s*\n", name);
+        printf("*   Exit code:          %-2d (%-2d)%29s*\n", qp->ret, qp->sub_fail, "");
+        printf("*   Objective:       %15e%15e%9s*\n", qp->obj, qp->obj_check, "");
+        printf("*   TR radius:       %15e%24s*\n", qp->radius, "");
+        printf("*   multiplier:      %15e%24s*\n", qp->lam, "");
+        if (!qp->equality) { printf("*   TR residual:     %15e (inequality requested)%1s*\n", qp->tr_res, ""); }
+        else { printf("*   TR resiudal:     %15e (equality requested)%3s*\n", qp->tr_res, ""); }
+        printf("*   pos def perturb: %15e%24s*\n", qp->pos_def_res, "");
+        printf("*   KKT residual:    %15e%24s*\n", qp->kkt_res, "");
+        if (qp->qpsolver == TRLIB_DRIVER_SOLVER_KRYLOV) { printf("*   ons residual:    %15e%24s*\n", qp->orth_res, ""); }
+        printf("*************************************************************\n\n");
+    #endif
+
+    // let us do a simple lanczos iteration ourselve and compare directions
+    if (qp->qpsolver == TRLIB_DRIVER_SOLVER_KRYLOV) {
+        int n; int inc = 1;
+        struct trlib_driver_work_krylov * work = (struct trlib_driver_work_krylov *)qp->work;
+        double igamma, gamma, delta, one, z;
+        double *g, *p, *pm, *Hp, *hess, *diag, *offdiag, *grad;
+        one = 1.0; z = 0.0;
+        if(qp->qptype == TRLIB_DRIVER_DENSE_QP) {
+            struct trlib_driver_problem_dense* problem = (struct trlib_driver_problem_dense *)qp->problem;
+            n = problem->n;
+            hess = problem->hess;
+            grad = problem->grad;
+        }
+        if(qp->qptype == TRLIB_DRIVER_TRI_QP) {
+            struct trlib_driver_problem_tri* problem = (struct trlib_driver_problem_tri *)qp->problem;
+            n = problem->n;
+            diag = problem->diag;
+            offdiag = problem->offdiag;
+            grad = problem->grad;
+        }
+        g = calloc(n, sizeof(double));
+        p = calloc(n, sizeof(double));
+        Hp = calloc(n, sizeof(double));
+        pm = calloc(n, sizeof(double));
+
+        memcpy(g, grad, n*sizeof(double));
+
+        for(int ii = 0; ii<qp->iter+1; ++ii) { 
+            gamma = dnrm2_(&n, g, &inc); igamma = 1.0/gamma;
+            memcpy(p, g, n*sizeof(double)); dscal_(&n, &igamma, p, &inc);
+            if(qp->qptype == TRLIB_DRIVER_DENSE_QP) { 
+                dgemv_("N", &n, &n, &one, hess, &n, p, &inc, &z, Hp, &inc); // Hp = H*p
+            }
+            if(qp->qptype == TRLIB_DRIVER_TRI_QP) { 
+                dlagtm_("N", &n, &inc, &one, offdiag, diag, offdiag, p, &inc, &z, Hp, &inc); // Hp = H*p
+            }
+            delta = ddot_(&n, p, &inc, Hp, &inc);
+            memcpy(g, Hp, n*sizeof(double)); 
+            igamma = -delta; daxpy_(&n, &igamma, p, &inc, g, &inc);
+            igamma = -gamma; daxpy_(&n, &igamma, pm, &inc, g, &inc);
+            memcpy(pm, p, n*sizeof(double));
+            for(int jj = 0; jj<n; ++jj){ ck_assert_msg( fabs(p[jj] - work->Q[jj+ii*n] ) <= lanczos_tol, "directions differ from thos produced by stupid Lanczos, iterate %d, index %d, residual %e", ii, jj, p[jj] - work->Q[jj+ii*n]); }
+        }
+
+        if (g != NULL) { free(g); }
+        if (p != NULL) { free(p); }
+        if (Hp != NULL) { free(Hp); }
+        if (pm != NULL) { free(pm); }
+    }
+
+    #if TRLIB_TEST_PLOT
+        if(qp->qpsolver == TRLIB_DRIVER_SOLVER_KRYLOV) {
+            void *context = zmq_ctx_new ();
+            void *requester = zmq_socket (context, ZMQ_REQ);
+            zmq_connect (requester, "tcp://localhost:5678");
+
+            void *buf;
+            unsigned lenbuf;
+            char recbuffer[10];
+
+            struct trlib_driver_work_krylov * work = (struct trlib_driver_work_krylov *)qp->work;
+            TrlibMatrixMessage orth_msg = TRLIB_MATRIX_MESSAGE__INIT;
+            orth_msg.id = 0;
+            orth_msg.m = qp->iter+1;
+            orth_msg.n = qp->iter+1;
+            orth_msg.n_data = orth_msg.m*orth_msg.n;
+            orth_msg.data = work->orth_check;
+
+            lenbuf = trlib_matrix_message__get_packed_size(&orth_msg);
+            buf = malloc(lenbuf);
+            trlib_matrix_message__pack(&orth_msg, buf);
+            zmq_send(requester, buf, lenbuf, 0);
+            zmq_recv(requester, recbuffer, 10, 0);
+            free(buf);
+
+            zmq_close(requester);
+            zmq_ctx_destroy(context);
+        }
+    #endif
+
+    ck_assert_msg(fabs(qp->pos_def_res) <= tol, "%s: Expected positive semidefinite regularized hessian, got multiplier %e, pertubation needed %e", name, qp->lam, qp->pos_def_res);
+    if(qp->equality){
+        ck_assert_msg(fabs(qp->tr_res) <= tol, "%s: Expected satisfaction of trust region constraint, residual %e", name, qp->tr_res);
+    }
+    else{
+        ck_assert_msg(qp->tr_res >= -tol, "%s: Expected satisfaction of trust region constraint, residual %e", name, qp->tr_res);
+        ck_assert_msg(fabs((qp->tr_res)*qp->lam) <= tol, "%s: Expected satisfaction of complementary, violation %e, trust region residual %e, multiplier %e", name, (qp->tr_res)*qp->lam, qp->tr_res, qp->lam);
+    }
+    ck_assert_msg(fabs(qp->kkt_res) <= tol, "%s: Expected satisfaction of KKT condition, residual %e", name, qp->kkt_res);
+    ck_assert_msg(fabs(qp->obj - qp->obj_check) <= tol, "%s: Returned objective and computed objective mismatch: %e", name, qp->obj - qp->obj_check);
+
+}
+
+#endif

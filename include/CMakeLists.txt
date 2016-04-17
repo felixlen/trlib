@@ -1,0 +1,5 @@
+configure_file("${CMAKE_CURRENT_SOURCE_DIR}/trlib.h.in" "${CMAKE_CURRENT_BINARY_DIR}/trlib.h")
+configure_file("${CMAKE_CURRENT_SOURCE_DIR}/trlib_driver.h.in" "${CMAKE_CURRENT_BINARY_DIR}/trlib_driver.h")
+configure_file("${CMAKE_CURRENT_SOURCE_DIR}/trlib_test.h.in" "${CMAKE_CURRENT_BINARY_DIR}/trlib_test.h")
+configure_file("${CMAKE_CURRENT_SOURCE_DIR}/ctrlib.pxd" "${CMAKE_BINARY_DIR}/src/ctrlib.pxd")
+include_directories(${CMAKE_CURRENT_BINARY_DIR})

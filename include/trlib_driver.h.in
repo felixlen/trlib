@@ -1,0 +1,110 @@
+#ifndef TRLIB_DRIVER_H
+#define TRLIB_DRIVER_H
+
+#include "trlib.h"
+
+#define TRLIB_DRIVER_DENSE_QP (0)
+#define TRLIB_DRIVER_TRI_QP   (1)
+#define TRLIB_DRIVER_OP_QP    (3)
+
+#define TRLIB_DRIVER_SOLVER_KRYLOV (0)
+#define TRLIB_DRIVER_SOLVER_FACTOR (1)
+
+struct trlib_driver_problem_dense {
+    int n;                   ///< dimension
+    double *hess;            ///< dense hessian
+    double *grad;            ///< gradient of quadratic form
+    double *sol;             ///< solution
+};
+
+struct trlib_driver_problem_tri {
+    int n;                   ///< dimension
+    double *diag;            ///< diagonal in case of #TRLIB_DRIVER_TRI_QP
+    double *offdiag;         ///< offdiagonal in case of #TRLIB_DRIVER_TRI_QP
+    double *diag_fac;        ///< factorization of diagonal in case of #TRLIB_DRIVER_TRI_QP
+    double *offdiag_fac;     ///< factorization of offdiagonal in case of #TRLIB_DRIVER_TRI_QP
+    double *diag_fac0;       ///< factorization of diagonal in case of #TRLIB_DRIVER_TRI_QP
+    double *offdiag_fac0;    ///< factorization of offdiagonal in case of #TRLIB_DRIVER_TRI_QP
+    double *grad;            ///< gradient of quadratic form
+    double *neggrad;         ///< negative of gradient in case of #TRLIB_DRIVER_TRI_QP
+    double *sol;             ///< solution
+    double *sol0;            ///< solution
+    int warm_fac;            ///< factorization is accurate in case of #TRLIB_DRIVER_TRI_QP
+    int warm_fac0;           ///< factorization is accurate in case of #TRLIB_DRIVER_TRI_QP
+    int pos_def;             ///< indicate if we know that hessian is positive definite in #TRLIB_DRIVER_TRI_QP
+};
+
+struct trlib_driver_problem_op {
+    int n;                   ///< dimension
+    double *grad;            ///< gradient
+    double *sol;             ///< solution
+    void *userdata;          ///< context pointer
+    void (*hv)(void *, int, double *, double *); ///< callback function for hessian vector product
+};
+
+struct trlib_driver_work_krylov {
+    int *iwork;              ///< integer work space
+    double *fwork;           ///< floating point workspace
+    double *g;               ///< gradient
+    double *gm;              ///< previous gradient
+    double *p;               ///< direction
+    double *Hp;              ///< hessian product
+    double *Q;               ///< matrix with Lanczos directions
+    double *orth_check;      ///< compute orthonormality of generated directions
+};
+
+struct trlib_driver_work_factor {
+    double *fwork;           ///< floating point workspace
+    double *ones;            ///< array of all ones
+    int nirblk;              ///< number of irreducible blocks
+    int *irblk;              ///< indices of irreducible blocks
+    double* leftmost;        ///< estimation of leftmost eigenvalues for blocks
+    int ileftmost;           ///< index to block with smallest leftmost
+    int warm_leftmost;       ///< leftmost is accurate
+    int warm_lam;            ///< lam is accurate
+    int warm_lam0;           ///< lam0 is accurate
+    double lam0;             ///< multiplier corresponding to first block
+};
+
+struct trlib_driver_qp {
+    int qptype;              ///< either #TRLIB_DRIVER_DENSE_QP or #TRLIB_DRIVER_TRI_QP
+    int qpsolver;            ///< either #TRLIB_DRIVER_SOLVER_KRYLOV or #TRLIB_DRIVER_SOLVER_FACTOR
+    void* problem;           ///< problem specific storage
+    void *work;              ///< solver specific workspace
+    int itmax;               ///< maximum number of iterations
+    char *prefix;            ///< prefix that is printed
+    int verbose;             ///< print level
+    int unicode;             ///< output stream supports unicode
+    FILE *stream;            ///< output stream
+    double radius;           ///< trust region radius
+    int equality;            ///< consider trust region constraint as equality
+    int reentry;             ///< hotstart on problem?
+    int refine;              ///< use iterative refinement on solution of linear equations
+    long *timing;            ///< statistics
+    double lam;              ///< lagrange multiplier
+    double tol_rel_i;        ///< relative stop tolerance interior case
+    double tol_abs_i;        ///< absolute stop tolerance interior case
+    double tol_rel_b;        ///< relative stop tolerance boundary case
+    double tol_abs_b;        ///< absolute stop tolerance boundary case
+    int ret;                 ///< return value from qp solver
+    int sub_fail;            ///< return value from subroutines called by qp solver
+    int iter;                ///< number of iterations
+    double obj;              ///< objective
+    double obj_check;        ///< objective recomputed by trlib_driver_check_optimality
+    double pos_def_res;      ///< perturbation needed to obtain positive definiteness
+    double kkt_res;          ///< KKT residual
+    double tr_res;           ///< trust region residual
+    double orth_res;         ///< orthonormality residual
+};
+
+void dgemv_(char *trans, int *m, int *n, double *alpha, double *a, int *lda, double *x, int *incx, double *beta, double *y, int *incy);
+void dpotrf_(char *uplo, int *n, double *a, int *lda, int *info);
+
+int trlib_driver_malloc_qp(int qptype, int qpsolver, int n, int itmax, struct trlib_driver_qp *qp);
+int trlib_driver_free_qp(struct trlib_driver_qp *qp);
+int trlib_driver_solve_qp(struct trlib_driver_qp *qp);
+int trlib_driver_pos_def_perturb(struct trlib_driver_qp *qp);
+int trlib_driver_check_optimality(struct trlib_driver_qp *qp);
+int trlib_driver_problem_set_hvcb(struct trlib_driver_problem_op* problem, void *userdata, void (*hv_cb)(void *, int, double *, double *));
+
+#endif
