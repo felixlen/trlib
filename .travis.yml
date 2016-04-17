@@ -17,4 +17,4 @@ before_script:
 script: make && make test
 
 after_failure:
-    find tests/test* -exec {} \;
+    - find tests/test* -exec {} \;
