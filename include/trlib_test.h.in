@@ -91,7 +91,7 @@ void trlib_test_solve_check_qp(struct trlib_driver_qp *qp, char *name, double to
             igamma = -delta; daxpy_(&n, &igamma, p, &inc, g, &inc);
             igamma = -gamma; daxpy_(&n, &igamma, pm, &inc, g, &inc);
             memcpy(pm, p, n*sizeof(double));
-            for(int jj = 0; jj<n; ++jj){ ck_assert_msg( fabs(p[jj] - work->Q[jj+ii*n] ) <= lanczos_tol, "directions differ from thos produced by stupid Lanczos, iterate %d, index %d, residual %e", ii, jj, p[jj] - work->Q[jj+ii*n]); }
+            for(int jj = 0; jj<n; ++jj){ ck_assert_msg( fabs(p[jj] - work->Q[jj+ii*n] ) <= lanczos_tol, "directions differ from those produced by stupid Lanczos, iterate %d, index %d, residual %e", ii, jj, p[jj] - work->Q[jj+ii*n]); }
         }
 
         if (g != NULL) { free(g); }
