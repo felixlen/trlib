@@ -4,9 +4,10 @@ dist: trusty
 language: c
 compiler:
     - gcc
+    - clang
 
 before_install:
-    - sudo apt-get -y install check
+    - sudo apt-get -y install check python-dev python-numpy python-scipy cython python3-dev python3-numpy python3-scipy cython3
 
 before_script:
     - mkdir build

@@ -15,16 +15,17 @@ You have to make sure that the following requirements are provided:
 - Python Header, TRLIB works with python 2 and 3 and compiles for the versions it finds (only needed if you want to compile the python interface)
 - Cython (only needed if you want to compile the python interface)
 - NumPy (only needed if you want to use the python interface, version >= 1.10)
+- SciPy (only needed if you want to run the rosenbrock example)
 - IPython Notebook (only needed to have a look at some of the examples)
 
 ### Ubuntu/Debian Packages
 Using Ubuntu/Debian, you can install all the requirements by executing:
 
-    sudo apt-get install cmake doxygen graphviz check cython build-essential python3-dev python3-numpy cython3 ipython3-notebook liblapack-dev libblas-dev libprotobuf-dev protobuf-compiler libprotoc-dev protobuf-c-compiler libprotobuf-c-dev libzmq-dev
+    sudo apt-get install cmake doxygen graphviz check build-essential python3-dev python3-numpy python3-scipy cython3 ipython3-notebook liblapack-dev libblas-dev libprotobuf-dev protobuf-compiler libprotoc-dev protobuf-c-compiler libprotobuf-c-dev libzmq-dev
 
 or for python2
 
-    sudo apt-get install cmake doxygen graphviz check cython build-essential python-dev python-numpy cython ipython-notebook liblapack-dev libblas-dev libprotobuf-dev protobuf-compiler libprotoc-dev protobuf-c-compiler libprotobuf-c-dev libzmq-dev
+    sudo apt-get install cmake doxygen graphviz check cython build-essential python-dev python-numpy python-scipy cython ipython-notebook liblapack-dev libblas-dev libprotobuf-dev protobuf-compiler libprotoc-dev protobuf-c-compiler libprotobuf-c-dev libzmq-dev
 
 
 ## Compilation
