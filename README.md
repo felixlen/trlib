@@ -61,13 +61,10 @@ Option                  | default | Description
 `TRLIB_MEASURE_TIME`    | `OFF`   | measure time for trlib function calls
 `TRLIB_MEASURE_SUBTIME` | `OFF`   | measure time for blas and lapack function calls
 `TRLIB_TEST_OUTPUT`     | `OFF`   | show output on stdout of trlib functions when individual tests are executed
-`TRLIB_TEST_PLOT`       | `ON`    | use socket communication to send matrix data for plotting (only for debug purposes)
+`TRLIB_TEST_PLOT`       | `OFF`   | use socket communication to send matrix data for plotting (only for debug purposes)
 
 ## Getting started
 - [C API](@ref src/trlib.c)
 - Python Library that shows how to use the low level reverse communication interface and the higher level driver interface
   as well how to make use of these interfaces in a standard trust region algorithm: `examples/umin.py`
-- IPython Notebbok with standard trust region algorithm to minimize the Rosenbrock function: `examples/rosenbrock.ipynb`:
-    
-    cd examples
-    ipython notebook rosenbrock
+- IPython Notebbok with standard trust region algorithm to minimize the Rosenbrock function: `examples/rosenbrock.ipynb`: `cd examples && ipython notebook rosenbrock`
