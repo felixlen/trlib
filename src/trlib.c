@@ -614,7 +614,6 @@ int trlib_tri_factor_min(
     }
 
     *warm0 = 1;
-    *warm_fac = 0;
 
     /* now in a situation were accurate lam0, h_0 exists to first irreducible block
      * invoke Theorem 5.8:
@@ -635,7 +634,10 @@ int trlib_tri_factor_min(
     // now that we have accurate lam, h_0 invoke Theorem 5.8
     // check if lam <= leftmost --> in that case the first block information describes everything
     TRLIB_PRINTLN_1("\nCheck if \u03bb\u2080 provides global solution, get leftmost ev for irred blocks")
-    *sub_fail = trlib_leftmost(nirblk, irblk, diag, offdiag, *warm_leftmost, leftmost[nirblk-1], 1000, TRLIB_EPS_POW_75, verbose-2, unicode, " LM ", fout, timing+10, ileftmost, leftmost);
+    if(!*warm_leftmost) {
+        *sub_fail = trlib_leftmost(nirblk, irblk, diag, offdiag, 0, leftmost[nirblk-1], 1000, TRLIB_EPS_POW_75, verbose-2, unicode, " LM ", fout, timing+10, ileftmost, leftmost);
+        *warm_leftmost = 1;
+    }
     TRLIB_PRINTLN_1("    leftmost = %e (block %d)", leftmost[*ileftmost], *ileftmost)
     if(*lam0 >= -leftmost[*ileftmost]) {
         if (unicode) { TRLIB_PRINTLN_1("  \u03bb\u2080 \u2265 -leftmost \u21d2 \u03bb = \u03bb\u2080, exit: h\u2080(\u03bb\u2080)") }
@@ -655,12 +657,14 @@ int trlib_tri_factor_min(
         // Compute solution of (T0 - leftmost*I)*h0 = neglin
         *lam = -leftmost[*ileftmost]; *warm = 1;
         TRLIB_DCOPY(&n0, neglin, &inc, sol, &inc) // neglin <-- sol
-        TRLIB_DCOPY(&n0, diag, &inc, diag_lam, &inc) // diag_lam <-- diag
-        TRLIB_DAXPY(&n0, lam, ones, &inc, diag_lam, &inc) // diag_lam <-- lam + diag_lam
-        TRLIB_DCOPY(&n0, diag_lam, &inc, diag_fac, &inc) // diag_fac <-- diag_lam
-        TRLIB_DCOPY(&nm0, offdiag, &inc, offdiag_fac, &inc) // offdiag_fac <-- offdiag
-        TRLIB_DPTTRF(&n0, diag_fac, offdiag_fac, &info_fac) // compute factorization
-        if (info_fac != 0) { TRLIB_RETURN(TRLIB_TTR_FAIL_FACTOR) } 
+        if(!*warm_fac){
+            TRLIB_DCOPY(&n0, diag, &inc, diag_lam, &inc) // diag_lam <-- diag
+            TRLIB_DAXPY(&n0, lam, ones, &inc, diag_lam, &inc) // diag_lam <-- lam + diag_lam
+            TRLIB_DCOPY(&n0, diag_lam, &inc, diag_fac, &inc) // diag_fac <-- diag_lam
+            TRLIB_DCOPY(&nm0, offdiag, &inc, offdiag_fac, &inc) // offdiag_fac <-- offdiag
+            TRLIB_DPTTRF(&n0, diag_fac, offdiag_fac, &info_fac) // compute factorization
+            if (info_fac != 0) { TRLIB_RETURN(TRLIB_TTR_FAIL_FACTOR) } 
+        }
         *warm_fac = 1;
         TRLIB_DPTTRS(&n0, &inc, diag_fac, offdiag_fac, sol, &n0, &info_fac) // sol <-- (T+lam I)^-1 sol
         if (info_fac != 0) { TRLIB_RETURN(TRLIB_TTR_FAIL_LINSOLVE) }

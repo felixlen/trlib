@@ -17,6 +17,7 @@ START_TEST (test_simple_reducible)
     problem->pos_def = 1;
     qp.radius = 1.0;
     trlib_test_solve_check_qp(&qp, "reducible", 1e5*TRLIB_EPS, TRLIB_EPS);
+    problem->warm_fac = 0;
     
     qp.radius = 0.5;
     trlib_test_solve_check_qp(&qp, "reducible", 1e5*TRLIB_EPS, TRLIB_EPS);

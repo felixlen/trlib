@@ -15,11 +15,11 @@ START_TEST (test_expensive)
     for(int ii = 0; ii < problem->n; ++ii) { grad[ii] = 1.0; }
 
     qp.radius = 3.2e3;
-    trlib_test_solve_check_qp(&qp, "Coldstart diagonal with zeros", 1e7*TRLIB_EPS, TRLIB_EPS);
+    trlib_test_solve_check_qp(&qp, "Coldstart diagonal with zeros", 1e8*TRLIB_EPS, TRLIB_EPS);
     
     qp.reentry = 1;
     qp.radius = 1e3;
-    trlib_test_solve_check_qp(&qp, "Warmstart diagonal with zeros", 1e7*TRLIB_EPS, TRLIB_EPS);
+    trlib_test_solve_check_qp(&qp, "Warmstart diagonal with zeros", 1e8*TRLIB_EPS, TRLIB_EPS);
 
     trlib_driver_free_qp(&qp);
 }

@@ -387,19 +387,21 @@ int trlib_krylov_min(
  *  @param[in,out] ileftmost: index to block with smallest leftmost eigenvalue
  *  @param[in,out] leftmost: array holding leftmost eigenvalues of blocks
  *  @param[in,out] warm_fac0 set \c 1 if you provide a valid factoricization in @p diag_fac0, @p offdiag_fac0
- *  @param[in,out] diag_fac0 pointer to array holding diagonal of Cholesky factorization of \f$ T_0 + \texttt{lam} I \f$, length \p irblk[1]
+ *  @param[in,out] diag_fac0 pointer to array holding diagonal of Cholesky factorization of \f$ T_0 + \texttt{lam0} I \f$, length \p irblk[1]
  *                 - on entry: factorization corresponding to provided estimation @p lam0 on entry
  *                 - on exit: factorization corresponding to computed multiplier @p lam0
  *  @param[in,out] offdiag_fac0 pointer to array holding offdiagonal of Cholesky factorization of \f$ T_0 + \texttt{lam0} I \f$, length \p irblk[1]-1
  *                 - on entry: factorization corresponding to provided estimation @p lam0 on entry
  *                 - on exit: factorization corresponding to computed multiplier @p lam0
  *  @param[in,out] warm_fac set \c 1 if you provide a valid factoricization in @p diag_fac, @p offdiag_fac
- *  @param[in,out] diag_fac pointer to array holding diagonal of Cholesky factorization of \f$ T + \texttt{lam} I \f$, length \p n
- *                 - on entry: factorization corresponding to provided estimation @p lam on entry
- *                 - on exit: factorization corresponding to computed multiplier @p lam
- *  @param[in,out] offdiag_fac pointer to array holding offdiagonal of Cholesky factorization of \f$ T + \texttt{lam} I \f$, length \p n-1
- *                 - on entry: factorization corresponding to provided estimation @p lam on entry
- *                 - on exit: factorization corresponding to computed multiplier @p lam
+ *  @param[in,out] diag_fac pointer to array of length \p n that holds the following:
+ *                 - let \f$ j = \texttt{ileftmost} \f$ and \f$ \theta = - \texttt{leftmost[ileftmost]} \f$
+ *                 - on position \f$ 0, \ldots, \texttt{irblk[1]} \f$: diagonal of factorization of \f$ T_0 + \theta I \f$
+ *                 - other positions have to be allocated
+ * @param[in,out] offdiag_fac pointer to array of length \p n-1 that holds the following:
+ *                 - let \f$ j = \texttt{ileftmost} \f$ and \f$ \theta = - \texttt{leftmost[ileftmost]} \f$
+ *                 - on position \f$ 0, \ldots, \texttt{irblk[1]}-1 \f$: offdiagonal of factorization of \f$ T_0 + \theta I \f$
+ *                 - other positions have to be allocated
  *  @param[in,out] sol0 pointer to array holding solution, length \p irblk[1]
  *  @param[in,out] sol pointer to array holding solution, length \p n
  *  @param[in]     ones array with every value \c 1.0, length \p n

@@ -28,8 +28,8 @@ if(CHECK_FOUND)
         krylov_2d_simple
         krylov_3d_all_cases 
         krylov_tri_simple
-        #krylov_tri_diagonal_lanczos_trigger
-        #krylov_tri_diagonal_with_zeros
+        krylov_tri_diagonal_lanczos_trigger
+        krylov_tri_diagonal_with_zeros
         krylov_lanczos_rosenbrock prepare_memory
         )
     foreach(t ${TESTNAMES})
