@@ -10,7 +10,6 @@ option(TRLIB_TEST_OUTPUT OFF)
 option(TRLIB_TEST_PLOT OFF)
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/CMakeModules/")
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c11")
 
 add_subdirectory(include)
 add_subdirectory(src)
