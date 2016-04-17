@@ -4,6 +4,7 @@ find_package(LAPACK REQUIRED)
 add_library(trlib SHARED ${CMAKE_SOURCE_DIR}/src/trlib.c ${CMAKE_SOURCE_DIR}/src/trlib_driver.c)
 target_include_directories(trlib PUBLIC "${CMAKE_BINARY_DIR}/include")
 set_property(TARGET trlib PROPERTY C_STANDARD 11)
+install(TARGETS trlib DESTINATION ${CMAKE_BINARY_DIR}/lib)
 
 configure_file("${CMAKE_CURRENT_SOURCE_DIR}/trlib.pyx" ${CMAKE_CURRENT_BINARY_DIR})
 

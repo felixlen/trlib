@@ -28,13 +28,13 @@ if(CHECK_FOUND)
         krylov_2d_simple
         krylov_3d_all_cases 
         krylov_tri_simple
-        krylov_tri_diagonal_lanczos_trigger
-        krylov_tri_diagonal_with_zeros
+        #krylov_tri_diagonal_lanczos_trigger
+        #krylov_tri_diagonal_with_zeros
         krylov_lanczos_rosenbrock prepare_memory
         )
     foreach(t ${TESTNAMES})
         add_executable("test_${t}" "test_${t}.c" ${MESSAGEFILES})
-    set_property(TARGET "test_${t}" PROPERTY C_STANDARD 11)
+        set_property(TARGET "test_${t}" PROPERTY C_STANDARD 11)
         target_link_libraries("test_${t}" trlib ${LIBS})
         target_include_directories("test_${t}" PRIVATE "${CMAKE_BINARY_DIR}/include" "${CMAKE_CURRENT_BINARY_DIR}" ${CHECK_INCLUDE_DIRS})
         add_test("test_${t}" "${CMAKE_CURRENT_BINARY_DIR}/test_${t}")
