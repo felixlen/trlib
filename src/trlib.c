@@ -165,15 +165,15 @@ int trlib_krylov_min(
                     /* solution candidate is on boundary
                        solve tridiagonal reduction
                        first try to update factorization if available to start tridiagonal problem warmstarted */
-                    warm_fac = 0;
-                    if (*warm_lam) {
+                    warm_fac0 = 0;
+                    if (*warm_lam0) {
                         // check if subminor regular, otherwise warmstart impossible
-                        warm_fac = delta_fac[*ii-1] != 0.0;
-                        if (warm_fac) {
-                            gamma_fac[*ii-1] = gamma[*ii-1]/delta_fac[*ii-1];
-                            delta_fac[*ii] = delta[*ii] + *lam - gamma[*ii-1]*gamma[*ii-1]/delta_fac[*ii-1];
+                        warm_fac0 = delta_fac0[*ii-1] != 0.0;
+                        if (warm_fac0) {
+                            gamma_fac0[*ii-1] = gamma[*ii-1]/delta_fac0[*ii-1];
+                            delta_fac0[*ii] = delta[*ii] + *lam0 - gamma[*ii-1]*gamma[*ii-1]/delta_fac0[*ii-1];
                             // check if regularized tridiagonal is still positive definite for warmstart
-                            warm_fac = delta_fac[*ii] > 0.0;
+                            warm_fac0 = delta_fac0[*ii] > 0.0;
                         }
                     }
                     /* call trlib_tri_factor_min to solve tridiagonal problem, store solution candidate in h
@@ -305,15 +305,15 @@ int trlib_krylov_min(
                 delta[*ii] = p_dot_Hp;
                 /* solve tridiagonal reduction
                    first try to update factorization if available to start tridiagonal problem warmstarted */
-                warm_fac = 0;
-                if (*warm_lam) {
+                warm_fac0 = 0;
+                if (*warm_lam0) {
                     // check if subminor regular, otherwise warmstart impossible
-                    warm_fac = delta_fac[*ii-1] != 0.0;
-                    if (warm_fac) {
-                        gamma_fac[*ii-1] = gamma[*ii-1]/delta_fac[*ii-1];
-                        delta_fac[*ii] = delta[*ii] + *lam - gamma[*ii-1]*gamma[*ii-1]/delta_fac[*ii-1];
+                    warm_fac0 = delta_fac0[*ii-1] != 0.0;
+                    if (warm_fac0) {
+                        gamma_fac0[*ii-1] = gamma[*ii-1]/delta_fac0[*ii-1];
+                        delta_fac0[*ii] = delta[*ii] + *lam0 - gamma[*ii-1]*gamma[*ii-1]/delta_fac0[*ii-1];
                         // check if regularized tridiagonal is still positive definite for warmstart
-                        warm_fac = delta_fac[*ii] > 0.0;
+                        warm_fac0 = delta_fac0[*ii] > 0.0;
                     }
                 }
                 /* call factor_min to solve tridiagonal problem, store solution candidate in h
@@ -447,8 +447,24 @@ int trlib_tri_factor_min(
         /* as a first step to initialize the newton iteration,
          *  find such a pair with the losened requierement ||h_0(lam_0)|| >= radius */
         if(*warm0) {
-            *warm0 = 0;
-            // FIXME: implement this
+            if(!*warm_fac0) {
+                // factorize T + lam0 I
+                TRLIB_DCOPY(&n0, diag, &inc, diag_lam, &inc) // diag_lam <-- diag
+                TRLIB_DAXPY(&n0, lam0, ones, &inc, diag_lam, &inc) // diag_lam <-- lam0 + diag_lam
+                TRLIB_DCOPY(&n0, diag_lam, &inc, diag_fac0, &inc) // diag_fac0 <-- diag_lam
+                TRLIB_DCOPY(&nm0, offdiag, &inc, offdiag_fac0, &inc) // offdiag_fac0 <-- offdiag
+                TRLIB_DPTTRF(&n0, diag_fac0, offdiag_fac0, &info_fac) // compute factorization
+                if (info_fac != 0) { *warm0 = 0; } // factorization failed, switch to coldastart
+                else { *warm_fac0 = 1; }
+            }
+            if(*warm_fac0) {
+                // solve for h0(lam0) and compute norm
+                TRLIB_DCOPY(&n0, neglin, &inc, sol0, &inc) // sol0 <-- neglin
+                TRLIB_DPTTRS(&n0, &inc, diag_fac0, offdiag_fac0, sol0, &n0, &info_fac) // sol <-- (T+lam0 I)^-1 sol
+                if(info_fac!=0) { TRLIB_RETURN(TRLIB_TTR_FAIL_LINSOLVE) }
+                TRLIB_DNRM2(norm_sol0, &n0, sol0, &inc)
+                if (norm_sol0 >= radius) { *warm0 = 1; newton = 1; } else { *warm0 = 0; }
+            }
         }
         if(!*warm0) {
             *lam0 = 0.0;
@@ -593,8 +609,6 @@ int trlib_tri_factor_min(
                 // theory tells this should not happen...
                     
                 ret = TRLIB_TTR_CONV_BOUND; break;
-                
-                TRLIB_RETURN(TRLIB_TTR_CONV_BOUND)
             }
         }
     }
@@ -682,160 +696,6 @@ int trlib_tri_factor_min(
         TRLIB_DDOT(dot, &n0, sol, &inc, w, &inc) *obj = *obj+0.5*dot; // obj = .5*(sol, w)
         TRLIB_RETURN(ret);
     }
-
-//    // Updating necessary information
-//    if (nirblk == 1) {
-//
-//    }
-//
-//    /* in the case of failure warmstart is inefficient if warmstarted with lam = 0.0
-//       since this is the first thing tried in coldstart */
-//    if (warm && *lam == 0.0) { warm = 0; }
-//
-//    /* in the case of a warmstart try previous lam
-//       test if T + lam I is pos def and || h_0(lam) || >= radius, otherwise switch to coldstart */
-//    if (warm) {
-//        TRLIB_PRINTLN_1("%s%e", "Attempting Warmstart in Tridiagonal Subproblem, use lam = ", *lam)
-//        if (! warm_fac) {
-//            // factorize T + lam I
-//            TRLIB_DCOPY(&n, diag, &inc, diag_lam, &inc) // diag_lam <-- diag
-//            TRLIB_DAXPY(&n, lam, ones, &inc, diag_lam, &inc) // diag_lam <-- lam + diag_lam
-//            TRLIB_DCOPY(&n, diag_lam, &inc, diag_fac, &inc) // diag_fac <-- diag_lam
-//            TRLIB_DCOPY(&nm, offdiag, &inc, offdiag_fac, &inc) // offdiag_fac <-- offdiag
-//            TRLIB_DPTTRF(&n, diag_fac, offdiag_fac, &info_fac) // compute factorization
-//            if (info_fac != 0) { warm = 0; } // factorization failed, switch to coldstart
-//            else { warm_fac = 1; } // indicate that factorization is suitable
-//        }
-//        if (warm_fac) {
-//            TRLIB_PRINTLN_1("%s", "Provided factorization suitable on warmstart")
-//            // solve for h(lam) and compute norm
-//            TRLIB_DCOPY(&n, neglin, &inc, sol, &inc) // sol <-- neglin
-//            TRLIB_DPTTRS(&n, &inc, diag_fac, offdiag_fac, sol, &n, &info_fac) // sol <-- (T+lam I)^-1 sol
-//            // we avoid iterative refinement since warmstarted factorization may be inexact so computed residuals may be way off?
-//            // dptrfs...
-//            if (info_fac != 0) { TRLIB_RETURN(TRLIB_TTR_FAIL_LINSOLVE) }
-//            TRLIB_DNRM2(norm_sol, &n, sol, &inc)
-//            // test if solution is not interior
-//            if (norm_sol >= radius) { warm = 1; }
-//            else { warm = 0; }
-//            if (unicode ) { TRLIB_PRINTLN_1("%s%e", "  resolve with old lam gives \u2016h(\u03bb)\u2016 = ", norm_sol) }
-//            else { TRLIB_PRINTLN_1("%s%e", "  resolve with old lam gives ||h(lam)|| = ", norm_sol) }
-//        }
-//    }
-//    // if coldstart or warmstart failed
-//    // try lam = 0.0 in pos def case, otherwise find leftmost eigenvalue and try lam = -leftmost + perturbation
-//    if (! warm) {
-//        if (pos_def) {
-//            *lam = 0.0;
-//            TRLIB_PRINTLN_1("%s", "Attempting Coldstart in Tridiagonal Subproblem")
-//            // factorize T + lam I
-//            TRLIB_DCOPY(&n, diag, &inc, diag_lam, &inc) // diag_lam <-- diag
-//            TRLIB_DAXPY(&n, lam, ones, &inc, diag_lam, &inc) // diag_lam <-- lam + diag_lam
-//            TRLIB_DCOPY(&n, diag_lam, &inc, diag_fac, &inc) // diag_fac <-- diag_lam
-//            TRLIB_DCOPY(&nm, offdiag, &inc, offdiag_fac, &inc) // offdiag_fac <-- offdiag
-//            TRLIB_DPTTRF(&n, diag_fac, offdiag_fac, &info_fac) // compute factorization
-//            if (info_fac != 0) { pos_def = 0; } // factorization failed, switch to computation of leftmost eigenvalue
-//            else {
-//                // solve for h(lam) and compute norm, record if interior solution found
-//                TRLIB_DCOPY(&n, neglin, &inc, sol, &inc) // sol <-- neglin
-//                TRLIB_DPTTRS(&n, &inc, diag_fac, offdiag_fac, sol, &n, &info_fac) // sol <-- (T+lam I)^-1 sol
-//                if (info_fac != 0) { TRLIB_RETURN(TRLIB_TTR_FAIL_LINSOLVE) }
-//                if (refine) { TRLIB_DPTRFS(&n, &inc, diag_lam, offdiag, diag_fac, offdiag_fac, neglin, &n, sol, &n, &ferr, &berr, work, &info_fac) }
-//                if (info_fac != 0) { TRLIB_RETURN(TRLIB_TTR_FAIL_LINSOLVE) }
-//                TRLIB_DNRM2(norm_sol, &n, sol, &inc)
-//                if (norm_sol < radius) { interior = 1; }
-//            }
-//        }
-//        /* if not positive definite, find leftmost eigenvalue and compute factorization and h with || h(lam) || >= radius
-//           for such a h the trust region condition is satisfied at least in the easy case, namely if leftmost is nondegenerate
-//           we have to check if the hard case occurs and find our way out */
-//        if (!pos_def) {
-//            // compute leftmost eigenvalue
-//            TRLIB_PRINTLN_1("%s", "Coldstart in Tridiagonal Subproblem, turned out indefinite, compute leftmost eigenvalue")
-//            ferr = *leftmost;
-//            *sub_fail = trlib_leftmost(nirblk, irblk, diag, offdiag, *warm_leftmost, ferr, 1000, TRLIB_EPS_POW_75, verbose-2, unicode, " LM ", fout, timing+10, ileftmost, leftmost); // ferr can safely be overwritten by computed leftmost for the moment as can jj with the number of rp iterations
-//            if (*sub_fail != 0) { TRLIB_RETURN(TRLIB_TTR_FAIL_LM) }
-//            *warm_leftmost = 1; // indicate that leftmost has been computed, set leftmost to result
-//            TRLIB_PRINTLN_1("%s%e", "  leftmost eigenvalue = ", *leftmost)
-//            // T - leftmost*I is singular, so perturb it a bit to catch factorization; start with small perturbation and increase
-//            lam_pert = (1.0+fabs(*leftmost)) * TRLIB_EPS_POW_75;
-//            while (lam_pert < (1.0+fabs(*leftmost))/TRLIB_EPS) {
-//                *lam = -(*leftmost) + lam_pert;
-//                // factorize T + lam I
-//                TRLIB_DCOPY(&n, diag, &inc, diag_lam, &inc) // diag_lam <-- diag
-//                TRLIB_DAXPY(&n, lam, ones, &inc, diag_lam, &inc) // diag_lam <-- lam + diag_lam
-//                TRLIB_DCOPY(&n, diag_lam, &inc, diag_fac, &inc) // diag_fac <-- diag_lam
-//                TRLIB_DCOPY(&nm, offdiag, &inc, offdiag_fac, &inc) // offdiag_fac <-- offdiag
-//                TRLIB_DPTTRF(&n, diag_fac, offdiag_fac, &info_fac) // compute factorization
-//                if (info_fac == 0) { break; } // factorization possible, exit loop
-//                lam_pert = 2.0*lam_pert;
-//            }
-//            if (info_fac != 0) { TRLIB_RETURN(TRLIB_TTR_FAIL_FACTOR) } // ensure we finally got a factorization
-//            // solve for h(lam) and compute norm
-//            TRLIB_DCOPY(&n, neglin, &inc, sol, &inc) // sol <-- neglin
-//            TRLIB_DPTTRS(&n, &inc, diag_fac, offdiag_fac, sol, &n, &info_fac) // sol <-- (T+lam I)^-1 sol
-//            if (info_fac != 0) { TRLIB_RETURN(TRLIB_TTR_FAIL_LINSOLVE) }
-//            if (refine) { TRLIB_DPTRFS(&n, &inc, diag_lam, offdiag, diag_fac, offdiag_fac, neglin, &n, sol, &n, &ferr, &berr, work, &info_fac) }
-//            if (info_fac != 0) { TRLIB_RETURN(TRLIB_TTR_FAIL_LINSOLVE) }
-//            TRLIB_DNRM2(norm_sol, &n, sol, &inc)
-//
-//            // we can be satisfied if || h || >= radius or we are in an equality constrained problem
-//            // if this is not the case, we are in the hard case
-//            if (norm_sol < radius && ! equality) {
-//                TRLIB_PRINTLN_1("%s", "  Hard Case encountered!")
-//                /* we are in the hard case
-//                   thus lam = - leftmost and leftmost is degenerate
-//                   to get an exact solution we would have to exhaust the full eigenspace in search
-//                   as computational feasible variant we restrict ourselves to h + r * w, where w is another eigenvector to leftmost */
-//                *lam = - (*leftmost);
-//                srand((unsigned) time(NULL));
-//                for( int ii = 0; ii < n; ++ii ) { w[ii] = ((double)rand()/(double)RAND_MAX); }
-//                *sub_fail = trlib_eigen_inverse(n, diag, offdiag, *leftmost, 10, TRLIB_EPS_POW_5, ones, diag_fac, offdiag_fac, w, verbose-2, unicode, " EI", NULL, timing+11, &ferr, &berr, &jj); // can savely overwrite ferr, berr, jj with results. only interesting: eigenvector
-//                if (sub_fail != 0) { TRLIB_RETURN(TRLIB_TTR_FAIL_EIG) }
-//                /* note || h + r*w ||^2 = || h ||^2 + 2 r (h, w) + r^2, since w normalized
-//                   solve for || h + r*w || ^2 == radius^2 */
-//                TRLIB_DDOT(dot, &n, sol, &inc, w, &inc)
-//                trlib_quadratic_zero(norm_sol*norm_sol - radius*radius, 2.0*dot, TRLIB_EPS_POW_75, 0, 0, "", NULL, &berr, &ferr); // can savely overwrite berr, ferr as temporaries. berr <= ferr
-//                /* take step with smaller objective value
-//                   objective(r) = lam * radius^2 + (g,h) +r (g,w) */
-//                // compute scalar product
-//                TRLIB_DDOT(dot, &n, neglin, &inc, w, &inc) dot = -1.0*dot; // dot = - (neglin, w)
-//                if (berr*dot <= ferr*dot) { TRLIB_DAXPY(&n, &berr, w, &inc, sol, &inc) } // sol <-- sol + berr w
-//                else { TRLIB_DAXPY(&n, &ferr, w, &inc, sol, &inc) } // sol <-- sol + ferr w
-//
-//                // compute objective. first store 2*gradient in w, then compute obj = .5*(sol, w)
-//                TRLIB_DCOPY(&n, neglin, &inc, w, &inc) ferr = -2.0; TRLIB_DSCAL(&n, &ferr, w, &inc) ferr = 1.0; // w <-- -2 neglin
-//                TRLIB_DLAGTM("N", &n, &inc, &ferr, offdiag, diag, offdiag, sol, &n, &ferr, w, &n) // w <-- T*sol + w
-//                TRLIB_DDOT(dot, &n, sol, &inc, w, &inc) *obj = 0.5*dot; // obj = .5*(sol, w)
-//
-//                // exit with this approximate solution
-//                TRLIB_RETURN(TRLIB_TTR_HARD)
-//            }
-//        }
-//    }
-//        
-//    /* now we are initialized such that either
-//       (a) there is interior solution: lam = 0.0 and || h || < radius
-//       (b) a pair (h, lam) is found with T + lam I pos def and || h || >= radius */
-//
-//    if (unicode) { TRLIB_PRINTLN_1("%s%e%s%e", "Successful Init in Tridiagonal Subproblem, \u03bb = ", *lam, ", \u2016h(\u03bb)\u2016 = ", norm_sol) }
-//    else { TRLIB_PRINTLN_1("%s%e%s%e", "Successful Init in Tridiagonal Subproblem, lam = ", *lam, ", ||h(lam)|| = ", norm_sol) }
-//
-//
-//    if (interior && !equality) { 
-//        // if solution is interior (case (a) ) and the user has not asked for equality constrained problem, return
-//        
-//        // compute objective. first store 2*gradient in w, then compute obj = .5*(sol, w)
-//        TRLIB_DCOPY(&n, neglin, &inc, w, &inc) ferr = -2.0; TRLIB_DSCAL(&n, &ferr, w, &inc) ferr = 1.0; // w <-- -2 neglin
-//        TRLIB_DLAGTM("N", &n, &inc, &ferr, offdiag, diag, offdiag, sol, &n, &ferr, w, &n) // w <-- T*sol + w
-//        TRLIB_DDOT(dot, &n, sol, &inc, w, &inc) *obj = 0.5*dot; // obj = .5*(sol, w)
-//
-//        TRLIB_PRINTLN_1("%s%e", "SUCCESS! Found Interior Solution, Objective = ", *obj)
-//
-//        TRLIB_RETURN(TRLIB_TTR_CONV_INTERIOR)
-//    }
-//
-//    // in case (b) we start newton iteration for root finding problem 1/||h(lam)|| - 1/radius = 0
 }
 
 int trlib_leftmost(
