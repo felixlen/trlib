@@ -77,21 +77,23 @@ void trlib_test_solve_check_qp(struct trlib_driver_qp *qp, char *name, double to
 
         memcpy(g, grad, n*sizeof(double));
 
-        for(int ii = 0; ii<qp->iter+1; ++ii) { 
-            gamma = dnrm2_(&n, g, &inc); igamma = 1.0/gamma;
-            memcpy(p, g, n*sizeof(double)); dscal_(&n, &igamma, p, &inc);
-            if(qp->qptype == TRLIB_DRIVER_DENSE_QP) { 
-                dgemv_("N", &n, &n, &one, hess, &n, p, &inc, &z, Hp, &inc); // Hp = H*p
+        if(lanczos_tol >= 0) {
+            for(int ii = 0; ii<qp->iter+1; ++ii) { 
+                gamma = dnrm2_(&n, g, &inc); igamma = 1.0/gamma;
+                memcpy(p, g, n*sizeof(double)); dscal_(&n, &igamma, p, &inc);
+                if(qp->qptype == TRLIB_DRIVER_DENSE_QP) { 
+                    dgemv_("N", &n, &n, &one, hess, &n, p, &inc, &z, Hp, &inc); // Hp = H*p
+                }
+                if(qp->qptype == TRLIB_DRIVER_TRI_QP) { 
+                    dlagtm_("N", &n, &inc, &one, offdiag, diag, offdiag, p, &inc, &z, Hp, &inc); // Hp = H*p
+                }
+                delta = ddot_(&n, p, &inc, Hp, &inc);
+                memcpy(g, Hp, n*sizeof(double)); 
+                igamma = -delta; daxpy_(&n, &igamma, p, &inc, g, &inc);
+                igamma = -gamma; daxpy_(&n, &igamma, pm, &inc, g, &inc);
+                memcpy(pm, p, n*sizeof(double));
+                for(int jj = 0; jj<n; ++jj){ ck_assert_msg( fabs(p[jj] - work->Q[jj+ii*n] ) <= lanczos_tol, "directions differ from those produced by stupid Lanczos, iterate %d, index %d, residual %e", ii, jj, p[jj] - work->Q[jj+ii*n]); }
             }
-            if(qp->qptype == TRLIB_DRIVER_TRI_QP) { 
-                dlagtm_("N", &n, &inc, &one, offdiag, diag, offdiag, p, &inc, &z, Hp, &inc); // Hp = H*p
-            }
-            delta = ddot_(&n, p, &inc, Hp, &inc);
-            memcpy(g, Hp, n*sizeof(double)); 
-            igamma = -delta; daxpy_(&n, &igamma, p, &inc, g, &inc);
-            igamma = -gamma; daxpy_(&n, &igamma, pm, &inc, g, &inc);
-            memcpy(pm, p, n*sizeof(double));
-            for(int jj = 0; jj<n; ++jj){ ck_assert_msg( fabs(p[jj] - work->Q[jj+ii*n] ) <= lanczos_tol, "directions differ from those produced by stupid Lanczos, iterate %d, index %d, residual %e", ii, jj, p[jj] - work->Q[jj+ii*n]); }
         }
 
         if (g != NULL) { free(g); }
