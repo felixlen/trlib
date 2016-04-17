@@ -114,6 +114,8 @@ int trlib_driver_free_qp(struct trlib_driver_qp *qp) {
         if(problem != NULL) {
             if(problem->grad != NULL) { free(problem->grad); }
             if(problem->sol != NULL) { free(problem->sol); }
+            problem->userdata = NULL;
+            problem->hv = NULL;
             free(problem);
         }
     }
