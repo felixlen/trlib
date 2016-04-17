@@ -15,3 +15,6 @@ before_script:
     - cmake ..
 
 script: make && make test
+
+after_failure:
+    find tests/test* -exec {} \;
