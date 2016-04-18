@@ -59,6 +59,7 @@
 #define TRLIB_CLA_UPDATE_STATIO (3)
 #define TRLIB_CLA_UPDATE_GRAD   (4)
 #define TRLIB_CLA_UPDATE_DIR    (5)
+#define TRLIB_CLA_NEW_KRYLOV    (6)
 
 #define TRLIB_CLS_INIT          (1)
 #define TRLIB_CLS_HOTSTART      (2)
@@ -287,18 +288,23 @@ int trlib_prepare_memory(int itmax, double *fwork);
  *                 - \f$ q_j \f$: \f$ j \f$-th column of \f$ Q \f$
  *                 - \f$ Q_i \f$: matrix consisting of the first \f$ i+1 \f$ columns of \f$ Q \f$, \f$ Q_i = (q_0, \ldots, q_i) \f$
  *                 - \f$ h_i \f$: vector of length \f$ i+1 \f$ stored in \p fwork with at start position \f$ 4\texttt{itmax}+17 \f$
- *                 - \f$ p \leftarrow \perp Q_j \f$: optionally reorthogonalize \f$ p \f$ against \f$ Q_j \f$
+ *                 - \f$ p \leftarrow \perp_M Q_j \f$: optionally \f$ M \f$-reorthonormalize \f$ p \f$ against \f$ Q_j \f$
+ *                 - \f$ g \leftarrow \texttt{rand}\perp Q_j \f$ find nonzero random vector that is orthogonal to \f$ Q_j \f$
+ *                 - Note that #TRLIB_CLA_NEW_KRYLOV is unlikely and only occurs on problems that employ the hard case.
+ *                   If you are confident that you do not run into it you may safe you from the trouble implementing it and 
+ *                   use a safeguard to exit instead.
  *                 action             | ityp            | command
  *                 -------------------|-----------------|------------
  *                 #TRLIB_CLA_TRIVIAL       | #TRLIB_CLT_CG, #TRLIB_CLT_L | do nothing
  *                 #TRLIB_CLA_RETRANSF      | #TRLIB_CLT_CG, #TRLIB_CLT_L | \f$ s \leftarrow Q_i h_i \f$
- *                 #TRLIB_CLA_INIT          | #TRLIB_CLT_CG, #TRLIB_CLT_L | \f$ s \leftarrow 0 \f$, \f$ g \leftarrow g_0 \f$, \f$ g_- \leftarrow 0 \f$, \f$ v \leftarrow M^{-1} g \f$, \f$ p \leftarrow -v \f$,\f$ \textit{Hp} \leftarrow Hp \f$, \f$ \texttt{v\_dot\_g} \leftarrow \langle v, g \rangle \f$, \f$ \texttt{p\_dot\_Hp} \leftarrow \langle p, \textit{Hp} \rangle \f$, \f$ q_0 \leftarrow \frac{1}{\sqrt{\texttt{v\_dot\_g}}} v \f$
+ *                 #TRLIB_CLA_INIT          | #TRLIB_CLT_CG, #TRLIB_CLT_L | \f$ s \leftarrow 0 \f$, \f$ g \leftarrow g_0 \f$, \f$ g_- \leftarrow 0 \f$, \f$ v \leftarrow M^{-1} g \f$, \f$ p \leftarrow -v \f$,\f$ \textit{Hp} \leftarrow Hp \f$, \f$ \texttt{g_dot_g} \leftarrow \langle g, g \rangle \f$, \f$ \texttt{v_dot_g} \leftarrow \langle v, g \rangle \f$, \f$ \texttt{p_dot_Hp} \leftarrow \langle p, \textit{Hp} \rangle \f$, \f$ q_0 \leftarrow \frac{1}{\sqrt{\texttt{v_dot_g}}} v \f$
  *                 #TRLIB_CLA_UPDATE_STATIO | #TRLIB_CLT_CG         | \f$ s \leftarrow s + \texttt{flt1} \, p \f$
  *                 #TRLIB_CLA_UPDATE_STATIO | #TRLIB_CLT_L          | do nothing
- *                 #TRLIB_CLA_UPDATE_GRAD   | #TRLIB_CLT_CG         | \f$ q_i \leftarrow \texttt{flt2} \, v \f$, \f$ g_- \leftarrow g \f$, \f$ g \leftarrow g + \texttt{flt1} \, \textit{Hp} \f$, \f$ v \leftarrow M^{-1} g \f$, \f$ \texttt{v\_dot\_g} \leftarrow \langle v, g \rangle \f$
- *                 #TRLIB_CLA_UPDATE_GRAD   | #TRLIB_CLT_L          | \f$ s \leftarrow \textit{Hp} + \texttt{flt1}\, g + \texttt{flt2}\, g_- \f$, \f$ g_- \leftarrow \texttt{flt3}\, g \f$, \f$ g \leftarrow s \f$, \f$ v \leftarrow M^{-1} g \f$, \f$ \texttt{v\_dot\_g} \leftarrow \langle v, g \rangle \f$
- *                 #TRLIB_CLA_UPDATE_DIR    | #TRLIB_CLT_CG         | \f$ p \leftarrow \texttt{flt1} \, v + \texttt{flt2} \, p \f$ with \f$ \texttt{flt1} = -1 \f$, \f$ \textit{Hp} \leftarrow Hp \f$, \f$ \texttt{p\_dot\_Hp} \leftarrow \langle p, \textit{Hp} \rangle \f$
- *                 #TRLIB_CLA_UPDATE_DIR    | #TRLIB_CLT_L          | \f$ p \leftarrow \texttt{flt1} \, v + \texttt{flt2} \, p \f$ with \f$ \texttt{flt2} = 0 \f$, \f$ p \leftarrow \perp Q_{i-1} \f$, \f$ \textit{Hp} \leftarrow Hp \f$, \f$ \texttt{p\_dot\_Hp} \leftarrow \langle p, \textit{Hp} \rangle \f$, \f$ q_i \leftarrow p \f$
+ *                 #TRLIB_CLA_UPDATE_GRAD   | #TRLIB_CLT_CG         | \f$ q_i \leftarrow \texttt{flt2} \, v \f$, \f$ g_- \leftarrow g \f$, \f$ g \leftarrow g + \texttt{flt1} \, \textit{Hp} \f$, \f$ v \leftarrow M^{-1} g \f$, \f$ \texttt{g_dot_g} \leftarrow \langle g, g \rangle \f$, \f$ \texttt{v_dot_g} \leftarrow \langle v, g \rangle \f$
+ *                 #TRLIB_CLA_UPDATE_GRAD   | #TRLIB_CLT_L          | \f$ s \leftarrow \textit{Hp} + \texttt{flt1}\, g + \texttt{flt2}\, g_- \f$, \f$ g_- \leftarrow \texttt{flt3}\, g \f$, \f$ g \leftarrow s \f$, \f$ v \leftarrow M^{-1} g \f$, \f$ \texttt{v_dot_g} \leftarrow \langle v, g \rangle \f$
+ *                 #TRLIB_CLA_UPDATE_DIR    | #TRLIB_CLT_CG         | \f$ p \leftarrow \texttt{flt1} \, v + \texttt{flt2} \, p \f$ with \f$ \texttt{flt1} = -1 \f$, \f$ \textit{Hp} \leftarrow Hp \f$, \f$ \texttt{p_dot_Hp} \leftarrow \langle p, \textit{Hp} \rangle \f$
+ *                 #TRLIB_CLA_UPDATE_DIR    | #TRLIB_CLT_L          | \f$ p \leftarrow \texttt{flt1} \, v + \texttt{flt2} \, p \f$ with \f$ \texttt{flt2} = 0 \f$, \f$ p \leftarrow \perp_M Q_{i-1} \f$, \f$ \textit{Hp} \leftarrow Hp \f$, \f$ \texttt{p_dot_Hp} \leftarrow \langle p, \textit{Hp} \rangle \f$, \f$ q_i \leftarrow p \f$
+ *                 #TRLIB_CLA_NEW_KRYLOV    | #TRLIB_CLT_CG, #TRLIB_CLT_L | \f$ g \leftarrow \texttt{rand}\perp Q_j \f$, \f$ g_- \leftarrow 0 \f$, \f$ v \leftarrow M^{-1} g \f$, \f$ \texttt{v_dot_g} \leftarrow \langle v, g \rangle \f$, \f$ p \leftarrow \frac{1}{\sqrt{\texttt{v_dot_g}}} v \f$, \f$ \texttt{p_dot_Hp} \leftarrow \langle p, \textit{Hp} \rangle \f$, \f$ q_i \leftarrow p \f$
  *  @param[out]    iter iteration counter to tell user position in vector storage
  *  @param[out]    ityp iteration type, see \p action
  *  @param[out]    flt1 floating point value that user needs for actions

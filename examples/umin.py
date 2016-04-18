@@ -136,6 +136,8 @@ def qpsolver_low_level(lin, hmv, radius, data=None, reentry=False, verbose=0):
             p_dot_Hp = np.dot(data['p'], data['Hp'])
             if ityp == 2: # CLT_L
                 data['Q'][iter,:] = data['p']
+        if action == 6: # CLA_NEW_KRYLOV
+            break # FIXME: actually implement this
         if ret < 10:
             break
     if ret < 0:

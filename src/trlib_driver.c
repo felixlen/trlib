@@ -235,8 +235,11 @@ int trlib_driver_solve_qp(struct trlib_driver_qp *qp) {
                     p_dot_Hp = ddot_(&n, work->p, &inc, work->Hp, &inc);
                     if ( ityp == TRLIB_CLT_L) { dcopy_(&n, work->p, &inc, work->Q+(qp->iter)*n, &inc); } // Q(iter*n:(iter+1)*n) = p
                     break;
+                case TRLIB_CLA_NEW_KRYLOV:
+                    // FIXME: implement this, exit right now...
+                    break;
             }
-            if( qp->ret < 10 ) { break; }
+            if( qp->ret < 10 || action == TRLIB_CLA_NEW_KRYLOV ) { break; }
         }
 
         qp->lam = work->fwork[7];
