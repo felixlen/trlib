@@ -145,6 +145,6 @@ def qpsolver_low_level(lin, hmv, radius, data=None, reentry=False, verbose=0):
         print("Warning, status: %d" % ret, data['iwork'][7], data['iwork'][8])
     return data['s'], data
 
-def qpsolver_driver(lin, hmv, radius, data=None, reentry=False, verbose=0):
-    sol = trlib.solve_qp_cb(radius, lin, hmv, verbose=verbose) 
-    return sol, None
+#def qpsolver_driver(lin, hmv, radius, data=None, reentry=False, verbose=0):
+#    sol = trlib.solve_qp_cb(radius, lin, hmv, verbose=verbose) 
+#    return sol, None
