@@ -49,7 +49,7 @@ int trlib_driver_malloc_qp(int qptype, int qpsolver, int n, int itmax, struct tr
         struct trlib_driver_problem_op* problem = (struct trlib_driver_problem_op *)qp->problem;
         problem->n = n;
         problem->grad = calloc(n, sizeof(double));
-        problem->sol = calloc(n, sizeof(double));
+        problem->sol = malloc(n*sizeof(double));
     }
 
     if(qpsolver == TRLIB_DRIVER_SOLVER_KRYLOV) {
@@ -184,7 +184,7 @@ int trlib_driver_solve_qp(struct trlib_driver_qp *qp) {
             //        action, qp->iter, ityp, flt1, flt2, flt3);
             switch(action) {
                 case TRLIB_CLA_INIT:
-                    memset(sol, 0, n); memset(work->gm, 0, n);
+                    memset(sol, 0, n*sizeof(double)); memset(work->gm, 0, n*sizeof(double));
                     dcopy_(&n, grad, &inc, work->g, &inc);
                     v_dot_g = ddot_(&n, work->g, &inc, work->g, &inc);
                     dcopy_(&n, work->g, &inc, work->p, &inc); dscal_(&n, &minus, work->p, &inc); // p = -g
