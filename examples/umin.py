@@ -72,15 +72,16 @@ def standard_tr_unconstrained(obj, grad, hessvec, x, qpsolver,
 
 def qpsolver_low_level(lin, hmv, radius, data=None, reentry=False, verbose=0):
     itmax = 10*lin.shape[0]
+    iwork_size, fwork_size, h_pointer = trlib.krylov_memory_size(itmax)
     if data is None:
         data = {}
     if not reentry:
         init = 1
         if not 'fwork' in data:
-            data['fwork'] = np.empty([22+17*itmax*lin.shape[0]])
-        trlib.prepare_memory(itmax, data['fwork'])
+            data['fwork'] = np.empty([fwork_size])
+        trlib.krylov_prepare_memory(itmax, data['fwork'])
         if not 'iwork' in data:
-            data['iwork'] = np.empty([15+itmax], dtype=ctypes.c_int)
+            data['iwork'] = np.empty([iwork_size], dtype=ctypes.c_int)
         if not 's' in data:
             data['s'] = np.empty(lin.shape)
         if not 'g' in data:
@@ -116,7 +117,7 @@ def qpsolver_low_level(lin, hmv, radius, data=None, reentry=False, verbose=0):
             p_dot_Hp = np.dot(data['p'], data['Hp'])
             data['Q'][0,:] = data['g']/np.sqrt(v_dot_g)
         if action == 2: # CLA_RETRANSF
-            data['s'][:] = np.dot(data['fwork'][16+3*itmax:16+3*itmax+iter+1], data['Q'][:iter+1,:])
+            data['s'][:] = np.dot(data['fwork'][h_pointer:h_pointer+iter+1], data['Q'][:iter+1,:])
         if action == 3: # CLA_UPDATE_STATIO
             if ityp == 1: # CLT_CG
                 data['s'] += flt1 * data['p']

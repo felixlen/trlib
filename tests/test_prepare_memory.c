@@ -4,7 +4,7 @@ START_TEST (test_prepare)
 {
     int itmax = 314;
     double *fwork = malloc((27+17*itmax)*sizeof(double));
-    trlib_prepare_memory(itmax, fwork);
+    trlib_krylov_prepare_memory(itmax, fwork);
     for(int jj = 21+11*itmax; jj<22+12*itmax; ++jj) { ck_assert_msg(fwork[jj] == 1.0, "Ones improperly initialized, %d --> %e", jj, fwork[jj]); }
     for(int jj = 15+2*itmax; jj<15+3*itmax; ++jj) { ck_assert_msg(fwork[jj] == 0.0, "Neglin improperly initialized, %d --> %e", jj, fwork[jj]); }
     free(fwork);

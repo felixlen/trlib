@@ -15,8 +15,13 @@ cdef void hvfcn_cb(void *userdata, int n, double *d, double* hv):
     _hv = np.asarray(<np.float64_t[:n]> hv)
     _hv[:] = self.hvfcn(_d)
 
-def prepare_memory(int itmax, double[::1] fwork not None):
-    return ctrlib.trlib_prepare_memory(itmax, &fwork[0] if fwork.shape[0] > 0 else NULL)
+def krylov_prepare_memory(int itmax, double[::1] fwork not None):
+    return ctrlib.trlib_krylov_prepare_memory(itmax, &fwork[0] if fwork.shape[0] > 0 else NULL)
+
+def krylov_memory_size(int itmax):
+    cdef int iwork_size, fwork_size, h_pointer
+    ctrlib.trlib_krylov_memory_size(itmax, &iwork_size, &fwork_size, &h_pointer)
+    return iwork_size, fwork_size, h_pointer
 
 def krylov_min(int init, double radius, double g_dot_g, double v_dot_g, double p_dot_Hp,
         int[::1] iwork not None, double [::1] fwork not None,

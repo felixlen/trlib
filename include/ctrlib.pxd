@@ -1,7 +1,8 @@
 cimport libc.stdio
 
 cdef extern from "trlib.h":
-    int trlib_prepare_memory(int itmax, double *fwork)
+    int trlib_krylov_prepare_memory(int itmax, double *fwork)
+    int trlib_krylov_memory_size(int itmax, int *iwork_size, int *fwork_size, int *h_pointer)
     int trlib_krylov_min(
         int init, double radius, int equality, int itmax, int itmax_lanczos,
         double tol_rel_i, double tol_abs_i, double tol_rel_b, double tol_abs_b, double zero,

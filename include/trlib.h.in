@@ -127,7 +127,19 @@ void dlagtm_(char *trans, int *n, int *nrhs, double *alpha, double *dl, double *
  *  @retval 0
  */
 
-int trlib_prepare_memory(int itmax, double *fwork);
+int trlib_krylov_prepare_memory(int itmax, double *fwork);
+
+/** @brief Gives information on memory that has to be allocated by #trlib_krylov_min
+ *  
+ *  @param[in]     itmax maximum number of iterations
+ *  @param[out]    iwork_size size of integer workspace iwork that has to be allocated for #trlib_krylov_min
+ *  @param[out]    fwork_size size of floating point workspace fwork that has to be allocated for #trlib_krylov_min
+ *  @param[out]    h_pointer start index of vector \f$ h \f$ that has to be used in reverse communication in action #TRLIB_CLA_RETRANSF
+ *  
+ *  @retval 0
+ */
+
+int trlib_krylov_memory_size(int itmax, int *iwork_size, int *fwork_size, int *h_pointer);
 
 /** @brief Solves trust region subproblem
  *
@@ -192,6 +204,9 @@ int trlib_prepare_memory(int itmax, double *fwork);
  *  \f$ s \f$ once \f$ q_j \f$ has been computed as \f$ s \rightarrow h_j q_j \f$
  *  with initialization \f$ s \leftarrow 0 \f$.
  *
+ *  Furthermore the user has to provide a integer and floating point workspace, details
+ *  are described in \p iwork and \p fwork.
+ *
  *  Reentry with new radius
  *  -----------------------
  *  You can efficiently hotstart from old results if you have a new problem
@@ -219,7 +234,7 @@ int trlib_prepare_memory(int itmax, double *fwork);
  *  @param[in]     v_dot_g dot product \f$ \langle v, g \rangle \f$
  *  @param[in]     p_dot_Hp dot product \f$ \langle p, Hp \rangle \f$
  *  @param[in,out] iwork integer workspace for problem, internal memory layout described in table below
- *                 - on first call, provide allocated memory for \f$ 15 + \texttt{itmax} \f$ entries
+ *                 - on first call, provide allocated memory for \p iwork_size entries provided by #trlib_krylov_memory_size
  *                 - leave untouched between iterations
  *                 start | end(exclusive)                | description
  *                 ------|-------------------------------|-------------
@@ -237,10 +252,11 @@ int trlib_prepare_memory(int itmax, double *fwork);
  *                 11    | 12                            | number of newton iterations needed in #trlib_tri_factor_min
  *                 12    | 13                            | last iteration in which a headline has been printed
  *                 13    | 14                            | kind of iteration headline that has been printed last
- *                 14    | \f$ 14+\texttt{itmax} + 1 \f$ | decomposition into irredecubile block, \p irblk for #trlib_tri_factor_min
+ *                 14    | 15                            | number of irreducible blocks
+ *                 15    | \f$ 15+\texttt{itmax} + 1 \f$ | decomposition into irredecubile block, \p irblk for #trlib_tri_factor_min
  *
  *  @param[in,out] fwork floating point workspace for problem, internal memory layout described in table below
- *                 - on very first call, provide allocated memory for at least \f$ 17\texttt{itmax} + 27 \f$ entries that has been initialized using #trlib_prepare_memory
+ *                 - on very first call, provide allocated memory for at least \p fwork_size entries that has been initialized using #trlib_prepare_memory, \p fwork_size can be obtained by calling #trlib_krylov_memory_size
  *                 - can be used for different problem instances with matching dimensions and itmax without reinitialization
  *                 - leave untouched between iterations
  *                 start                          | end (exclusive)                | description
@@ -287,7 +303,7 @@ int trlib_prepare_memory(int itmax, double *fwork);
  *                 - \f$ i \f$: \f$ \texttt{iter} \f$
  *                 - \f$ q_j \f$: \f$ j \f$-th column of \f$ Q \f$
  *                 - \f$ Q_i \f$: matrix consisting of the first \f$ i+1 \f$ columns of \f$ Q \f$, \f$ Q_i = (q_0, \ldots, q_i) \f$
- *                 - \f$ h_i \f$: vector of length \f$ i+1 \f$ stored in \p fwork with at start position \f$ 4\texttt{itmax}+17 \f$
+ *                 - \f$ h_i \f$: vector of length \f$ i+1 \f$ stored in \p fwork at start position \p h_pointer provided by #trlib_krylov_memory_size
  *                 - \f$ p \leftarrow \perp_M Q_j \f$: optionally \f$ M \f$-reorthonormalize \f$ p \f$ against \f$ Q_j \f$
  *                 - \f$ g \leftarrow \texttt{rand}\perp Q_j \f$ find nonzero random vector that is orthogonal to \f$ Q_j \f$
  *                 - Note that #TRLIB_CLA_NEW_KRYLOV is unlikely and only occurs on problems that employ the hard case.

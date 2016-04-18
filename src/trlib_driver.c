@@ -55,8 +55,10 @@ int trlib_driver_malloc_qp(int qptype, int qpsolver, int n, int itmax, struct tr
     if(qpsolver == TRLIB_DRIVER_SOLVER_KRYLOV) {
         qp->work = (void *)malloc(sizeof(struct trlib_driver_work_krylov));
         struct trlib_driver_work_krylov * work = (struct trlib_driver_work_krylov *)qp->work;
-        work->iwork = malloc((15+itmax)*sizeof(int));
-        work->fwork = malloc((27+17*itmax)*sizeof(double));
+        int iwork_size, fwork_size, h_pointer;
+        trlib_krylov_memory_size(itmax, &iwork_size, &fwork_size, &h_pointer);
+        work->iwork = malloc(iwork_size*sizeof(int));
+        work->fwork = malloc(fwork_size*sizeof(double));
         work->g = malloc(n*sizeof(double));
         work->gm = malloc(n*sizeof(double));
         work->p = malloc(n*sizeof(double));
@@ -167,11 +169,14 @@ int trlib_driver_solve_qp(struct trlib_driver_qp *qp) {
         }
         int init = 0; int inc = 1; int itp1 = 0;
         double minus = -1.0; double one = 1.0; double z = 0.0;
-        if(!qp->reentry) { init = 1; trlib_prepare_memory(qp->itmax, work->fwork); }
+        if(!qp->reentry) { init = 1; trlib_krylov_prepare_memory(qp->itmax, work->fwork); }
         else { init = 2; }
 
         double v_dot_g = 0.0; double p_dot_Hp = 0.0; double flt1; double flt2; double flt3;
         int action; int ityp;
+
+        int iwork_size, fwork_size, h_pointer;
+        trlib_krylov_memory_size(qp->itmax, &iwork_size, &fwork_size, &h_pointer);
 
         while(1) {
             qp->ret = trlib_krylov_min(init, qp->radius, qp->equality, qp->itmax, 100,
@@ -203,7 +208,7 @@ int trlib_driver_solve_qp(struct trlib_driver_qp *qp) {
                     break;
                 case TRLIB_CLA_RETRANSF:
                     itp1 = qp->iter+1;
-                    dgemv_("N", &n, &itp1, &one, work->Q, &n, work->fwork+17+4*qp->itmax, &inc, &z, sol, &inc); // s = Q_i * h_i
+                    dgemv_("N", &n, &itp1, &one, work->Q, &n, work->fwork+h_pointer, &inc, &z, sol, &inc); // s = Q_i * h_i
                     break;
                 case TRLIB_CLA_UPDATE_STATIO:
                     if (ityp == TRLIB_CLT_CG) { daxpy_(&n, &flt1, work->p, &inc, sol, &inc); }; // s += flt1*p

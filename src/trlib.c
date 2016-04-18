@@ -1,8 +1,15 @@
 #include "trlib.h"
 
-int trlib_prepare_memory(int itmax, double *fwork) {
+int trlib_krylov_prepare_memory(int itmax, double *fwork) {
     for(int jj = 21+11*itmax; jj<22+12*itmax; ++jj) { *(fwork+jj) = 1.0; } // everything to 1.0 in ones
     memset(fwork+15+2*itmax, 0, itmax*sizeof(double)); // neglin = - gamma_0 e1, thus set neglin[1:] = 0
+    return 0;
+}
+
+int trlib_krylov_memory_size(int itmax, int *iwork_size, int *fwork_size, int *h_pointer) {
+    *iwork_size = 16+itmax;
+    *fwork_size = 27+17*itmax;
+    *h_pointer = 17+4*itmax;
     return 0;
 }
 
@@ -56,7 +63,8 @@ int trlib_krylov_min(
     int *iter_tri = iwork+11;
     int *iter_last_head = iwork+12;
     int *type_last_head = iwork+13;
-    int *irblk = iwork+14;
+    int *nirblk = iwork + 14;
+    int *irblk = iwork+15;
 
     double *stop_i = fwork;
     double *stop_b = fwork+1;
@@ -103,6 +111,7 @@ int trlib_krylov_min(
                 *pos_def = 1;  // empty krylov subspace so far, so H is positive definite there for sure
                 *interior = !equality;  // we can have interior solution if we are not asked for equality solution
                 *warm_leftmost = 0;  // coldstart, so no warmstart information on leftmost available
+                *nirblk = 1;  // at start, there is one irreducible block
                 irblk[0] = 0; // start pointer to first irreducible block
                 *warm_lam0 = 0;  // coldstart, so no warmstart information on multiplier available
                 *warm_lam = 0;  // coldstart, so no warmstart information on multiplier available
@@ -180,7 +189,7 @@ int trlib_krylov_min(
                        the criterion to specify the maximum number of iterations is weird. it should not be dependent on problem size rather than condition of the hessian... */
                     irblk[1] = *ii+1;
                     *exit_tri = trlib_tri_factor_min(
-                        1, irblk, delta, gamma, neglin, radius, 100+3*(*ii), TRLIB_EPS, *pos_def, equality,
+                        *nirblk, irblk, delta, gamma, neglin, radius, 100+3*(*ii), TRLIB_EPS, *pos_def, equality,
                         warm_lam0, lam0, warm_lam, lam, warm_leftmost, ileftmost, leftmost,
                         &warm_fac0, delta_fac0, gamma_fac0, &warm_fac, delta_fac, gamma_fac,
                         h0, h, ones, fwork_tr, refine, verbose-1, unicode, " TR ", fout,
@@ -260,7 +269,7 @@ int trlib_krylov_min(
                 // solve the corresponding tridiagonal problem, check for convergence and otherwise continue to iterate
                 irblk[1] = *ii+1;
                 *exit_tri = trlib_tri_factor_min(
-                    1, irblk, delta, gamma, neglin, radius, 100+3*(*ii), TRLIB_EPS, *pos_def, equality,
+                    *nirblk, irblk, delta, gamma, neglin, radius, 100+3*(*ii), TRLIB_EPS, *pos_def, equality,
                     warm_lam0, lam0, warm_lam, lam, warm_leftmost, ileftmost, leftmost,
                     &warm_fac0, delta_fac0, gamma_fac0, &warm_fac, delta_fac, gamma_fac,
                     h0, h, ones, fwork_tr, refine, verbose-1, unicode, " TR ", fout,
@@ -320,7 +329,7 @@ int trlib_krylov_min(
                    the criterion to specify the maximum number of iterations is weird. it should not be dependent on problem size rather than condition of the hessian... */
                 irblk[1] = *ii+1;
                 *exit_tri = trlib_tri_factor_min(
-                    1, irblk, delta, gamma, neglin, radius, 100+3*(*ii), TRLIB_EPS, *pos_def, equality,
+                    *nirblk, irblk, delta, gamma, neglin, radius, 100+3*(*ii), TRLIB_EPS, *pos_def, equality,
                     warm_lam0, lam0, warm_lam, lam, warm_leftmost, ileftmost, leftmost,
                     &warm_fac0, delta_fac0, gamma_fac0, &warm_fac, delta_fac, gamma_fac,
                     h0, h, ones, fwork_tr, refine, verbose-1, unicode, " TR ", fout,
