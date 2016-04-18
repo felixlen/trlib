@@ -89,6 +89,7 @@ struct trlib_driver_qp {
     int ret;                 ///< return value from qp solver
     int sub_fail;            ///< return value from subroutines called by qp solver
     int iter;                ///< number of iterations
+    int ctl_invariant;       ///< in case of #TRLIB_DRIVER_SOLVER_KRYLOV behaviour towards multiple invariant subspaces
     double obj;              ///< objective
     double obj_check;        ///< objective recomputed by trlib_driver_check_optimality
     double pos_def_res;      ///< perturbation needed to obtain positive definiteness

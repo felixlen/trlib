@@ -73,6 +73,8 @@
 #define TRLIB_CLS_L_CHK_CONV    (10)
 #define TRLIB_CLS_L_NEW_ITER    (11)
 
+#define TRLIB_CLC_NO_EXP_INV    (0)
+
 #define TRLIB_CLT_CG_INT        (0)
 #define TRLIB_CLT_CG_BOUND      (1)
 #define TRLIB_CLT_LANCZOS       (2)
@@ -145,20 +147,19 @@ int trlib_krylov_memory_size(int itmax, int *iwork_size, int *fwork_size, int *h
  *
  *  Computes minimizer to
  * 
- *  \f$ \frac 12 \min \langle h, H h \rangle + \langle g_0, h \rangle \f$
+ *  \f$ \frac 12 \min \langle s, H s \rangle + \langle g_0, s \rangle \f$
  *  subject to the trust region constraint \f$ \Vert h \Vert_M \le r \f$,
  *  where 
  *  - \f$ H \f$ is available via matrix-vector products \f$ v \mapsto Hv \f$,
- *  - \f$ \Vert h \Vert_M = \sqrt{\langle h, Mh \rangle} \f$ with \f$ M \f$ positive definite,
+ *  - \f$ \Vert s \Vert_M = \sqrt{\langle s, Ms \rangle} \f$ with \f$ M \f$ positive definite,
  *  - \f$ M \f$ is available via matrix-vector products of its inverse, \f$ v \mapsto M^{-1}v \f$.
  *
- *  The minimizer is a local minimizer (modulo floating point),
+ *  The minimizer is a global minimizer (modulo floating point),
  *  as long as the hard case does not occur.
  *  The hard case is characterized by the fact that the eigenspace
  *  corresponding to the smallest eigenvalue is degenerate.
  *
- *  In that case a minimizer in a random two-dimensional subspace
- *  of that eigenspace is returned.
+ *  In that case a global minimizer in the Krylov subspaces sampled so far is returned.
  *
  *  A preconditioned Conjugate Gradient / Lanczos method is used,
  *  that possibly employs a reduction to a tridiagnoal subproblem
@@ -172,8 +173,10 @@ int trlib_krylov_memory_size(int itmax, int *iwork_size, int *fwork_size, int *h
  *
  *  Convergence
  *  -----------
- *  The stopping criterion is based on the gradient. Convergence in iteration \f$ i \f$ is reported as soon as
- *  \f$ \Vert g_{i+1} \Vert_{M^{-1}} \le \max\{ \texttt{tol_abs}, \texttt{tol_rel} \, \Vert g_0 \Vert_{M^{-1}} \} \f$.
+ *  The stopping criterion is based on the gradient of the Lagrangian. Convergence in iteration \f$ i \f$ is reported as soon as
+ *  - interior case: \f$ \Vert g_{i+1} \Vert_{M^{-1}} \le \max\{ \texttt{tol_abs_i}, \texttt{tol_rel_i} \, \Vert g_0 \Vert_{M^{-1}} \} \f$.
+ *  - boundary case: \f$ \Vert g_{i+1} \Vert_{M^{-1}} \le \max\{ \texttt{tol_abs_b}, \texttt{tol_rel_b} \, \Vert g_0 \Vert_{M^{-1}} \} \f$.
+ *  - hard case: \p ctl_invariant determines if this is the sole stopping criterion or if further invariant subspaces are going to be explored. See the documentation of this option.
  *
  *  Calling Scheme
  *  --------------
@@ -196,12 +199,12 @@ int trlib_krylov_memory_size(int itmax, int *iwork_size, int *fwork_size, int *h
  *
  *  \f$ s \f$ holds the solution candidate.
  *
- *  Note that the action \f$ s \leftarrow Q s \f$ will only sometimes be requested
+ *  Note that the action \f$ s \leftarrow Q h \f$ will only sometimes be requested
  *  in the very final iteration before convergence. If memory and not computational
  *  load is an issue, you may very well save \p iter, \p ityp, \p flt1, \p flt2
  *  \p flt2 instead of \f$ q_j \f$ and when \f$ s \leftarrow Q s \f$ is requested
  *  simultaniously recompute the directions \f$ q_j \f$ and update the direction
- *  \f$ s \f$ once \f$ q_j \f$ has been computed as \f$ s \rightarrow h_j q_j \f$
+ *  \f$ s \f$ once \f$ q_j \f$ has been computed as \f$ s \leftarrow h_j q_j \f$
  *  with initialization \f$ s \leftarrow 0 \f$.
  *
  *  Furthermore the user has to provide a integer and floating point workspace, details
@@ -230,6 +233,7 @@ int trlib_krylov_memory_size(int itmax, int *iwork_size, int *fwork_size, int *h
  *  @param[in]     tol_rel_b relative stopping tolerance for boundary solution
  *  @param[in]     tol_abs_b absolute stopping tolerance for boundary solution
  *  @param[in]     zero threshold that determines when \f$ \langle p, Hp \rangle \f$ is considered to be zero and thus control eventual Lanczos switch
+ *  @param[in]     ctl_invariant at the moment ignored, routine behaves as if set to #TRLIB_CLC_NO_EXP_INV
  *  @param[in]     g_dot_g dot product \f$ \langle g, g \rangle \f$
  *  @param[in]     v_dot_g dot product \f$ \langle v, g \rangle \f$
  *  @param[in]     p_dot_Hp dot product \f$ \langle p, Hp \rangle \f$
@@ -306,8 +310,8 @@ int trlib_krylov_memory_size(int itmax, int *iwork_size, int *fwork_size, int *h
  *                 - \f$ h_i \f$: vector of length \f$ i+1 \f$ stored in \p fwork at start position \p h_pointer provided by #trlib_krylov_memory_size
  *                 - \f$ p \leftarrow \perp_M Q_j \f$: optionally \f$ M \f$-reorthonormalize \f$ p \f$ against \f$ Q_j \f$
  *                 - \f$ g \leftarrow \texttt{rand}\perp Q_j \f$ find nonzero random vector that is orthogonal to \f$ Q_j \f$
- *                 - Note that #TRLIB_CLA_NEW_KRYLOV is unlikely and only occurs on problems that employ the hard case.
- *                   If you are confident that you do not run into it you may safe you from the trouble implementing it and 
+ *                 - Note that #TRLIB_CLA_NEW_KRYLOV is unlikely and only occurs on problems that employ the hard case and only if \p ctl_invariant != #TRLIB_CLC_NO_EXP_INV.
+ *                   If you want to safe yourself from the trouble implementing this and are confident that you don't need to expand several invariant Krylov subspaces, just ensure that \p ctl_invariant is set to #TRLIB_CLC_NO_EXP_INV.
  *                   use a safeguard to exit instead.
  *                 action             | ityp            | command
  *                 -------------------|-----------------|------------
@@ -343,10 +347,13 @@ int trlib_krylov_memory_size(int itmax, int *iwork_size, int *fwork_size, int *h
 
 int trlib_krylov_min(
     int init, double radius, int equality, int itmax, int itmax_lanczos,
-    double tol_rel_i, double tol_abs_i, double tol_rel_b, double tol_abs_b, double zero,
-    double g_dot_g, double v_dot_g, double p_dot_Hp, int *iwork, double *fwork, int refine,
-    int verbose, int unicode, char *prefix, FILE *fout, long *timing, int *action,
-    int *iter, int *ityp, double *flt1, double *flt2, double *flt3
+    double tol_rel_i, double tol_abs_i,
+    double tol_rel_b, double tol_abs_b, double zero,
+    int ctl_invariant, double g_dot_g, double v_dot_g, double p_dot_Hp,
+    int *iwork, double *fwork, int refine,
+    int verbose, int unicode, char *prefix, FILE *fout, long *timing,
+    int *action, int *iter, int *ityp,
+    double *flt1, double *flt2, double *flt3
 );
 
 /** @brief Solves tridiagonal trust region subproblem
@@ -360,13 +367,7 @@ int trlib_krylov_min(
  *  Let \f$ T = \begin{pmatrix} T_1 & & \\ & \ddots & \\ & & T_\ell \end{pmatrix} \f$
  *  be composed into irreducible blocks \f$ T_i \f$.
  * 
- *  The minimizer is a local minimizer (modulo floating point),
- *  as long as the hard case does not occur.
- *  The hard case is characterized by the fact that the eigenspace
- *  corresponding to the smallest eigenvalue is degenerate.
- * 
- *  In that case a minimizer in a random two-dimensional subspace
- *  of that eigenspace is returned.
+ *  The minimizer is a global minimizer (modulo floating point).
  * 
  *  The algorithm is the Moré-Sorensen-Method as decribed as Algorithm 5.2 in:
  *  >   Gould, Lucidi, Roma, Toint; SIAM J. Optim. 1999, Vol. 9, No. 2, pp. 504-525,
@@ -377,8 +378,8 @@ int trlib_krylov_min(
  *  -----------
  *  Exit with success is reported in several cases:
  *  - interior solution: the stationary point \f$ T h = - g \f$ is suitable, iterative refinement is used in the solution of this system.
- *  - hard case: the smallest eigenvalue was found to be degenerate and \f$ h = v + \alpha w \f$ is returned with \f$ v \f$ solution of \f$ (T + \lambda I) v = -g \f$, \f$ w \f$ another eigenvector and \f$ \alpha \f$ chosen to satisfy the trust region constraint.
- *  - Newton iteration: convergence is reported if \f$ \Vert h(\lambda) \Vert - r \le \texttt{tol_rel} \, r \f$ with \f$ (T+\lambda I) h(\lambda) = -g \f$, Newton breakdown reported if \f$ \vert d\lambda \vert \le \texttt{macheps} \vert \lambda \vert \f$.
+ *  - hard case: the smallest eigenvalue \f$ -\theta \f$ was found to be degenerate and \f$ h = v + \alpha w \f$ is returned with \f$ v \f$ solution of \f$ (T + \theta I) v = -g \f$, \f$ w \f$ eigenvector corresponding to \f$ - \theta \f$ and \f$ \alpha \f$ chosen to satisfy the trust region constraint and being a minimizer.
+ *  - boundary and hard case: convergence in Newton iteration is reported if \f$ \Vert h(\lambda) \Vert - r \le \texttt{tol_rel} \, r \f$ with \f$ (T+\lambda I) h(\lambda) = -g \f$, Newton breakdown reported if \f$ \vert d\lambda \vert \le \texttt{macheps} \vert \lambda \vert \f$.
  *
  *  @param[in]     nirblk number of irreducible blocks \f$ \ell \f$, ensure \f$ \ell > 0 \f$
  *  @param[in]     irblk pointer to indices of irreducible blocks, length `nirblk+1`:

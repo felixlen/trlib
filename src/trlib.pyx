@@ -26,6 +26,7 @@ def krylov_memory_size(int itmax):
 def krylov_min(int init, double radius, double g_dot_g, double v_dot_g, double p_dot_Hp,
         int[::1] iwork not None, double [::1] fwork not None,
         equality = False, int itmax = 500, int itmax_lanczos = 100,
+        int ctl_invariant=0,
         double tol_rel_i = np.finfo(np.float).eps**.5, double tol_abs_i = 0.0,
         double tol_rel_b = np.finfo(np.float).eps**.3, double tol_abs_b = 0.0,
         double zero = np.finfo(np.float).eps, int verbose=0, refine = True,
@@ -41,7 +42,7 @@ def krylov_min(int init, double radius, double g_dot_g, double v_dot_g, double p
     eprefix = prefix.encode('UTF-8')
     cdef char* cprefix = eprefix
     ret = ctrlib.trlib_krylov_min(init, radius, 1 if equality else 0, itmax, itmax_lanczos,
-            tol_rel_i, tol_abs_i, tol_rel_b, tol_abs_b, zero, g_dot_g, v_dot_g, p_dot_Hp,
+            tol_rel_i, tol_abs_i, tol_rel_b, tol_abs_b, zero, ctl_invariant, g_dot_g, v_dot_g, p_dot_Hp,
             &iwork[0] if iwork.shape[0] > 0 else NULL, &fwork[0] if fwork.shape[0] > 0 else NULL,
             1 if refine else 0, verbose, 1, eprefix, <libc.stdio.FILE*> libc.stdio.stdout, &timing_b[0], &action, &iter, &ityp, &flt1, &flt2, &flt3)
     if timing is None:

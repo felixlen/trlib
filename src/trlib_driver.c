@@ -18,6 +18,7 @@ int trlib_driver_malloc_qp(int qptype, int qpsolver, int n, int itmax, struct tr
     qp->tol_abs_i = 0.0;
     qp->tol_rel_b = TRLIB_EPS_POW_4;
     qp->tol_abs_b = 0.0;
+    qp->ctl_invariant = TRLIB_CLC_NO_EXP_INV;
     if(qptype == TRLIB_DRIVER_DENSE_QP) {
         qp->problem = (void *)malloc(sizeof(struct trlib_driver_problem_dense));
         struct trlib_driver_problem_dense* problem = (struct trlib_driver_problem_dense *)qp->problem;
@@ -181,8 +182,8 @@ int trlib_driver_solve_qp(struct trlib_driver_qp *qp) {
         while(1) {
             qp->ret = trlib_krylov_min(init, qp->radius, qp->equality, qp->itmax, 100,
                     qp->tol_rel_i, qp->tol_abs_i, qp->tol_rel_b, qp->tol_abs_b,
-                    TRLIB_EPS, v_dot_g, v_dot_g, p_dot_Hp, work->iwork, work->fwork, qp->refine,
-                    qp->verbose, qp->unicode, qp->prefix, qp->stream, qp->timing,
+                    TRLIB_EPS, qp->ctl_invariant, v_dot_g, v_dot_g, p_dot_Hp, work->iwork, work->fwork, 
+                    qp->refine, qp->verbose, qp->unicode, qp->prefix, qp->stream, qp->timing,
                     &action, &(qp->iter), &ityp, &flt1, &flt2, &flt3);
             init = 0;
             //fprintf(stderr, "action: %d, iter: %d, ityp: %d, flt1: %e, flt2: %e, flt3: %e\n",
