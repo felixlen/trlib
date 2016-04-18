@@ -176,7 +176,7 @@ int trlib_driver_solve_qp(struct trlib_driver_qp *qp) {
         while(1) {
             qp->ret = trlib_krylov_min(init, qp->radius, qp->equality, qp->itmax, 100,
                     qp->tol_rel_i, qp->tol_abs_i, qp->tol_rel_b, qp->tol_abs_b,
-                    TRLIB_EPS, v_dot_g, p_dot_Hp, work->iwork, work->fwork, qp->refine,
+                    TRLIB_EPS, v_dot_g, v_dot_g, p_dot_Hp, work->iwork, work->fwork, qp->refine,
                     qp->verbose, qp->unicode, qp->prefix, qp->stream, qp->timing,
                     &action, &(qp->iter), &ityp, &flt1, &flt2, &flt3);
             init = 0;

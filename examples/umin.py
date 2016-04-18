@@ -103,7 +103,7 @@ def qpsolver_low_level(lin, hmv, radius, data=None, reentry=False, verbose=0):
     
     while True:
         ret, action, iter, ityp, flt1, flt2, flt3 = trlib.krylov_min(
-            init, radius, v_dot_g, p_dot_Hp, data['iwork'], data['fwork'],
+            init, radius, v_dot_g, v_dot_g, p_dot_Hp, data['iwork'], data['fwork'],
             itmax=itmax, timing=data['timing'], refine=True, verbose=verbose)
         init = 0
         if action == 1: # CLA_INIT
