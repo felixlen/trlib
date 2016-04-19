@@ -60,7 +60,6 @@ Option                  | default | Description
 ------------------------|---------|------------
 `TRLIB_MEASURE_TIME`    | `OFF`   | measure time for trlib function calls
 `TRLIB_MEASURE_SUBTIME` | `OFF`   | measure time for blas and lapack function calls
-`TRLIB_TEST_OUTPUT`     | `OFF`   | show output on stdout of trlib functions when individual tests are executed
 `TRLIB_TEST_PLOT`       | `OFF`   | use socket communication to send matrix data for plotting (only for debug purposes)
 
 ## Getting started

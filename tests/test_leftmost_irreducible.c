@@ -34,29 +34,19 @@ double factorization_zero(int n, double lam, double *diag, double *offdiag) {
 
 START_TEST (test_trivial_exit)
 {
-    #if TRLIB_TEST_OUTPUT
-        char *bp; size_t size; FILE *stream = open_memstream(&bp, &size);
-    #endif
-
     double diag = 3.0;
     double leftmost = 0.0;
     long *timing = malloc(8*sizeof(long));
     int iter_pr = 0; int ret = 0;
-    ret = trlib_leftmost_irreducible(1, &diag, NULL, 0, 0.0, 1, TRLIB_EPS,
-           TRLIB_TEST_VERBOSE(1), TRLIB_TEST_UNICODE, "", TRLIB_TEST_FOUT(stream), timing,
+    ret = trlib_leftmost_irreducible(1, &diag, NULL, 0, 0.0, 1, TRLIB_EPS, 1, 1, "", stderr, timing,
            &leftmost, &iter_pr);
     ck_assert_msg(leftmost == diag, "One-Dimensional: Eigenvalue = Diagonal not satisfied, lam = %e, diag = %e", leftmost, diag);
-    TRLIB_TEST_SHOW_CLEANUP_STREAM()
     free(timing);
 }
 END_TEST
 
 START_TEST (test_nontrivial)
 {
-    #if TRLIB_TEST_OUTPUT
-        char *bp; size_t size; FILE *stream = open_memstream(&bp, &size);
-    #endif
-
     int n = 10; int nm = n-1;
     double *diag = malloc(n*sizeof(double));
     double *offdiag = malloc((n-1)*sizeof(double));
@@ -67,19 +57,16 @@ START_TEST (test_nontrivial)
         diag[ii] = 2.0+((double)ii)/n;
         if ( ii < n-1 ) { offdiag[ii] = -1.0 - (2.0*ii)/n; }
     }
-    trlib_leftmost_irreducible(nm, diag, offdiag, 0, 0.0, 10*n, TRLIB_EPS,
-           TRLIB_TEST_VERBOSE(1), TRLIB_TEST_UNICODE, "", TRLIB_TEST_FOUT(stream), timing,
+    trlib_leftmost_irreducible(nm, diag, offdiag, 0, 0.0, 10*n, TRLIB_EPS, 1, 1, "", stderr, timing,
            &leftmost, &iter_pr);
     perturb = factorization_zero(nm, leftmost, diag, offdiag);
     ck_assert_msg(fabs(perturb) < 500.0*TRLIB_EPS, "Cholesky factorization for T-lam*I fails on coldstart test, needed to perturb by %e", perturb);
     leftmost_minor = leftmost;
 
-    trlib_leftmost_irreducible(n, diag, offdiag, 1, leftmost, 10*n, TRLIB_EPS,
-           TRLIB_TEST_VERBOSE(1), TRLIB_TEST_UNICODE, "", TRLIB_TEST_FOUT(stream), timing,
+    trlib_leftmost_irreducible(n, diag, offdiag, 1, leftmost, 10*n, TRLIB_EPS, 1, 1, "", stderr, timing,
            &leftmost, &iter_pr);
     perturb = factorization_zero(nm, leftmost, diag, offdiag);
     ck_assert_msg(fabs(perturb) < 500.0*TRLIB_EPS, "Cholesky factorization for T-lam*I fails on coldstart test, needed to perturb by %e", perturb);
-    TRLIB_TEST_SHOW_CLEANUP_STREAM()
 
     free(diag); free(offdiag); free(timing);
 }

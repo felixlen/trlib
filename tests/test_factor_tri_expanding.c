@@ -58,23 +58,18 @@ START_TEST (test_simple)
 
     for(int kk = 1; kk < n+1; ++kk) {
         
-        #if TRLIB_TEST_OUTPUT
-            char *bp; size_t size; FILE *stream = open_memstream(&bp, &size);
-        #endif
-
         if (irblk[blkptr]+1 == kk) {
             blkptr += 1;
         }
 
         irblk2[blkptr] = kk;
 
-        for(int ll = 0; ll<nirblk+1; ++ll){ printf("%d ", irblk2[ll]); } printf("\n");
+        for(int ll = 0; ll<nirblk+1; ++ll){ fprintf(stderr, "%d ", irblk2[ll]); } fprintf(stderr, "\n");
 
         ret = trlib_tri_factor_min(blkptr, irblk2, diag, offdiag, neglin, radius, 100, TRLIB_EPS,
                 pos_def, equality, &warm0, &lam0, &warm, &lam, &warm_leftmost, &ileftmost,
                 leftmost, &warm_fac0, diag_fac0, offdiag_fac0, &warm_fac, diag_fac, offdiag_fac,
-                sol0, sol, ones, fwork, refine,
-                TRLIB_TEST_VERBOSE(1), TRLIB_TEST_UNICODE, "", TRLIB_TEST_FOUT(stream), timing,
+                sol0, sol, ones, fwork, refine, 1, 1, "", stderr, timing,
                 &obj, &iter_newton, &sub_fail);
 
         nexpand = irblk2[blkptr]; nexpandm1 = nexpand - 1;
@@ -98,7 +93,7 @@ START_TEST (test_simple)
         tr_res = radius - dnrm2_(&nexpand, sol, &inc);
         dcopy_(&nexpand, grad, &inc, resv, &inc);
         kkt_res = dnrm2_(&nexpand, resv, &inc);
-        dcopy_(&nexpand, diag, &inc, diag_lam, &inc); dcopy_(&nexpand, offdiag, &inc, offdiag_lam, &inc);
+        dcopy_(&nexpand, diag, &inc, diag_lam, &inc); dcopy_(&nexpandm1, offdiag, &inc, offdiag_lam, &inc);
         for(int ii = 0; ii < nexpand; ++ii) { diag_lam[ii] += lam; }
         dlagtm_("N", &nexpand, &inc, &one, offdiag, diag_lam, offdiag, sol, &nexpand, &one, resv, &n);
         kkt_res = dnrm2_(&nexpand, resv, &inc);
@@ -107,20 +102,16 @@ START_TEST (test_simple)
         dlagtm_("N", &nexpand, &inc, &one, offdiag, diag, offdiag, sol, &nexpand, &one, resv, &n); // w <-- T*sol + w
         obj_check = ddot_(&nexpand, sol, &inc, resv, &inc); obj_check = 0.5*obj_check; // obj = .5*(sol, w)
 
-        TRLIB_TEST_SHOW_CLEANUP_STREAM()
-        
-        #if TRLIB_TEST_OUTPUT
-            printf("\n*************************************************************\n");
-            printf("* Test Case   %-46s*\n", "Expanding Tridiagonal");
-            printf("*   Exit code:          %-2d (%-2d)%29s*\n", ret, sub_fail, "");
-            printf("*   Objective:       %15e%15e%9s*\n", obj, obj_check, "");
-            printf("*   TR radius:       %15e%24s*\n", radius, "");
-            printf("*   multiplier:      %15e%24s*\n", lam, "");
-            printf("*   TR residual:     %15e (inequality requested)%1s*\n", tr_res, "");
-            printf("*   pos def perturb: %15e%24s*\n", pos_def_res, "");
-            printf("*   KKT residual:    %15e%24s*\n", kkt_res, "");
-            printf("*************************************************************\n\n");
-        #endif
+        printf("\n*************************************************************\n");
+        printf("* Test Case   %-46s*\n", "Expanding Tridiagonal");
+        printf("*   Exit code:          %-2d (%-2d)%29s*\n", ret, sub_fail, "");
+        printf("*   Objective:       %15e%15e%9s*\n", obj, obj_check, "");
+        printf("*   TR radius:       %15e%24s*\n", radius, "");
+        printf("*   multiplier:      %15e%24s*\n", lam, "");
+        printf("*   TR residual:     %15e (inequality requested)%1s*\n", tr_res, "");
+        printf("*   pos def perturb: %15e%24s*\n", pos_def_res, "");
+        printf("*   KKT residual:    %15e%24s*\n", kkt_res, "");
+        printf("*************************************************************\n\n");
 
         ck_assert_msg(fabs(pos_def_res) <= tol, "%s: Expected positive semidefinite regularized hessian, got multiplier %e, pertubation needed %e", "", lam, pos_def_res);
         ck_assert_msg(tr_res >= -tol, "%s: Expected satisfaction of trust region constraint, residual %e", "", tr_res);
@@ -132,7 +123,7 @@ START_TEST (test_simple)
 
     free(diag); free(diag_fac0); free(diag_fac); free(diag_lam);
     free(offdiag); free(offdiag_fac); free(offdiag_fac0); free(offdiag_lam);
-    //free(grad); 
+    free(grad); 
     free(neglin); free(sol); free(sol0);
     free(ones); free(fwork); free(irblk); free(irblk2); free(leftmost);
     free(timing); free(resv);

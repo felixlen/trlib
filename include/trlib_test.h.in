@@ -1,7 +1,6 @@
 #ifndef TRLIB_TEST_H
 #define TRLIB_TEST_H
 
-#cmakedefine TRLIB_TEST_OUTPUT 1
 #cmakedefine TRLIB_TEST_PLOT 1
 #include <check.h>
 #include "trlib.h"
@@ -11,44 +10,24 @@
     #include "trlib_test_matrix_msg.pb-c.h"
 #endif
 
-#if TRLIB_TEST_OUTPUT
-    #define TRLIB_TEST_SHOW_CLEANUP_STREAM() { fflush(stream); printf("%s", bp); fclose(stream); }
-    #define TRLIB_TEST_VERBOSE(X) X
-    #define TRLIB_TEST_UNICODE 1
-    #define TRLIB_TEST_FOUT(X) X
-#else
-    #define TRLIB_TEST_SHOW_CLEANUP_STREAM()
-    #define TRLIB_TEST_VERBOSE(X) 0
-    #define TRLIB_TEST_UNICODE 0
-    #define TRLIB_TEST_FOUT(X) NULL
-#endif
-
 void trlib_test_solve_check_qp(struct trlib_driver_qp *qp, char *name, double tol, double lanczos_tol) {
-    #if TRLIB_TEST_OUTPUT
-        char *bp; size_t size; FILE *stream = open_memstream(&bp, &size);
-    #endif
-    qp->verbose = TRLIB_TEST_VERBOSE(qp->verbose);
-    qp->unicode = TRLIB_TEST_UNICODE;
-    qp->stream = TRLIB_TEST_FOUT(stream);
+    qp->stream = stderr;
     trlib_driver_solve_qp(qp);
-    TRLIB_TEST_SHOW_CLEANUP_STREAM()
 
     trlib_driver_check_optimality(qp);
 
-    #if TRLIB_TEST_OUTPUT
-        printf("\n*************************************************************\n");
-        printf("* Test Case   %-46s*\n", name);
-        printf("*   Exit code:          %-2d (%-2d)%29s*\n", qp->ret, qp->sub_fail, "");
-        printf("*   Objective:       %15e%15e%9s*\n", qp->obj, qp->obj_check, "");
-        printf("*   TR radius:       %15e%24s*\n", qp->radius, "");
-        printf("*   multiplier:      %15e%24s*\n", qp->lam, "");
-        if (!qp->equality) { printf("*   TR residual:     %15e (inequality requested)%1s*\n", qp->tr_res, ""); }
-        else { printf("*   TR resiudal:     %15e (equality requested)%3s*\n", qp->tr_res, ""); }
-        printf("*   pos def perturb: %15e%24s*\n", qp->pos_def_res, "");
-        printf("*   KKT residual:    %15e%24s*\n", qp->kkt_res, "");
-        if (qp->qpsolver == TRLIB_DRIVER_SOLVER_KRYLOV) { printf("*   ons residual:    %15e%24s*\n", qp->orth_res, ""); }
-        printf("*************************************************************\n\n");
-    #endif
+    printf("\n*************************************************************\n");
+    printf("* Test Case   %-46s*\n", name);
+    printf("*   Exit code:          %-2d (%-2d)%29s*\n", qp->ret, qp->sub_fail, "");
+    printf("*   Objective:       %15e%15e%9s*\n", qp->obj, qp->obj_check, "");
+    printf("*   TR radius:       %15e%24s*\n", qp->radius, "");
+    printf("*   multiplier:      %15e%24s*\n", qp->lam, "");
+    if (!qp->equality) { printf("*   TR residual:     %15e (inequality requested)%1s*\n", qp->tr_res, ""); }
+    else { printf("*   TR resiudal:     %15e (equality requested)%3s*\n", qp->tr_res, ""); }
+    printf("*   pos def perturb: %15e%24s*\n", qp->pos_def_res, "");
+    printf("*   KKT residual:    %15e%24s*\n", qp->kkt_res, "");
+    if (qp->qpsolver == TRLIB_DRIVER_SOLVER_KRYLOV) { printf("*   ons residual:    %15e%24s*\n", qp->orth_res, ""); }
+    printf("*************************************************************\n\n");
 
     // let us do a simple lanczos iteration ourselve and compare directions
     if (qp->qpsolver == TRLIB_DRIVER_SOLVER_KRYLOV) {

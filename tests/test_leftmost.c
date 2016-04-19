@@ -2,10 +2,6 @@
 
 START_TEST (test_diagonal)
 {
-    #if TRLIB_TEST_OUTPUT
-        char *bp; size_t size; FILE *stream = open_memstream(&bp, &size);
-    #endif
-
     int n = 10; int nirblk = n;
     double *diag = malloc(n*sizeof(double));
     double *offdiag = calloc((n-1), sizeof(double));
@@ -16,10 +12,8 @@ START_TEST (test_diagonal)
     for(int ii = 0; ii < nirblk+1; ++ii) { irblk[ii] = ii; }
 
     diag[0] = 10.0; diag[1] = 9.0; diag[2] = -10.0; diag[3] = 4.0; diag[4] = 0.0; diag[5] = 6.0; diag[6] = 0.0; diag[7] = -1.0; diag[8] = -10.0; diag[9] = 1.0;
-    trlib_leftmost(nirblk, irblk, diag, offdiag, 0, 0.0, 10*n, TRLIB_EPS,
-           TRLIB_TEST_VERBOSE(1), TRLIB_TEST_UNICODE, "", TRLIB_TEST_FOUT(stream), timing,
+    trlib_leftmost(nirblk, irblk, diag, offdiag, 0, 0.0, 10*n, TRLIB_EPS, 1, 1, "", stderr, timing,
            &ileftmost, leftmost);
-    TRLIB_TEST_SHOW_CLEANUP_STREAM()
     for(int ii = 0; ii < nirblk; ++ii) { ck_assert_msg(leftmost[ii] == diag[ii], "diagonal matrix: lefmost[%d] = %e should equal diag[%d] = %e", ii, leftmost[ii], ii, diag[ii]); }
     ck_assert_msg(ileftmost == 2, "block that corresponds to smallest eigenvalue has index 2, but received %d", ileftmost);
 
@@ -29,10 +23,6 @@ END_TEST
 
 START_TEST (test_warm)
 {
-    #if TRLIB_TEST_OUTPUT
-        char *bp; size_t size; FILE *stream = open_memstream(&bp, &size);
-    #endif
-
     int n = 3; int nirblk = 2;
     double *diag = malloc(n*sizeof(double));
     double *offdiag = calloc((n-1), sizeof(double));
@@ -47,16 +37,14 @@ START_TEST (test_warm)
 
     // just test principal 1x1 submatrix, should have leftmost eigenvalue 1.0
     nirblk = 1;
-    trlib_leftmost(nirblk, irblk, diag, offdiag, 0, 0.0, 10*n, TRLIB_EPS,
-           TRLIB_TEST_VERBOSE(1), TRLIB_TEST_UNICODE, "", TRLIB_TEST_FOUT(stream), timing,
+    trlib_leftmost(nirblk, irblk, diag, offdiag, 0, 0.0, 10*n, TRLIB_EPS, 1, 1, "", stderr, timing,
            &ileftmost, leftmost);
     ck_assert_msg((leftmost[0] == diag[0]), "first block diagonal, leftmost[0] = %e should equal diag[0] = %e", leftmost[0], diag[0]);
     ck_assert_msg(ileftmost == 0, "block that corresponds to smallest eigenvalue has index 0, but received %d", ileftmost);
 
     // just test principal 2x2 submatrix, should have leftmost eigenvalue 1.0
     nirblk = 2; irblk[nirblk] = 2;
-    trlib_leftmost(nirblk, irblk, diag, offdiag, 1, 0.0, 10*n, TRLIB_EPS,
-           TRLIB_TEST_VERBOSE(1), TRLIB_TEST_UNICODE, "", TRLIB_TEST_FOUT(stream), timing,
+    trlib_leftmost(nirblk, irblk, diag, offdiag, 1, 0.0, 10*n, TRLIB_EPS, 1, 1, "", stderr, timing,
            &ileftmost, leftmost);
     ck_assert_msg((leftmost[0] == diag[0]), "first block diagonal, leftmost[0] = %e should equal diag[0] = %e", leftmost[0], diag[0]);
     ck_assert_msg((leftmost[1] == diag[1]), "second block diagonal, leftmost[1] = %e should equal diag[1] = %e", leftmost[1], diag[1]);
@@ -64,10 +52,8 @@ START_TEST (test_warm)
 
     // test complete 3x3 submatrix, should have leftmost eigenvalue 1.0
     nirblk = 2; irblk[nirblk] = 3;
-    trlib_leftmost(nirblk, irblk, diag, offdiag, 1, diag[1], 10*n, TRLIB_EPS,
-           TRLIB_TEST_VERBOSE(1), TRLIB_TEST_UNICODE, "", TRLIB_TEST_FOUT(stream), timing,
+    trlib_leftmost(nirblk, irblk, diag, offdiag, 1, diag[1], 10*n, TRLIB_EPS, 1, 1, "", stderr, timing,
            &ileftmost, leftmost);
-    TRLIB_TEST_SHOW_CLEANUP_STREAM()
     ck_assert_msg((leftmost[0] == diag[0]), "first block diagonal, leftmost[0] = %e should equal diag[0] = %e", leftmost[0], diag[0]);
     ck_assert_msg(fabs(leftmost[1] +2.0) <= 1.1*TRLIB_EPS, "second block leftmost[1] = -2.0, residue %e", leftmost[1]+2.0);
     ck_assert_msg(ileftmost == 1, "block that corresponds to smallest eigenvalue has index 1, but received %d", ileftmost);
