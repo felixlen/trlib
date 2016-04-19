@@ -49,6 +49,7 @@
 #define TRLIB_CLR_FAIL_TTR      (-7)
 #define TRLIB_CLR_PCINDEF       (-8)
 #define TRLIB_CLR_UNEXPECT_INT  (-9)
+#define TRLIB_CLR_FAIL_HARD     (-10)
 
 #define TRLIB_CLT_CG            (1)
 #define TRLIB_CLT_L             (2)
@@ -74,6 +75,8 @@
 #define TRLIB_CLS_L_NEW_ITER    (11)
 
 #define TRLIB_CLC_NO_EXP_INV    (0)
+#define TRLIB_CLC_EXP_INV_LOC   (1)
+#define TRLIB_CLC_EXP_INV_GLO   (2)
 
 #define TRLIB_CLT_CG_INT        (0)
 #define TRLIB_CLT_CG_BOUND      (1)
@@ -159,7 +162,9 @@ int trlib_krylov_memory_size(int itmax, int *iwork_size, int *fwork_size, int *h
  *  The hard case is characterized by the fact that the eigenspace
  *  corresponding to the smallest eigenvalue is degenerate.
  *
- *  In that case a global minimizer in the Krylov subspaces sampled so far is returned.
+ *  In that case a global minimizer in the Krylov subspaces sampled so far is returned,
+ *  sampling the complete search space can be forced by setting \p ctl_invariant to #TRLIB_CLC_EXP_INV_GLO,
+ *  but if this is desired factorization based method will most likely be much more efficient.
  *
  *  A preconditioned Conjugate Gradient / Lanczos method is used,
  *  that possibly employs a reduction to a tridiagnoal subproblem
@@ -234,6 +239,9 @@ int trlib_krylov_memory_size(int itmax, int *iwork_size, int *fwork_size, int *h
  *  @param[in]     tol_abs_b absolute stopping tolerance for boundary solution
  *  @param[in]     zero threshold that determines when \f$ \langle p, Hp \rangle \f$ is considered to be zero and thus control eventual Lanczos switch
  *  @param[in]     ctl_invariant at the moment ignored, routine behaves as if set to #TRLIB_CLC_NO_EXP_INV
+ *                 - set to #TRLIB_CLC_NO_EXP_INV if you want to search only in the first invariant Krylov subspace
+ *                 - set to #TRLIB_CLC_EXP_INV_LOC if you want to search in further invariant Krylov subspace if there is no convergence to alocal minimizer in the subspaces sampled so far
+ *                 - set to #TRLIB_CLC_EXP_INV_GLO if you want to continue to expand the Krylov subspaces even in the case of convergence to a local minimizer within in the subspaces sampled so far. Reverse communication continues as long as ctl_invariant is set to #TRLIB_CLC_EXP_INV_GLO, so you should reset \p ctl_invariant to either #TRLIB_CLC_EXP_INV_LOC or #TRLIB_CLC_EXP_INV_LOC if there is no reason to continue, for example because you cannot find a new nonzero random vector orthogonal to the sampled directions if \p action is #TRLIB_CLA_NEW_KRYLOV.
  *  @param[in]     g_dot_g dot product \f$ \langle g, g \rangle \f$
  *  @param[in]     v_dot_g dot product \f$ \langle v, g \rangle \f$
  *  @param[in]     p_dot_Hp dot product \f$ \langle p, Hp \rangle \f$
@@ -312,7 +320,6 @@ int trlib_krylov_memory_size(int itmax, int *iwork_size, int *fwork_size, int *h
  *                 - \f$ g \leftarrow \texttt{rand}\perp Q_j \f$ find nonzero random vector that is orthogonal to \f$ Q_j \f$
  *                 - Note that #TRLIB_CLA_NEW_KRYLOV is unlikely and only occurs on problems that employ the hard case and only if \p ctl_invariant != #TRLIB_CLC_NO_EXP_INV.
  *                   If you want to safe yourself from the trouble implementing this and are confident that you don't need to expand several invariant Krylov subspaces, just ensure that \p ctl_invariant is set to #TRLIB_CLC_NO_EXP_INV.
- *                   use a safeguard to exit instead.
  *                 action             | ityp            | command
  *                 -------------------|-----------------|------------
  *                 #TRLIB_CLA_TRIVIAL       | #TRLIB_CLT_CG, #TRLIB_CLT_L | do nothing
@@ -342,6 +349,7 @@ int trlib_krylov_memory_size(int itmax, int *iwork_size, int *fwork_size, int *h
  *  @retval        #TRLIB_CLR_PCINDEF preconditioner apperas to be indefinite, end reverse communication process
  *  @retval        #TRLIB_CLR_UNEXPECT_INT unexpected interior solution found, expected boundary solution, end reverse communication process
  *  @retval        #TRLIB_CLR_FAIL_TTR failure occured in #trlib_tri_factor_min, check `iwork[7]` and `iwork[8]` for details
+ *  @retval        #TRLIB_CLR_FAIL_HARD failure due to occurence of hard case: invariant subspace encountered without local convergence and request for early termination without exploring further invariant subspaces
  *
  */
 
