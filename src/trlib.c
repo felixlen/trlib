@@ -128,7 +128,7 @@ int trlib_krylov_min(
                 *ityp = TRLIB_CLT_CG; *status = TRLIB_CLS_VEC_INIT; *action = TRLIB_CLA_INIT;
                 break;
             case TRLIB_CLS_VEC_INIT:
-                if (v_dot_g <= 0.0) { *ityp = TRLIB_CLT_CG; *action = TRLIB_CLA_TRIVIAL; returnvalue = TRLIB_CLR_PCINDEF; break; } // exit if M^-1 indefinite
+                if (v_dot_g <= 0.0 && g_dot_g > 0.0) { *ityp = TRLIB_CLT_CG; *action = TRLIB_CLA_TRIVIAL; returnvalue = TRLIB_CLR_PCINDEF; break; } // exit if M^-1 indefinite
                 *stop_i = fmax(tol_abs_i, tol_rel_i*sqrt(v_dot_g)); *stop_i = (*stop_i)*(*stop_i); // set interior stopping tolerance, note that this is squared as for efficiency we compare norm^2 <= tol
                 *stop_b = fmax(tol_abs_b, tol_rel_b*sqrt(v_dot_g)); // set boundary stopping tolerance, here no square as we directly compare norm <= tol
                 *v_g = v_dot_g; // store (v, g)
@@ -217,7 +217,7 @@ int trlib_krylov_min(
                 *ityp = TRLIB_CLT_CG; *status = TRLIB_CLS_CG_UPDATE_GV; *flt1 = alpha[*ii]; *flt2= *cgl; *action = TRLIB_CLA_UPDATE_GRAD;
                 break;
             case TRLIB_CLS_CG_UPDATE_GV:
-                if (v_dot_g <= 0.0) { if (*interior) {*action = TRLIB_CLA_TRIVIAL;} else {*ityp = TRLIB_CLT_CG; *action = TRLIB_CLA_RETRANSF;} returnvalue = TRLIB_CLR_PCINDEF; break; } // exit if M^-1 indefinite
+                if (v_dot_g <= 0.0 && g_dot_g > 0.0) { if (*interior) {*action = TRLIB_CLA_TRIVIAL;} else {*ityp = TRLIB_CLT_CG; *action = TRLIB_CLA_RETRANSF;} returnvalue = TRLIB_CLR_PCINDEF; break; } // exit if M^-1 indefinite
                 beta[*ii] = v_dot_g/(*v_g);
                 /* prepare the next Lanczos tridiagonal matrix as far as possible
                    the diagonal term is given by delta(i+1) = 1/alpha(i+1) + beta(i)/alpha(i)
