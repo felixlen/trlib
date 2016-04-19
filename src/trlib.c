@@ -218,6 +218,12 @@ int trlib_krylov_min(
                 break;
             case TRLIB_CLS_CG_UPDATE_GV:
                 if (v_dot_g <= 0.0 && g_dot_g > 0.0) { if (*interior) {*action = TRLIB_CLA_TRIVIAL;} else {*ityp = TRLIB_CLT_CG; *action = TRLIB_CLA_RETRANSF;} returnvalue = TRLIB_CLR_PCINDEF; break; } // exit if M^-1 indefinite
+                if (g_dot_g <= zero) { // check if Krylov iteration breaks down
+                    if ( ctl_invariant <= TRLIB_CLC_EXP_INV_GLO ) {
+                        if (*interior) {*action = TRLIB_CLA_TRIVIAL;} else {*ityp = TRLIB_CLT_CG; *action = TRLIB_CLA_RETRANSF;}
+                        returnvalue = TRLIB_CLR_FAIL_HARD; break;
+                        }
+                }
                 beta[*ii] = v_dot_g/(*v_g);
                 /* prepare the next Lanczos tridiagonal matrix as far as possible
                    the diagonal term is given by delta(i+1) = 1/alpha(i+1) + beta(i)/alpha(i)
@@ -314,6 +320,12 @@ int trlib_krylov_min(
                 *ityp = TRLIB_CLT_L; *status = TRLIB_CLS_L_UPDATE_P; *flt1 = (*sigma)/sqrt(*v_g); *flt2 = 0.0; *action = TRLIB_CLA_UPDATE_DIR;
                 break;
             case TRLIB_CLS_L_UPDATE_P:
+                if ( fabs(p_dot_Hp) <= zero) { // Krylov iteration breaks down
+                    if ( ctl_invariant <= TRLIB_CLC_EXP_INV_GLO ) {
+                        *ityp = TRLIB_CLT_CG; *action = TRLIB_CLA_RETRANSF;
+                        returnvalue = TRLIB_CLR_FAIL_HARD; break;
+                        }
+                }
                 delta[*ii] = p_dot_Hp;
                 /* solve tridiagonal reduction
                    first try to update factorization if available to start tridiagonal problem warmstarted */
