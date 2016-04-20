@@ -8,7 +8,7 @@ START_TEST (test_trivial_exit)
     double ones = 1.0;
     double diag_fac = 12.0;
     double eig = 7.0;
-    long *timing = malloc(8*sizeof(long));
+    long *timing = malloc(trlib_eigen_timing_size()*sizeof(long));
     double lam_pert = 0.0;
     double pert = 0.0;
     int iter_inv = 0;
@@ -31,7 +31,7 @@ START_TEST (test_nontrivial)
     double *eig = malloc(n*sizeof(double));
     double *leig = malloc(n*sizeof(double));
     double zero = 0.0;
-    long *timing = malloc(8*sizeof(long));
+    long *timing = malloc(trlib_eigen_timing_size()*sizeof(long));
     double lam_init = 0.0;
     double lam_pert = 0.0;
     double pert = 0.0;

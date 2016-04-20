@@ -62,3 +62,11 @@ int trlib_eigen_inverse(
     
     TRLIB_RETURN(TRLIB_EIR_ITMAX)
 };
+
+int trlib_eigen_timing_size() {
+#if TRLIB_MEASURE_TIME
+    return 1 + TRLIB_SIZE_TIMING_LINALG;
+#endif
+    return 0;
+}
+

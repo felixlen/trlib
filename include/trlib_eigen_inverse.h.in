@@ -36,17 +36,11 @@
  *  @param[in]     unicode set to \c 1 if \p fout can handle unicode, otherwise to \c 0
  *  @param[in]     prefix string that is printed before iteration output
  *  @param[in]     fout output stream
- *  @param[in,out] timing gives timing details, all values are multiples of nanoseconds, memory layout:
- *                 index | value
- *                 ------|------
+ *  @param[in,out] timing gives timing details, provide allocated zero initialized memory of length #trlib_eigen_timing_size()
+ *                 block | description
+ *                 ------|--------------
  *                 0     | total duration
- *                 1     | copy
- *                 2     | axpy
- *                 3     | scal
- *                 4     | nrm2
- *                 5     | dot
- *                 6     | pttrf
- *                 7     | pttrs
+ *                 1     | timing of linear algebra calls
  *  @param[out]    lam_pert eigenvalue corresponding to eigenvector
  *  @param[out]    pert perturbation applied to provided eigenvalue
  *  @param[out]    iter_inv number of inverse iterations
@@ -63,5 +57,9 @@ int trlib_eigen_inverse(
         double *ones, double *diag_fac, double *offdiag_fac,
         double *eig, int verbose, int unicode, char *prefix, FILE *fout,
         long *timing, double *lam_pert, double *pert, int *iter_inv);
+
+/** @brief size that has to be allocated for \p timing in #trlib_eigen_inverse
+ */
+int trlib_eigen_timing_size();
 
 #endif

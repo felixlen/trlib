@@ -8,7 +8,7 @@ START_TEST (test_diagonal)
     double *offdiag = calloc((n-1), sizeof(double));
     double *leftmost = malloc(nirblk*sizeof(double));
     int *irblk = malloc((nirblk+1)*sizeof(int));
-    long *timing = malloc(8*sizeof(long));
+    long *timing = malloc(trlib_leftmost_timing_size()*sizeof(long));
     int ileftmost; int ret = 0;
     for(int ii = 0; ii < nirblk+1; ++ii) { irblk[ii] = ii; }
 
@@ -29,7 +29,7 @@ START_TEST (test_warm)
     double *offdiag = calloc((n-1), sizeof(double));
     double *leftmost = malloc(nirblk*sizeof(double));
     int *irblk = malloc((nirblk+1)*sizeof(int));
-    long *timing = malloc(8*sizeof(long));
+    long *timing = malloc(trlib_leftmost_timing_size()*sizeof(long));
     int ileftmost; int ret = 0;
     irblk[0] = 0; irblk[1] = 1; irblk[2] = 3;
 

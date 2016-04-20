@@ -1,18 +1,5 @@
 #include "trlib_krylov.h"
 
-int trlib_krylov_prepare_memory(int itmax, double *fwork) {
-    for(int jj = 21+11*itmax; jj<22+12*itmax; ++jj) { *(fwork+jj) = 1.0; } // everything to 1.0 in ones
-    memset(fwork+15+2*itmax, 0, itmax*sizeof(double)); // neglin = - gamma_0 e1, thus set neglin[1:] = 0
-    return 0;
-}
-
-int trlib_krylov_memory_size(int itmax, int *iwork_size, int *fwork_size, int *h_pointer) {
-    *iwork_size = 16+itmax;
-    *fwork_size = 27+17*itmax;
-    *h_pointer = 17+4*itmax;
-    return 0;
-}
-
 int trlib_krylov_min(
     int init, double radius, int equality, int itmax, int itmax_lanczos,
     double tol_rel_i, double tol_abs_i,
@@ -47,8 +34,10 @@ int trlib_krylov_min(
              diag(T_ii) = (delta_0, ..., delta_ii) and offdiag(T_ii) = (gamma_1, ..., gamma_ii)
        (c) test for convergence */
 
+    long *leftmost_timing = NULL;
     #if TRLIB_MEASURE_TIME
         struct timespec verystart, start, end;
+        leftmost_timing = timing + 1;
         TRLIB_TIC(verystart)
     #endif
     // sane names for workspace variables
@@ -196,7 +185,7 @@ int trlib_krylov_min(
                         warm_lam0, lam0, warm_lam, lam, warm_leftmost, ileftmost, leftmost,
                         &warm_fac0, delta_fac0, gamma_fac0, &warm_fac, delta_fac, gamma_fac,
                         h0, h, ones, fwork_tr, refine, verbose-1, unicode, " TR ", fout,
-                        timing+1, obj, iter_tri, sub_fail_tri);
+                        leftmost_timing, obj, iter_tri, sub_fail_tri);
 
                     // check for failure, beware: newton break is ok as this means most likely convergence
                     // exit with error and ask the user to get (potentially invalid) solution candidate by backtransformation
@@ -282,7 +271,7 @@ int trlib_krylov_min(
                     warm_lam0, lam0, warm_lam, lam, warm_leftmost, ileftmost, leftmost,
                     &warm_fac0, delta_fac0, gamma_fac0, &warm_fac, delta_fac, gamma_fac,
                     h0, h, ones, fwork_tr, refine, verbose-1, unicode, " TR ", fout,
-                    timing+1, obj, iter_tri, sub_fail_tri);
+                    leftmost_timing, obj, iter_tri, sub_fail_tri);
 
                 /* check for failure, beware: newton break is ok as this means most likely convergence
                    exit with error and ask the user to get (potentially invalid) solution candidate by backtransformation */
@@ -348,7 +337,7 @@ int trlib_krylov_min(
                     warm_lam0, lam0, warm_lam, lam, warm_leftmost, ileftmost, leftmost,
                     &warm_fac0, delta_fac0, gamma_fac0, &warm_fac, delta_fac, gamma_fac,
                     h0, h, ones, fwork_tr, refine, verbose-1, unicode, " TR ", fout,
-                    timing+1, obj, iter_tri, sub_fail_tri);
+                    leftmost_timing, obj, iter_tri, sub_fail_tri);
 
                 /* check for failure, beware: newton break is ok as this means most likely convergence
                    exit with error and ask the user to get (potentially invalid) solution candidate by backtransformation */
@@ -403,3 +392,24 @@ int trlib_krylov_min(
     }
     TRLIB_RETURN(returnvalue)
 }
+
+int trlib_krylov_prepare_memory(int itmax, double *fwork) {
+    for(int jj = 21+11*itmax; jj<22+12*itmax; ++jj) { *(fwork+jj) = 1.0; } // everything to 1.0 in ones
+    memset(fwork+15+2*itmax, 0, itmax*sizeof(double)); // neglin = - gamma_0 e1, thus set neglin[1:] = 0
+    return 0;
+}
+
+int trlib_krylov_memory_size(int itmax, int *iwork_size, int *fwork_size, int *h_pointer) {
+    *iwork_size = 16+itmax;
+    *fwork_size = 23+13*itmax+trlib_tri_factor_memory_size(itmax+1);
+    *h_pointer = 17+4*itmax;
+    return 0;
+}
+
+int trlib_krylov_timing_size() {
+#if TRLIB_MEASURE_TIME
+    return 1 + trlib_tri_timing_size();
+#endif
+    return 0;
+}
+

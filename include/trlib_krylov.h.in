@@ -48,30 +48,6 @@
 #define TRLIB_CLT_LANCZOS       (2)
 #define TRLIB_CLT_HOTSTART      (3)
 
-/** @brief Prepares floating point workspace for #trlib_krylov_min
- *  
- *  Initializes floating point workspace \p fwork for #trlib_krylov_min
- *
- *  @param[in]     itmax maximum number of iterations
- *  @param[in,out] fwork floating point workspace to be used by #trlib_krylov_min
- *  
- *  @retval 0
- */
-
-int trlib_krylov_prepare_memory(int itmax, double *fwork);
-
-/** @brief Gives information on memory that has to be allocated by #trlib_krylov_min
- *  
- *  @param[in]     itmax maximum number of iterations
- *  @param[out]    iwork_size size of integer workspace iwork that has to be allocated for #trlib_krylov_min
- *  @param[out]    fwork_size size of floating point workspace fwork that has to be allocated for #trlib_krylov_min
- *  @param[out]    h_pointer start index of vector \f$ h \f$ that has to be used in reverse communication in action #TRLIB_CLA_RETRANSF
- *  
- *  @retval 0
- */
-
-int trlib_krylov_memory_size(int itmax, int *iwork_size, int *fwork_size, int *h_pointer);
-
 /** @brief Solves trust region subproblem
  *
  *  Computes minimizer to
@@ -225,17 +201,17 @@ int trlib_krylov_memory_size(int itmax, int *iwork_size, int *fwork_size, int *h
  *                 \f$ 13+10\texttt{itmax}+8 \f$   | \f$ 13+11\texttt{itmax}+8\f$   | offdiagonal of Cholesky factorization of \f$ T + \lambda I \f$
  *                 \f$ 13+11\texttt{itmax}+8 \f$   | \f$ 13+12\texttt{itmax}+9 \f$   | \p ones for #trlib_tri_factor_min and #trlib_eigen_inverse
  *                 \f$ 13+12\texttt{itmax}+9 \f$   | \f$ 13+13\texttt{itmax}+10  \f$ | \p leftmost for #trlib_tri_factor_min
- *                 \f$ 13+13\texttt{itmax}+10 \f$  | \f$ 13+17\texttt{itmax}+14 \f$ | \p fwork for #trlib_tri_factor_min
+ *                 \f$ 13+13\texttt{itmax}+10 \f$  | \f$ 13+13\texttt{itmax}+10 \f$ + #trlib_tri_factor_memory_size `(itmax+1)` | \p fwork for #trlib_tri_factor_min
  *  @param[in]     refine set to \c 1 if iterative refinement should be used on solving linear systems, otherwise to \c 0
  *  @param[in]     verbose determines the verbosity level of output that is written to \p fout
  *  @param[in]     unicode set to \c 1 if \p fout can handle unicode, otherwise to \c 0
  *  @param[in]     prefix string that is printed before iteration output
  *  @param[in]     fout output stream
- *  @param[in,out] timing gives timing details, all values are multiples of nanoseconds, memory layout:
- *                 start | end (excl) | value
- *                 ------|------------|--------------
- *                 0     | 1          | total duration
- *                 1     | 20         | \p timing from #trlib_tri_factor_min
+ *  @param[in,out] timing gives timing details, all values are multiples of nanoseconds, provide zero allocated memory of length #trlib_krylov_timing_size()
+ *                 block | description
+ *                 ------|------------
+ *                 0     | total duration
+ *                 1     | \p timing of #trlib_tri_factor_min
  *  @param[out]    action The user should perform the following action depending on \p action and \p ityp on the vectors he manages, see the table below.
  *                 The table makes use of the notation explained in the section _User provided storage_ above and the following:
  *                 - \f$ i \f$: \f$ \texttt{iter} \f$
@@ -289,5 +265,33 @@ int trlib_krylov_min(
     int *action, int *iter, int *ityp,
     double *flt1, double *flt2, double *flt3
 );
+
+/** @brief Prepares floating point workspace for #trlib_krylov_min
+ *  
+ *  Initializes floating point workspace \p fwork for #trlib_krylov_min
+ *
+ *  @param[in]     itmax maximum number of iterations
+ *  @param[in,out] fwork floating point workspace to be used by #trlib_krylov_min
+ *  
+ *  @retval 0
+ */
+
+int trlib_krylov_prepare_memory(int itmax, double *fwork);
+
+/** @brief Gives information on memory that has to be allocated for #trlib_krylov_min
+ *  
+ *  @param[in]     itmax maximum number of iterations
+ *  @param[out]    iwork_size size of integer workspace iwork that has to be allocated for #trlib_krylov_min
+ *  @param[out]    fwork_size size of floating point workspace fwork that has to be allocated for #trlib_krylov_min
+ *  @param[out]    h_pointer start index of vector \f$ h \f$ that has to be used in reverse communication in action #TRLIB_CLA_RETRANSF
+ *  
+ *  @retval 0
+ */
+
+int trlib_krylov_memory_size(int itmax, int *iwork_size, int *fwork_size, int *h_pointer);
+
+/** @brief size that has to be allocated for \p timing in #trlib_krylov_min
+ */
+int trlib_krylov_timing_size();
 
 #endif

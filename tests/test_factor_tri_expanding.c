@@ -47,7 +47,7 @@ START_TEST (test_simple)
     int warm_fac0 = 0;
     int warm_fac = 0;
     int refine = 1;
-    long *timing = malloc(20*sizeof(long));
+    long *timing = malloc(trlib_tri_timing_size()*sizeof(long));
     double obj = 0.0;
     int iter_newton = 0;
     int sub_fail = 0;

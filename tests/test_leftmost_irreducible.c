@@ -36,7 +36,7 @@ START_TEST (test_trivial_exit)
 {
     double diag = 3.0;
     double leftmost = 0.0;
-    long *timing = malloc(8*sizeof(long));
+    long *timing = malloc(trlib_leftmost_timing_size()*sizeof(long));
     int iter_pr = 0; int ret = 0;
     ret = trlib_leftmost_irreducible(1, &diag, NULL, 0, 0.0, 1, TRLIB_EPS, 1, 1, "", stderr, timing,
            &leftmost, &iter_pr);
@@ -50,7 +50,7 @@ START_TEST (test_nontrivial)
     int n = 10; int nm = n-1;
     double *diag = malloc(n*sizeof(double));
     double *offdiag = malloc((n-1)*sizeof(double));
-    long *timing = malloc(8*sizeof(long));
+    long *timing = malloc(trlib_leftmost_timing_size()*sizeof(long));
     double leftmost = 0.0; double leftmost_minor; double perturb;
     int iter_pr = 0; int ret = 0;
     for(int ii = 0; ii < n; ++ii) {

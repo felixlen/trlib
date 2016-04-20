@@ -32,8 +32,8 @@
  *  @param[in]     unicode set to \c 1 if \p fout can handle unicode, otherwise to \c 0
  *  @param[in]     prefix string that is printed before iteration output
  *  @param[in]     fout output stream
- *  @param[in,out] timing gives timing details, all values are multiples of nanoseconds, memory layout:
- *                 index | value
+ *  @param[in,out] timing gives timing details, all values are multiples of nanoseconds, provide allocated and zero initialized memory of length #trlib_leftmost_timing_size()
+ *                 block | description
  *                 ------|--------------
  *                 0     | total duration
  *  @param[in,out] ileftmost index of block that corresponds to absolute smallest eigenvalue
@@ -78,8 +78,8 @@ int trlib_leftmost(
  *  @param[in]     unicode set to \c 1 if \p fout can handle unicode, otherwise to \c 0
  *  @param[in]     prefix string that is printed before iteration output
  *  @param[in]     fout output stream
- *  @param[in,out] timing gives timing details, all values are multiples of nanoseconds, memory layout:
- *                 index | value
+ *  @param[in,out] timing gives timing details, all values are multiples of nanoseconds, provide allocated and zero initialized memory of length #trlib_leftmost_timing_size()
+ *                 block | description
  *                 ------|--------------
  *                 0     | total duration
  *  @param[out]    leftmost smallest eigenvalue of \f$ T \f$
@@ -94,5 +94,9 @@ int trlib_leftmost_irreducible(
         int warm, double leftmost_minor, int itmax, double tol_abs,
         int verbose, int unicode, char *prefix, FILE *fout,
         long *timing, double *leftmost, int *iter_pr);
+
+/** @brief size that has to be allocated for \p timing in #trlib_leftmost_irreducible and #trlib_leftmost
+ */
+int trlib_leftmost_timing_size();
 
 #endif

@@ -12,3 +12,4 @@ cdef extern from "trlib_krylov.h":
         int verbose, int unicode, char *prefix, libc.stdio.FILE *fout, long *timing,
         int *action, int *iter, int *ityp,
         double *flt1, double *flt2, double *flt3)
+    int trlib_krylov_timing_size()

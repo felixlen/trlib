@@ -26,6 +26,7 @@ void dlagtm_(char *trans, int *n, int *nrhs, double *alpha, double *dl, double *
 #if TRLIB_MEASURE_TIME
     #define TRLIB_TIC(X) { clock_gettime(CLOCK_MONOTONIC, &X); }
     #define TRLIB_DURATION(X, Y, Z) { clock_gettime(CLOCK_MONOTONIC, &Y); Z += 1000000000L*(Y.tv_sec-X.tv_sec)+Y.tv_nsec-X.tv_nsec; }
+    #define TRLIB_SIZE_TIMING_LINALG (9)
     #if TRLIB_MEASURE_SUBTIME
         #define TRLIB_DURATION_SUB(X, Y, Z) { clock_gettime(CLOCK_MONOTONIC, &Y); Z += 1000000000L*(Y.tv_sec-X.tv_sec)+Y.tv_nsec-X.tv_nsec; }
     #else

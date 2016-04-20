@@ -210,3 +210,11 @@ int trlib_leftmost_irreducible(
         }
     }
 }
+
+int trlib_leftmost_timing_size() {
+#if TRLIB_MEASURE_TIME
+    return 1;
+#endif
+    return 0;
+}
+

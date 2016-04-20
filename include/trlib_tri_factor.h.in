@@ -88,7 +88,7 @@
  *  @param[in,out] sol0 pointer to array holding solution, length \p irblk[1]
  *  @param[in,out] sol pointer to array holding solution, length \p n
  *  @param[in]     ones array with every value \c 1.0, length \p n
- *  @param[in,out] fwork floating point workspace, must be allocated on input and can be discarded on output, memory layout:
+ *  @param[in,out] fwork floating point workspace, must be allocated memory on input of size #trlib_tri_factor_memory_size `(n)` and can be discarded on output, memory layout:
  *                 start                                     | end (excl)                                | description
  *                 ------------------------------------------|-------------------------------------------|------------
  *                 \c 0                                      | `n`                                       | auxiliary vector
@@ -99,21 +99,13 @@
  *  @param[in]     unicode set to \c 1 if \p fout can handle unicode, otherwise to \c 0
  *  @param[in]     prefix string that is printed before iteration output
  *  @param[in]     fout output stream
- *  @param[in,out] timing gives timing details, all values are multiples of nanoseconds, memory layout:
- *                 start | end (excl) | value
- *                 ------|------------|--------------
- *                 0     | 1          | total duration
- *                 1     | 2          | copy
- *                 2     | 3          | axpy
- *                 3     | 4          | scal
- *                 4     | 5          | nrm2
- *                 5     | 6          | ddot
- *                 6     | 7          | pttrf
- *                 7     | 8          | pttrs
- *                 8     | 9          | ptrfs
- *                 9     | 10         | lagtm
- *                 10    | 11         | \p timing from #trlib_leftmost_irreducible
- *                 11    | 19         | \p timing from #trlib_eigen_inverse
+ *  @param[in,out] timing gives timing details, all values are multiples of nanoseconds, provide zero allocated memory of length #trlib_tri_timing_size()
+ *                 block | description
+ *                 ------|------------
+ *                 0     | total duration
+ *                 1     | timing of linear algebra calls
+ *                 2     | \p timing from #trlib_leftmost_irreducible
+ *                 3     | \p timing from #trlib_eigen_inverse
  *  @param[out]    obj objective function value at solution point
  *  @param[out]    iter_newton number of Newton iterations
  *  @param[out]    sub_fail status code of subroutine if failure occured in subroutines called
@@ -141,5 +133,19 @@ int trlib_tri_factor_min(
     int refine,
     int verbose, int unicode, char *prefix, FILE *fout,
     long *timing, double *obj, int *iter_newton, int *sub_fail);
+
+/** @brief Gives information on memory that has to be allocated for #trlib_tri_factor_min
+ *  
+ *  @param[in]     n dimension of problem
+ *  @param[out]    fwork_size size of floating point workspace fwork that has to be allocated for #trlib_krylov_min
+ *  
+ *  @retval 0
+ */
+
+int trlib_tri_factor_memory_size(int n);
+
+/** @brief size that has to be allocated for \p timing in #trlib_tri_factor_min
+ */
+int trlib_tri_timing_size();
 
 #endif

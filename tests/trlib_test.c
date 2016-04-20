@@ -13,7 +13,6 @@ int trlib_test_malloc_qp(int qptype, int qpsolver, int n, int itmax, struct trli
     qp->reentry = 0;
     qp->refine = 1;
     qp->lam = 0.0;
-    qp->timing = malloc(20*sizeof(long));
     qp->tol_rel_i = TRLIB_EPS_POW_5;
     qp->tol_abs_i = 0.0;
     qp->tol_rel_b = TRLIB_EPS_POW_4;
@@ -54,6 +53,7 @@ int trlib_test_malloc_qp(int qptype, int qpsolver, int n, int itmax, struct trli
     }
 
     if(qpsolver == TRLIB_TEST_SOLVER_KRYLOV) {
+        qp->timing = malloc(trlib_krylov_timing_size()*sizeof(long));
         qp->work = (void *)malloc(sizeof(struct trlib_test_work_krylov));
         struct trlib_test_work_krylov * work = (struct trlib_test_work_krylov *)qp->work;
         int iwork_size, fwork_size, h_pointer;
@@ -68,6 +68,7 @@ int trlib_test_malloc_qp(int qptype, int qpsolver, int n, int itmax, struct trli
         work->orth_check = malloc((itmax+1)*(itmax+1)*sizeof(double));
     }
     if(qpsolver == TRLIB_TEST_SOLVER_FACTOR) {
+        qp->timing = malloc(trlib_tri_timing_size()*sizeof(long));
         qp->work = (void *)malloc(sizeof(struct trlib_test_work_factor));
         struct trlib_test_work_factor * work = (struct trlib_test_work_factor *)qp->work;
         work->fwork = malloc(4*n*sizeof(double));

@@ -49,3 +49,6 @@ def krylov_min(int init, double radius, double g_dot_g, double v_dot_g, double p
         return ret, action, iter, ityp, flt1, flt2, flt3, ttiming
     else:
         return ret, action, iter, ityp, flt1, flt2, flt3
+
+def krylov_timing_size():
+    return ctrlib.trlib_krylov_timing_size()

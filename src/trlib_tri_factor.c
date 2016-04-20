@@ -15,10 +15,14 @@ int trlib_tri_factor_min(
     // use notation of Gould paper
     // h = h(lam) denotes solution of (T+lam I) * h = -lin
 
+    long *leftmost_timing = NULL;
+    long *eigen_timing = NULL;
     // local variables
     #if TRLIB_MEASURE_TIME
         struct timespec verystart, start, end;
         TRLIB_TIC(verystart)
+        leftmost_timing = timing + 1 + TRLIB_SIZE_TIMING_LINALG;
+        eigen_timing = timing + 1 + TRLIB_SIZE_TIMING_LINALG + trlib_leftmost_timing_size();
     #endif
     /* this is based on Theorem 5.8 in Gould paper,
      * the data for the first block has a 0 suffix,
@@ -103,7 +107,7 @@ int trlib_tri_factor_min(
             }
             if (info_fac != 0) { 
                 TRLIB_PRINTLN_1(" \u03bb\u2080 = 0 unsuitable \u2265 get leftmost ev of first block!")
-                *sub_fail = trlib_leftmost_irreducible(irblk[1], diag, offdiag, *warm_leftmost, *leftmost, 1000, TRLIB_EPS_POW_75, verbose-2, unicode, " LM ", fout, timing+10, leftmost, &jj); // ferr can safely be overwritten by computed leftmost for the moment as can jj with the number of rp iterations
+                *sub_fail = trlib_leftmost_irreducible(irblk[1], diag, offdiag, *warm_leftmost, *leftmost, 1000, TRLIB_EPS_POW_75, verbose-2, unicode, " LM ", fout, leftmost_timing, leftmost, &jj); // ferr can safely be overwritten by computed leftmost for the moment as can jj with the number of rp iterations
                 // if (*sub_fail != 0) { TRLIB_RETURN(TRLIB_TTR_FAIL_LM) } failure of leftmost: may lead to inefficiency, since what we are doing may be slow...
                 // T - leftmost*I is singular, so perturb it a bit to catch factorization; start with small perturbation and increase
                 // first enlarge -leftmost to get into the region of positive definiteness
@@ -255,7 +259,7 @@ int trlib_tri_factor_min(
     // check if lam <= leftmost --> in that case the first block information describes everything
     TRLIB_PRINTLN_1("\nCheck if \u03bb\u2080 provides global solution, get leftmost ev for irred blocks")
     if(!*warm_leftmost) {
-        *sub_fail = trlib_leftmost(nirblk, irblk, diag, offdiag, 0, leftmost[nirblk-1], 1000, TRLIB_EPS_POW_75, verbose-2, unicode, " LM ", fout, timing+10, ileftmost, leftmost);
+        *sub_fail = trlib_leftmost(nirblk, irblk, diag, offdiag, 0, leftmost[nirblk-1], 1000, TRLIB_EPS_POW_75, verbose-2, unicode, " LM ", fout, leftmost_timing, ileftmost, leftmost);
         *warm_leftmost = 1;
     }
     TRLIB_PRINTLN_1("    leftmost = %e (block %d)", leftmost[*ileftmost], *ileftmost)
@@ -300,7 +304,7 @@ int trlib_tri_factor_min(
                 leftmost[*ileftmost], 10, TRLIB_EPS_POW_5, ones,
                 diag_fac+irblk[*ileftmost], offdiag_fac+irblk[*ileftmost],
                 sol+irblk[*ileftmost], 
-                verbose-2, unicode, " EI", NULL, timing+11, &ferr, &berr, &jj); // can savely overwrite ferr, berr, jj with results. only interesting: eigenvector
+                verbose-2, unicode, " EI", NULL, eigen_timing, &ferr, &berr, &jj); // can savely overwrite ferr, berr, jj with results. only interesting: eigenvector
         if (*sub_fail != 0) { TRLIB_RETURN(TRLIB_TTR_FAIL_EIG) }
 
         // solution is of form [h,0,...,0,alpha*u,0,...,0]
@@ -321,3 +325,15 @@ int trlib_tri_factor_min(
         TRLIB_RETURN(ret);
     }
 }
+
+int trlib_tri_timing_size() {
+#if TRLIB_MEASURE_TIME
+    return 1+TRLIB_SIZE_TIMING_LINALG+trlib_leftmost_timing_size()+trlib_eigen_timing_size();
+#endif
+    return 0;
+}
+
+int trlib_tri_factor_memory_size(int n) {
+    return 4*n;
+}
+

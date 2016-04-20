@@ -95,7 +95,7 @@ def qpsolver_low_level(lin, hmv, radius, data=None, reentry=False, verbose=0):
         if not 'Q' in data:
             data['Q'] = np.empty([itmax+1, lin.shape[0]])
         if not 'timing' in data:
-            data['timing'] = np.empty([20], dtype=np.int)
+            data['timing'] = np.empty([trlib.krylov_timing_size()], dtype=np.int)
         data['timing'][:] = 0
     else:
         init = 2
