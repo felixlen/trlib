@@ -49,31 +49,3 @@ def krylov_min(int init, double radius, double g_dot_g, double v_dot_g, double p
         return ret, action, iter, ityp, flt1, flt2, flt3, ttiming
     else:
         return ret, action, iter, ityp, flt1, flt2, flt3
-
-#def solve_qp_cb(double radius, double [::1] g, hv, 
-#        double tol_rel_i = np.finfo(np.float).eps**.5, 
-#        double tol_rel_b = np.finfo(np.float).eps**.3,
-#        verbose=0):
-#    cdef ctrlib.trlib_driver_qp qp
-#    cdef int n = g.shape[0]
-#    if n == 0:
-#        return
-#    ctrlib.trlib_driver_malloc_qp(3, 0, n, 10*n, &qp)
-#    cb = Callback(hv)
-#    cdef ctrlib.trlib_driver_problem_op* pp = <ctrlib.trlib_driver_problem_op*> qp.problem
-#    cdef ctrlib.trlib_driver_problem_op problem = pp[0]
-#    ctrlib.trlib_driver_problem_set_hvcb(pp, <void *> cb, hvfcn_cb)
-#    qp.verbose = verbose
-#    qp.unicode = 1
-#    qp.stream = <libc.stdio.FILE*> libc.stdio.stdout
-#    qp.radius = radius
-#    qp.tol_rel_i = tol_rel_i
-#    qp.tol_rel_b = tol_rel_b
-#    _g = np.asarray(<np.float64_t[:n]> problem.grad)
-#    _g[:] = g[:]
-#    sol = np.empty_like(g)
-#    _sol = np.asarray(<np.float64_t[:n]> problem.sol)
-#    ctrlib.trlib_driver_solve_qp(&qp)
-#    sol[:] = _sol[:]
-#    ctrlib.trlib_driver_free_qp(&qp)
-#    return sol

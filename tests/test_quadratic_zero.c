@@ -1,4 +1,5 @@
-#include "trlib_test.h"
+#include <check.h>
+#include "trlib_quadratic_zero.h"
 
 START_TEST (test_well_behaved_seperated)
 {

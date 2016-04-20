@@ -15,6 +15,8 @@ if(CHECK_FOUND)
         configure_file("${CMAKE_CURRENT_SOURCE_DIR}/socketserver.py" ${CMAKE_CURRENT_BINARY_DIR})
     endif(PROTOBUF_FOUND) 
 
+    configure_file("${CMAKE_CURRENT_SOURCE_DIR}/trlib_test.h.in" "${CMAKE_CURRENT_BINARY_DIR}/trlib_test.h")
+
     set(LIBS ${LIBS} ${CHECK_LIBRARIES} ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES} pthread)
     set(TESTNAMES 
         quadratic_zero 
@@ -33,7 +35,7 @@ if(CHECK_FOUND)
         krylov_lanczos_rosenbrock prepare_memory
         )
     foreach(t ${TESTNAMES})
-        add_executable("test_${t}" "test_${t}.c" ${MESSAGEFILES})
+        add_executable("test_${t}" "test_${t}.c" "${CMAKE_CURRENT_SOURCE_DIR}/trlib_test.c" ${MESSAGEFILES})
         set_property(TARGET "test_${t}" PROPERTY C_STANDARD 11)
         target_link_libraries("test_${t}" trlib ${LIBS})
         target_include_directories("test_${t}" PRIVATE "${CMAKE_BINARY_DIR}/include" "${CMAKE_CURRENT_BINARY_DIR}" ${CHECK_INCLUDE_DIRS})

@@ -2,11 +2,11 @@
 
 START_TEST (test_3d_easy)
 {
-    struct trlib_driver_qp qp;
-    trlib_driver_malloc_qp(TRLIB_DRIVER_DENSE_QP, TRLIB_DRIVER_SOLVER_KRYLOV, 3, 10*3, &qp);
+    struct trlib_test_qp qp;
+    trlib_test_malloc_qp(TRLIB_TEST_DENSE_QP, TRLIB_TEST_SOLVER_KRYLOV, 3, 10*3, &qp);
     qp.verbose = 1;
 
-    struct trlib_driver_problem_dense* problem = (struct trlib_driver_problem_dense*) qp.problem;
+    struct trlib_test_problem_dense* problem = (struct trlib_test_problem_dense*) qp.problem;
     double *hess = problem->hess; double *grad = problem->grad;
 
     hess[0] = 1.0; hess[1] = 0.0; hess[2] = 4.0;
@@ -21,17 +21,17 @@ START_TEST (test_3d_easy)
     qp.radius = 0.5;
     qp.reentry = 1;
     trlib_test_solve_check_qp(&qp, "Easy Case 3D Warmstart", 10*TRLIB_EPS, 1e1*TRLIB_EPS);
-    trlib_driver_free_qp(&qp);
+    trlib_test_free_qp(&qp);
 }
 END_TEST
 
 START_TEST (test_3d_near_hard)
 {
-    struct trlib_driver_qp qp;
-    trlib_driver_malloc_qp(TRLIB_DRIVER_DENSE_QP, TRLIB_DRIVER_SOLVER_KRYLOV, 3, 10*3, &qp);
+    struct trlib_test_qp qp;
+    trlib_test_malloc_qp(TRLIB_TEST_DENSE_QP, TRLIB_TEST_SOLVER_KRYLOV, 3, 10*3, &qp);
     qp.verbose = 1;
 
-    struct trlib_driver_problem_dense* problem = (struct trlib_driver_problem_dense*) qp.problem;
+    struct trlib_test_problem_dense* problem = (struct trlib_test_problem_dense*) qp.problem;
     double *hess = problem->hess; double *grad = problem->grad;
 
     hess[0] = 1.0; hess[1] = 0.0; hess[2] = 4.0;
@@ -46,17 +46,17 @@ START_TEST (test_3d_near_hard)
     qp.radius = 0.5;
     qp.reentry = 1;
     trlib_test_solve_check_qp(&qp, "Near Hard 3D Warmstart", 1e7*TRLIB_EPS, 1e1*TRLIB_EPS);
-    trlib_driver_free_qp(&qp);
+    trlib_test_free_qp(&qp);
 }
 END_TEST
 
 START_TEST (test_3d_hard)
 {
-    struct trlib_driver_qp qp;
-    trlib_driver_malloc_qp(TRLIB_DRIVER_DENSE_QP, TRLIB_DRIVER_SOLVER_KRYLOV, 3, 10*3, &qp);
+    struct trlib_test_qp qp;
+    trlib_test_malloc_qp(TRLIB_TEST_DENSE_QP, TRLIB_TEST_SOLVER_KRYLOV, 3, 10*3, &qp);
     qp.verbose = 1;
 
-    struct trlib_driver_problem_dense* problem = (struct trlib_driver_problem_dense*) qp.problem;
+    struct trlib_test_problem_dense* problem = (struct trlib_test_problem_dense*) qp.problem;
     double *hess = problem->hess; double *grad = problem->grad;
 
     hess[0] = 1.0; hess[1] = 0.0; hess[2] = 4.0;
@@ -71,7 +71,7 @@ START_TEST (test_3d_hard)
     qp.radius = 0.5;
     qp.reentry = 1;
     //trlib_test_solve_check_qp(&qp, "Near Hard 3D Warmstart", 1e7*TRLIB_EPS, 1e1*TRLIB_EPS);
-    trlib_driver_free_qp(&qp);
+    trlib_test_free_qp(&qp);
 }
 END_TEST
 

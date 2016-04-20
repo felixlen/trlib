@@ -1,0 +1,98 @@
+#ifndef TRLIB_LEFTMOST_H
+#define TRLIB_LEFTMOST_H
+#include "trlib.h"
+#include "trlib_quadratic_zero.h"
+
+#define TRLIB_LMR_CONV          (0)
+#define TRLIB_LMR_ITMAX         (-1)
+
+/** @brief Computes smallest eigenvalue of symmetric tridiagonal matrix
+ *         \f$ T \in \mathbb R^{n\times n} \f$,
+ *         using a iteration based on last-pivot function of Parlett and Reid.
+ *
+ *  Let \f$ T = \begin{pmatrix} T_1 & & \\ & \ddots & \\ & & T_\ell \end{pmatrix} \f$
+ *  be composed into irreducible blocks \f$ T_i \f$.
+ *  
+ *  Calls #trlib_leftmost_irreducible on every irreducible block in case of coldstart,
+ *  in case of warmstart just updates information on \f$ T_\ell \f$.
+ *
+ *  @param[in]     nirblk number of irreducible blocks \f$ \ell \f$, ensure \f$ \ell > 0 \f$
+ *  @param[in]     irblk pointer to indices of irreducible blocks, length `nirblk+1`:
+ *                 - `irblk[i]` is the start index of block \f$ i \f$ in \p diag and \p offdiag
+ *                 - `irblk[i+1] - 1` is the stop index of block \f$ i \f$
+ *                 - `irblk[i+1] - irred[i]` the dimension \f$ n_\ell \f$ of block \f$ i \f$
+ *                 - `irblk[nirred]` the dimension of \f$ T \f$
+ *  @param[in]     diag pointer to array holding diagonal of \f$ T \f$, length `irblk[nirblk]`
+ *  @param[in]     offdiag pointer to array holding offdiagonal of \f$ T \f$, length `irblk[nirblk]`
+ *  @param[in]     warm set \c 1 if you want to update information about block \f$ \ell \f$, provide a values in @p leftmost_minor, @p ileftmost, @p leftmost; else \c 0
+ *  @param[in]     leftmost_minor smallest eigenvalue of principal \f$ (n_\ell-1)\times (n_\ell-1)\f$ submatrix of \f$ T_\ell \f$
+ *  @param[in]     itmax maximum number of iterations
+ *  @param[in]     tol_abs absolute stopping tolerance in Reid-Parlett zero finding, good default may be \f$ \texttt{macheps}^{3/4} \f$
+ *  @param[in]     verbose determines the verbosity level of output that is written to \p fout
+ *  @param[in]     unicode set to \c 1 if \p fout can handle unicode, otherwise to \c 0
+ *  @param[in]     prefix string that is printed before iteration output
+ *  @param[in]     fout output stream
+ *  @param[in,out] timing gives timing details, all values are multiples of nanoseconds, memory layout:
+ *                 index | value
+ *                 ------|--------------
+ *                 0     | total duration
+ *  @param[in,out] ileftmost index of block that corresponds to absolute smallest eigenvalue
+ *  @param[in,out] leftmost smallest eigenvalue of \f$ T \f$, length \f$ \ell \f$
+ *                 - on entry: allocated memory
+ *                 - on exit: `leftmost[i]` smallest eigenvalue of \f$ T_i \f$
+ *
+ *  @retval        #TRLIB_LMR_CONV success
+ *  @retval        #TRLIB_LMR_ITMAX iteration limit exceeded
+ */
+
+int trlib_leftmost(
+        int nirblk, int *irblk, double *diag, double *offdiag,
+        int warm, double leftmost_minor, int itmax, double tol_abs,
+        int verbose, int unicode, char *prefix, FILE *fout,
+        long *timing, int *ileftmost, double *leftmost);
+
+/** @brief Computes smallest eigenvalue of irreducible symmetric tridiagonal matrix
+ *         \f$ T \in \mathbb R^{n\times n} \f$,
+ *         using a iteration based on last-pivot function of Parlett and Reid.
+ *  
+ *  Method is sketched on p. 516 in:
+ *  >   Gould, Lucidi, Roma, Toint; SIAM J. Optim. 1999, Vol. 9, No. 2, pp. 504-525,
+ *  >   [doi:10.1137/S1052623497322735](http://dx.doi.org/10.1137/S1052623497322735):
+ *  >   _Solving The Trust-Region Subproblem Using The Lanczos Method_
+ *
+ *  Note that this function most likely will fail in the case of a reducible matrix
+ *  (\p offdiag contains 0).
+ *
+ *  Convergence
+ *  -----------
+ *  Convergence is reported if \f$ \texttt{up}-\texttt{low} \le \texttt{tol_abs} * \max\{1, \vert \texttt{low} \vert, \vert \texttt{up} \vert \} \f$ or \f$ \texttt{prlp} \le \texttt{tol_abs} \f$, \f$ \texttt{low} \f$ and \f$ \texttt{up} \f$ denote bracket values enclosing the leftmost eigenvalue and \f$ \texttt{prlp} \f$ denotes the last-pivot function value used in root finding.
+ *
+ *  @param[in]     n dimension, ensure \f$ n > 0 \f$
+ *  @param[in]     diag pointer to array holding diagonal of \f$ T \f$, length \p n
+ *  @param[in]     offdiag pointer to array holding offdiagonal of \f$ T \f$, length \p n-1
+ *  @param[in]     warm set \c 1 if you provide a valid value in @p leftmost_minor, else \c 0
+ *  @param[in]     leftmost_minor smallest eigenvalue of principal \f$ (n-1)\times (n-1)\f$ submatrix of \f$ T \f$
+ *  @param[in]     itmax maximum number of iterations
+ *  @param[in]     tol_abs absolute stopping tolerance in Reid-Parlett zero finding, good default may be \f$ \texttt{macheps}^{3/4} \f$
+ *  @param[in]     verbose determines the verbosity level of output that is written to \p fout
+ *  @param[in]     unicode set to \c 1 if \p fout can handle unicode, otherwise to \c 0
+ *  @param[in]     prefix string that is printed before iteration output
+ *  @param[in]     fout output stream
+ *  @param[in,out] timing gives timing details, all values are multiples of nanoseconds, memory layout:
+ *                 index | value
+ *                 ------|--------------
+ *                 0     | total duration
+ *  @param[out]    leftmost smallest eigenvalue of \f$ T \f$
+ *  @param[out]    iter_pr number of Parlett-Reid iterations
+ *
+ *  @retval        #TRLIB_LMR_CONV success
+ *  @retval        #TRLIB_LMR_ITMAX iteration limit exceeded
+ */
+
+int trlib_leftmost_irreducible(
+        int n, double *diag, double *offdiag,
+        int warm, double leftmost_minor, int itmax, double tol_abs,
+        int verbose, int unicode, char *prefix, FILE *fout,
+        long *timing, double *leftmost, int *iter_pr);
+
+#endif

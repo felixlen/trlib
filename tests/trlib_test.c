@@ -1,6 +1,6 @@
-#include "trlib_driver.h"
+#include "trlib_test.h"
 
-int trlib_driver_malloc_qp(int qptype, int qpsolver, int n, int itmax, struct trlib_driver_qp *qp) {
+int trlib_test_malloc_qp(int qptype, int qpsolver, int n, int itmax, struct trlib_test_qp *qp) {
     qp->qptype = qptype;
     qp->qpsolver = qpsolver;
     qp->radius = 0.0;
@@ -19,17 +19,17 @@ int trlib_driver_malloc_qp(int qptype, int qpsolver, int n, int itmax, struct tr
     qp->tol_rel_b = TRLIB_EPS_POW_4;
     qp->tol_abs_b = 0.0;
     qp->ctl_invariant = TRLIB_CLC_NO_EXP_INV;
-    if(qptype == TRLIB_DRIVER_DENSE_QP) {
-        qp->problem = (void *)malloc(sizeof(struct trlib_driver_problem_dense));
-        struct trlib_driver_problem_dense* problem = (struct trlib_driver_problem_dense *)qp->problem;
+    if(qptype == TRLIB_TEST_DENSE_QP) {
+        qp->problem = (void *)malloc(sizeof(struct trlib_test_problem_dense));
+        struct trlib_test_problem_dense* problem = (struct trlib_test_problem_dense *)qp->problem;
         problem->n = n;
         problem->hess = calloc(n*n, sizeof(double));
         problem->grad = calloc(n, sizeof(double));
         problem->sol = malloc(n*sizeof(double));
     }
-    if(qptype == TRLIB_DRIVER_TRI_QP) {
-        qp->problem = (void *)malloc(sizeof(struct trlib_driver_problem_tri));
-        struct trlib_driver_problem_tri* problem = (struct trlib_driver_problem_tri *)qp->problem;
+    if(qptype == TRLIB_TEST_TRI_QP) {
+        qp->problem = (void *)malloc(sizeof(struct trlib_test_problem_tri));
+        struct trlib_test_problem_tri* problem = (struct trlib_test_problem_tri *)qp->problem;
         problem->n = n;
         problem->diag = calloc(n, sizeof(double));
         problem->offdiag = calloc(n-1, sizeof(double));
@@ -45,17 +45,17 @@ int trlib_driver_malloc_qp(int qptype, int qpsolver, int n, int itmax, struct tr
         problem->warm_fac0 = 0;
         problem->pos_def = 0;
     }
-    if(qptype == TRLIB_DRIVER_OP_QP) {
-        qp->problem = (void *)malloc(sizeof(struct trlib_driver_problem_op));
-        struct trlib_driver_problem_op* problem = (struct trlib_driver_problem_op *)qp->problem;
+    if(qptype == TRLIB_TEST_OP_QP) {
+        qp->problem = (void *)malloc(sizeof(struct trlib_test_problem_op));
+        struct trlib_test_problem_op* problem = (struct trlib_test_problem_op *)qp->problem;
         problem->n = n;
         problem->grad = calloc(n, sizeof(double));
         problem->sol = malloc(n*sizeof(double));
     }
 
-    if(qpsolver == TRLIB_DRIVER_SOLVER_KRYLOV) {
-        qp->work = (void *)malloc(sizeof(struct trlib_driver_work_krylov));
-        struct trlib_driver_work_krylov * work = (struct trlib_driver_work_krylov *)qp->work;
+    if(qpsolver == TRLIB_TEST_SOLVER_KRYLOV) {
+        qp->work = (void *)malloc(sizeof(struct trlib_test_work_krylov));
+        struct trlib_test_work_krylov * work = (struct trlib_test_work_krylov *)qp->work;
         int iwork_size, fwork_size, h_pointer;
         trlib_krylov_memory_size(itmax, &iwork_size, &fwork_size, &h_pointer);
         work->iwork = malloc(iwork_size*sizeof(int));
@@ -67,9 +67,9 @@ int trlib_driver_malloc_qp(int qptype, int qpsolver, int n, int itmax, struct tr
         work->Q = malloc((itmax+1)*n*sizeof(double));
         work->orth_check = malloc((itmax+1)*(itmax+1)*sizeof(double));
     }
-    if(qpsolver == TRLIB_DRIVER_SOLVER_FACTOR) {
-        qp->work = (void *)malloc(sizeof(struct trlib_driver_work_factor));
-        struct trlib_driver_work_factor * work = (struct trlib_driver_work_factor *)qp->work;
+    if(qpsolver == TRLIB_TEST_SOLVER_FACTOR) {
+        qp->work = (void *)malloc(sizeof(struct trlib_test_work_factor));
+        struct trlib_test_work_factor * work = (struct trlib_test_work_factor *)qp->work;
         work->fwork = malloc(4*n*sizeof(double));
         work->ones = malloc(n*sizeof(double));
         work->nirblk = 0;
@@ -84,11 +84,11 @@ int trlib_driver_malloc_qp(int qptype, int qpsolver, int n, int itmax, struct tr
     return 0;
 }
 
-int trlib_driver_free_qp(struct trlib_driver_qp *qp) {
+int trlib_test_free_qp(struct trlib_test_qp *qp) {
     if(qp->prefix != NULL) { free(qp->prefix); }
     if(qp->timing != NULL) { free(qp->timing); }
-    if(qp->qptype == TRLIB_DRIVER_DENSE_QP) {
-        struct trlib_driver_problem_dense* problem = (struct trlib_driver_problem_dense *)qp->problem;
+    if(qp->qptype == TRLIB_TEST_DENSE_QP) {
+        struct trlib_test_problem_dense* problem = (struct trlib_test_problem_dense *)qp->problem;
         if(problem != NULL) {
             if(problem->hess != NULL) { free(problem->hess); }
             if(problem->grad != NULL) { free(problem->grad); }
@@ -96,8 +96,8 @@ int trlib_driver_free_qp(struct trlib_driver_qp *qp) {
             free(problem);
         }
     }
-    if(qp->qptype == TRLIB_DRIVER_TRI_QP) {
-        struct trlib_driver_problem_tri* problem = (struct trlib_driver_problem_tri *)qp->problem;
+    if(qp->qptype == TRLIB_TEST_TRI_QP) {
+        struct trlib_test_problem_tri* problem = (struct trlib_test_problem_tri *)qp->problem;
         if(problem != NULL) {
             if(problem->diag != NULL) { free(problem->diag); }
             if(problem->offdiag != NULL) { free(problem->offdiag); }
@@ -112,8 +112,8 @@ int trlib_driver_free_qp(struct trlib_driver_qp *qp) {
             free(problem);
         }
     }
-    if(qp->qptype == TRLIB_DRIVER_OP_QP) {
-        struct trlib_driver_problem_op* problem = (struct trlib_driver_problem_op *)qp->problem;
+    if(qp->qptype == TRLIB_TEST_OP_QP) {
+        struct trlib_test_problem_op* problem = (struct trlib_test_problem_op *)qp->problem;
         if(problem != NULL) {
             if(problem->grad != NULL) { free(problem->grad); }
             if(problem->sol != NULL) { free(problem->sol); }
@@ -123,8 +123,8 @@ int trlib_driver_free_qp(struct trlib_driver_qp *qp) {
         }
     }
 
-    if(qp->qpsolver == TRLIB_DRIVER_SOLVER_KRYLOV) {
-        struct trlib_driver_work_krylov * work = (struct trlib_driver_work_krylov *)qp->work;
+    if(qp->qpsolver == TRLIB_TEST_SOLVER_KRYLOV) {
+        struct trlib_test_work_krylov * work = (struct trlib_test_work_krylov *)qp->work;
         if(work != NULL) {
             if(work->iwork != NULL) { free(work->iwork); }
             if(work->fwork != NULL) { free(work->fwork); }
@@ -137,8 +137,8 @@ int trlib_driver_free_qp(struct trlib_driver_qp *qp) {
             free(work);
         }
     }
-    if(qp->qpsolver == TRLIB_DRIVER_SOLVER_FACTOR) {
-        struct trlib_driver_work_factor * work = (struct trlib_driver_work_factor *)qp->work;
+    if(qp->qpsolver == TRLIB_TEST_SOLVER_FACTOR) {
+        struct trlib_test_work_factor * work = (struct trlib_test_work_factor *)qp->work;
         if(work != NULL) {
             if(work->fwork != NULL) { free(work->fwork); }
             if(work->ones != NULL) { free(work->ones); }
@@ -151,21 +151,21 @@ int trlib_driver_free_qp(struct trlib_driver_qp *qp) {
     return 0;
 }
 
-int trlib_driver_solve_qp(struct trlib_driver_qp *qp) { 
-    if(qp->qpsolver == TRLIB_DRIVER_SOLVER_KRYLOV) {
-        struct trlib_driver_work_krylov * work = (struct trlib_driver_work_krylov *)qp->work;
+int trlib_test_solve_qp(struct trlib_test_qp *qp) { 
+    if(qp->qpsolver == TRLIB_TEST_SOLVER_KRYLOV) {
+        struct trlib_test_work_krylov * work = (struct trlib_test_work_krylov *)qp->work;
         int n; double *grad; double *sol; double *hess; double *diag; double *offdiag;
         void (*hv)(void *, int, double *, double *); double *userdata;
-        if(qp->qpsolver == TRLIB_DRIVER_DENSE_QP) { 
-            struct trlib_driver_problem_dense* problem = (struct trlib_driver_problem_dense *)qp->problem;
+        if(qp->qpsolver == TRLIB_TEST_DENSE_QP) { 
+            struct trlib_test_problem_dense* problem = (struct trlib_test_problem_dense *)qp->problem;
             n = problem->n; grad = problem->grad; sol = problem->sol; hess = problem->hess;
         }
-        if(qp->qptype == TRLIB_DRIVER_TRI_QP) {
-            struct trlib_driver_problem_tri* problem = (struct trlib_driver_problem_tri *)qp->problem;
+        if(qp->qptype == TRLIB_TEST_TRI_QP) {
+            struct trlib_test_problem_tri* problem = (struct trlib_test_problem_tri *)qp->problem;
             n = problem->n; grad = problem->grad; sol = problem->sol; diag = problem->diag; offdiag = problem->offdiag;
         }
-        if(qp->qptype == TRLIB_DRIVER_OP_QP) {
-            struct trlib_driver_problem_op* problem = (struct trlib_driver_problem_op *)qp->problem;
+        if(qp->qptype == TRLIB_TEST_OP_QP) {
+            struct trlib_test_problem_op* problem = (struct trlib_test_problem_op *)qp->problem;
             n = problem->n; grad = problem->grad; hv = problem->hv; userdata = problem->userdata; sol = problem->sol;
         }
         int init = 0; int inc = 1; int itp1 = 0;
@@ -194,13 +194,13 @@ int trlib_driver_solve_qp(struct trlib_driver_qp *qp) {
                     dcopy_(&n, grad, &inc, work->g, &inc);
                     v_dot_g = ddot_(&n, work->g, &inc, work->g, &inc);
                     dcopy_(&n, work->g, &inc, work->p, &inc); dscal_(&n, &minus, work->p, &inc); // p = -g
-                    if(qp->qptype == TRLIB_DRIVER_DENSE_QP) { 
+                    if(qp->qptype == TRLIB_TEST_DENSE_QP) { 
                         dgemv_("N", &n, &n, &one, hess, &n, work->p, &inc, &z, work->Hp, &inc); // Hp = H*p
                     }
-                    if(qp->qptype == TRLIB_DRIVER_TRI_QP) { 
+                    if(qp->qptype == TRLIB_TEST_TRI_QP) { 
                         dlagtm_("N", &n, &inc, &one, offdiag, diag, offdiag, work->p, &inc, &z, work->Hp, &inc); // Hp = H*p
                     }
-                    if(qp->qptype == TRLIB_DRIVER_OP_QP) {
+                    if(qp->qptype == TRLIB_TEST_OP_QP) {
                         hv(userdata, n, work->p, work->Hp); // Hp = H*p
                     }
                     p_dot_Hp = ddot_(&n, work->p, &inc, work->Hp, &inc);
@@ -229,13 +229,13 @@ int trlib_driver_solve_qp(struct trlib_driver_qp *qp) {
                 case TRLIB_CLA_UPDATE_DIR:
                     if (ityp == TRLIB_CLT_CG) { dscal_(&n, &flt2, work->p, &inc); daxpy_(&n, &minus, work->g, &inc, work->p, &inc); } // p = -g + flt2 * p
                     if (ityp == TRLIB_CLT_L) { dcopy_(&n, work->g, &inc, work->p, &inc); dscal_(&n, &flt1, work->p, &inc); } // p = flt1*g
-                    if(qp->qptype == TRLIB_DRIVER_DENSE_QP) { 
+                    if(qp->qptype == TRLIB_TEST_DENSE_QP) { 
                         dgemv_("N", &n, &n, &one, hess, &n, work->p, &inc, &z, work->Hp, &inc); // Hp = H*p
                     }
-                    if(qp->qptype == TRLIB_DRIVER_TRI_QP) { 
+                    if(qp->qptype == TRLIB_TEST_TRI_QP) { 
                         dlagtm_("N", &n, &inc, &one, offdiag, diag, offdiag, work->p, &inc, &z, work->Hp, &inc); // Hp = H*p
                     }
-                    if(qp->qptype == TRLIB_DRIVER_OP_QP) {
+                    if(qp->qptype == TRLIB_TEST_OP_QP) {
                         hv(userdata, n, work->p, work->Hp); // Hp = H*p
                     }
                     p_dot_Hp = ddot_(&n, work->p, &inc, work->Hp, &inc);
@@ -254,10 +254,10 @@ int trlib_driver_solve_qp(struct trlib_driver_qp *qp) {
 
     }
 
-    if (qp->qpsolver == TRLIB_DRIVER_SOLVER_FACTOR) { 
+    if (qp->qpsolver == TRLIB_TEST_SOLVER_FACTOR) { 
         int inc = 1; double minus = -1.0;
-        struct trlib_driver_work_factor * work = (struct trlib_driver_work_factor *)qp->work;
-        struct trlib_driver_problem_tri* problem = (struct trlib_driver_problem_tri *)qp->problem;
+        struct trlib_test_work_factor * work = (struct trlib_test_work_factor *)qp->work;
+        struct trlib_test_problem_tri* problem = (struct trlib_test_problem_tri *)qp->problem;
 
         dcopy_(&problem->n, problem->grad, &inc, problem->neggrad, &inc); dscal_(&problem->n, &minus, problem->neggrad, &inc);
 
@@ -287,21 +287,21 @@ int trlib_driver_solve_qp(struct trlib_driver_qp *qp) {
     return 0;
 }
 
-int trlib_driver_check_optimality(struct trlib_driver_qp *qp) { 
+int trlib_test_check_optimality(struct trlib_test_qp *qp) { 
     int n; int nn; int nm1; int jj; double *sol; double *grad; double perturbed;
     double *hess;  double *hess_lam;
     double *diag; double *offdiag; double *diag_lam; double *offdiag_lam;
     int inc = 1; int ifail = 0; double one = 1.0;
     qp->pos_def_res = 0.0; perturbed = qp->lam + qp->pos_def_res;
-    if(qp->qptype == TRLIB_DRIVER_DENSE_QP) {
-        struct trlib_driver_problem_dense* problem = (struct trlib_driver_problem_dense *)qp->problem;
+    if(qp->qptype == TRLIB_TEST_DENSE_QP) {
+        struct trlib_test_problem_dense* problem = (struct trlib_test_problem_dense *)qp->problem;
         n = problem->n; nn = problem->n*problem->n; sol = problem->sol; hess = problem->hess; grad = problem->grad;
         hess_lam = malloc(nn*sizeof(double));
         dcopy_(&nn, hess, &inc, hess_lam, &inc);
         for(int ii = 0; ii < n; ++ii) { hess_lam[ii*n+ii] += perturbed; }
     }
-    if(qp->qptype == TRLIB_DRIVER_TRI_QP) {
-        struct trlib_driver_problem_tri* problem = (struct trlib_driver_problem_tri *)qp->problem;
+    if(qp->qptype == TRLIB_TEST_TRI_QP) {
+        struct trlib_test_problem_tri* problem = (struct trlib_test_problem_tri *)qp->problem;
         n = problem->n; nm1 = problem->n-1; diag = problem->diag; offdiag = problem->offdiag; grad = problem->grad; sol = problem->sol;
         diag_lam = malloc(n*sizeof(double)); offdiag_lam = malloc((n-1)*sizeof(double));
         dcopy_(&n, diag, &inc, diag_lam, &inc); dcopy_(&nm1, offdiag, &inc, offdiag_lam, &inc);
@@ -309,18 +309,18 @@ int trlib_driver_check_optimality(struct trlib_driver_qp *qp) {
     }
     jj = 0;
     while (1) {
-        if(qp->qptype == TRLIB_DRIVER_DENSE_QP) { dpotrf_("L", &n, hess_lam, &n, &ifail); }
-        if(qp->qptype == TRLIB_DRIVER_TRI_QP) { dpttrf_(&n, diag_lam, offdiag_lam, &ifail); }
+        if(qp->qptype == TRLIB_TEST_DENSE_QP) { dpotrf_("L", &n, hess_lam, &n, &ifail); }
+        if(qp->qptype == TRLIB_TEST_TRI_QP) { dpttrf_(&n, diag_lam, offdiag_lam, &ifail); }
         jj += 1;
         if (ifail == 0) { break; }
         if ( jj > 500 ) { break; }
         if ( qp->pos_def_res == 0.0 ) { qp->pos_def_res = TRLIB_EPS; } else { qp->pos_def_res = 2.0*qp->pos_def_res; }
         perturbed = qp->lam + qp->pos_def_res;
-        if(qp->qptype == TRLIB_DRIVER_SOLVER_KRYLOV) {
+        if(qp->qptype == TRLIB_TEST_SOLVER_KRYLOV) {
             dcopy_(&nn, hess, &inc, hess_lam, &inc);
             for(int ii = 0; ii < n; ++ii) { hess_lam[ii*n+ii] += perturbed; }
         }
-        if(qp->qptype == TRLIB_DRIVER_TRI_QP) {
+        if(qp->qptype == TRLIB_TEST_TRI_QP) {
             dcopy_(&n, diag, &inc, diag_lam, &inc); dcopy_(&nm1, offdiag, &inc, offdiag_lam, &inc);
             for(int ii = 0; ii < n; ++ii) { diag_lam[ii] += perturbed; }
         }
@@ -328,12 +328,12 @@ int trlib_driver_check_optimality(struct trlib_driver_qp *qp) {
 
     qp->tr_res = qp->radius - dnrm2_(&n, sol, &inc);
     double *resv = malloc(n*sizeof(double));
-    if(qp->qptype == TRLIB_DRIVER_DENSE_QP) {
+    if(qp->qptype == TRLIB_TEST_DENSE_QP) {
         dcopy_(&n, sol, &inc, resv, &inc);
         dgemv_("N", &n, &n, &one, hess, &n, sol, &inc, &(qp->lam), resv, &inc);
         daxpy_(&n, &one, grad, &inc, resv, &inc);
     }
-    if(qp->qptype == TRLIB_DRIVER_TRI_QP) {
+    if(qp->qptype == TRLIB_TEST_TRI_QP) {
         dcopy_(&n, grad, &inc, resv, &inc);
         qp->kkt_res = dnrm2_(&n, resv, &inc);
         dcopy_(&n, diag, &inc, diag_lam, &inc); dcopy_(&n, offdiag, &inc, offdiag_lam, &inc);
@@ -342,19 +342,19 @@ int trlib_driver_check_optimality(struct trlib_driver_qp *qp) {
     }
     qp->kkt_res = dnrm2_(&n, resv, &inc);
 
-    if(qp->qptype == TRLIB_DRIVER_DENSE_QP) {
+    if(qp->qptype == TRLIB_TEST_DENSE_QP) {
         dcopy_(&n, grad, &inc, resv, &inc); perturbed = 2.0; dscal_(&n, &perturbed, resv, &inc); perturbed = 1.0; // w <-- 2 grad
         dgemv_("N", &n, &n, &one, hess, &n, sol, &inc, &one, resv, &inc); // w <-- H*sol + w
         qp->obj_check = ddot_(&n, sol, &inc, resv, &inc); qp->obj_check = 0.5*qp->obj_check; // obj = .5*(sol, w)
     }
-    if(qp->qptype == TRLIB_DRIVER_TRI_QP) {
+    if(qp->qptype == TRLIB_TEST_TRI_QP) {
         dcopy_(&n, grad, &inc, resv, &inc); perturbed = 2.0; dscal_(&n, &perturbed, resv, &inc); perturbed = 1.0; // w <-- 2 grad
         dlagtm_("N", &n, &inc, &one, offdiag, diag, offdiag, sol, &n, &one, resv, &n); // w <-- T*sol + w
         qp->obj_check = ddot_(&n, sol, &inc, resv, &inc); qp->obj_check = 0.5*qp->obj_check; // obj = .5*(sol, w)
     }
 
-    if(qp->qpsolver == TRLIB_DRIVER_SOLVER_KRYLOV) {
-        struct trlib_driver_work_krylov * work = (struct trlib_driver_work_krylov *)qp->work;
+    if(qp->qpsolver == TRLIB_TEST_SOLVER_KRYLOV) {
+        struct trlib_test_work_krylov * work = (struct trlib_test_work_krylov *)qp->work;
         for(int ii = 0; ii < qp->iter+1; ++ii) {
             for(int jj = 0; jj < ii+1; ++jj) {
                 work->orth_check[ii*(qp->iter+1)+jj] = ddot_(&n, work->Q+ii*n, &inc, work->Q+jj*n, &inc);
@@ -367,16 +367,131 @@ int trlib_driver_check_optimality(struct trlib_driver_qp *qp) {
         qp->orth_res = qp->orth_res/(qp->iter+1);
     }
 
-    if(qp->qptype == TRLIB_DRIVER_DENSE_QP) { free(hess_lam); }
-    if(qp->qptype == TRLIB_DRIVER_TRI_QP) { free(diag_lam); free(offdiag_lam); }
+    if(qp->qptype == TRLIB_TEST_DENSE_QP) { free(hess_lam); }
+    if(qp->qptype == TRLIB_TEST_TRI_QP) { free(diag_lam); free(offdiag_lam); }
     free(resv);
 
     return 0; 
 }
 
 // it seems that for some reason this construction is needed from cython
-int trlib_driver_problem_set_hvcb(struct trlib_driver_problem_op* problem, void *userdata, void (*hv_cb)(void *, int, double *, double *)) {
+int trlib_test_problem_set_hvcb(struct trlib_test_problem_op* problem, void *userdata, void (*hv_cb)(void *, int, double *, double *)) {
     problem->userdata = userdata;
     problem->hv = hv_cb;
     return 0;
 }
+
+void trlib_test_solve_check_qp(struct trlib_test_qp *qp, char *name, double tol, double lanczos_tol) {
+    qp->stream = stderr;
+    trlib_test_solve_qp(qp);
+
+    trlib_test_check_optimality(qp);
+
+    printf("\n*************************************************************\n");
+    printf("* Test Case   %-46s*\n", name);
+    printf("*   Exit code:          %-2d (%-2d)%29s*\n", qp->ret, qp->sub_fail, "");
+    printf("*   Objective:       %15e%15e%9s*\n", qp->obj, qp->obj_check, "");
+    printf("*   TR radius:       %15e%24s*\n", qp->radius, "");
+    printf("*   multiplier:      %15e%24s*\n", qp->lam, "");
+    if (!qp->equality) { printf("*   TR residual:     %15e (inequality requested)%1s*\n", qp->tr_res, ""); }
+    else { printf("*   TR resiudal:     %15e (equality requested)%3s*\n", qp->tr_res, ""); }
+    printf("*   pos def perturb: %15e%24s*\n", qp->pos_def_res, "");
+    printf("*   KKT residual:    %15e%24s*\n", qp->kkt_res, "");
+    if (qp->qpsolver == TRLIB_TEST_SOLVER_KRYLOV) { printf("*   ons residual:    %15e%24s*\n", qp->orth_res, ""); }
+    printf("*************************************************************\n\n");
+
+    // let us do a simple lanczos iteration ourselve and compare directions
+    if (qp->qpsolver == TRLIB_TEST_SOLVER_KRYLOV) {
+        int n; int inc = 1;
+        struct trlib_test_work_krylov * work = (struct trlib_test_work_krylov *)qp->work;
+        double igamma, gamma, delta, one, z;
+        double *g, *p, *pm, *Hp, *hess, *diag, *offdiag, *grad;
+        one = 1.0; z = 0.0;
+        if(qp->qptype == TRLIB_TEST_DENSE_QP) {
+            struct trlib_test_problem_dense* problem = (struct trlib_test_problem_dense *)qp->problem;
+            n = problem->n;
+            hess = problem->hess;
+            grad = problem->grad;
+        }
+        if(qp->qptype == TRLIB_TEST_TRI_QP) {
+            struct trlib_test_problem_tri* problem = (struct trlib_test_problem_tri *)qp->problem;
+            n = problem->n;
+            diag = problem->diag;
+            offdiag = problem->offdiag;
+            grad = problem->grad;
+        }
+        g = calloc(n, sizeof(double));
+        p = calloc(n, sizeof(double));
+        Hp = calloc(n, sizeof(double));
+        pm = calloc(n, sizeof(double));
+
+        memcpy(g, grad, n*sizeof(double));
+
+        if(lanczos_tol >= 0) {
+            for(int ii = 0; ii<qp->iter+1; ++ii) { 
+                gamma = dnrm2_(&n, g, &inc); igamma = 1.0/gamma;
+                memcpy(p, g, n*sizeof(double)); dscal_(&n, &igamma, p, &inc);
+                if(qp->qptype == TRLIB_TEST_DENSE_QP) { 
+                    dgemv_("N", &n, &n, &one, hess, &n, p, &inc, &z, Hp, &inc); // Hp = H*p
+                }
+                if(qp->qptype == TRLIB_TEST_TRI_QP) { 
+                    dlagtm_("N", &n, &inc, &one, offdiag, diag, offdiag, p, &inc, &z, Hp, &inc); // Hp = H*p
+                }
+                delta = ddot_(&n, p, &inc, Hp, &inc);
+                memcpy(g, Hp, n*sizeof(double)); 
+                igamma = -delta; daxpy_(&n, &igamma, p, &inc, g, &inc);
+                igamma = -gamma; daxpy_(&n, &igamma, pm, &inc, g, &inc);
+                memcpy(pm, p, n*sizeof(double));
+                for(int jj = 0; jj<n; ++jj){ ck_assert_msg( fabs(p[jj] - work->Q[jj+ii*n] ) <= lanczos_tol, "directions differ from those produced by stupid Lanczos, iterate %d, index %d, residual %e", ii, jj, p[jj] - work->Q[jj+ii*n]); }
+            }
+        }
+
+        if (g != NULL) { free(g); }
+        if (p != NULL) { free(p); }
+        if (Hp != NULL) { free(Hp); }
+        if (pm != NULL) { free(pm); }
+    }
+
+    #if TRLIB_TEST_PLOT
+        if(qp->qpsolver == TRLIB_TEST_SOLVER_KRYLOV) {
+            void *context = zmq_ctx_new ();
+            void *requester = zmq_socket (context, ZMQ_REQ);
+            zmq_connect (requester, "tcp://localhost:5678");
+
+            void *buf;
+            unsigned lenbuf;
+            char recbuffer[10];
+
+            struct trlib_test_work_krylov * work = (struct trlib_test_work_krylov *)qp->work;
+            TrlibMatrixMessage orth_msg = TRLIB_MATRIX_MESSAGE__INIT;
+            orth_msg.id = 0;
+            orth_msg.m = qp->iter+1;
+            orth_msg.n = qp->iter+1;
+            orth_msg.n_data = orth_msg.m*orth_msg.n;
+            orth_msg.data = work->orth_check;
+
+            lenbuf = trlib_matrix_message__get_packed_size(&orth_msg);
+            buf = malloc(lenbuf);
+            trlib_matrix_message__pack(&orth_msg, buf);
+            zmq_send(requester, buf, lenbuf, 0);
+            zmq_recv(requester, recbuffer, 10, 0);
+            free(buf);
+
+            zmq_close(requester);
+            zmq_ctx_destroy(context);
+        }
+    #endif
+
+    ck_assert_msg(fabs(qp->pos_def_res) <= tol, "%s: Expected positive semidefinite regularized hessian, got multiplier %e, pertubation needed %e", name, qp->lam, qp->pos_def_res);
+    if(qp->equality){
+        ck_assert_msg(fabs(qp->tr_res) <= tol, "%s: Expected satisfaction of trust region constraint, residual %e", name, qp->tr_res);
+    }
+    else{
+        ck_assert_msg(qp->tr_res >= -tol, "%s: Expected satisfaction of trust region constraint, residual %e", name, qp->tr_res);
+        ck_assert_msg(fabs((qp->tr_res)*qp->lam) <= tol, "%s: Expected satisfaction of complementary, violation %e, trust region residual %e, multiplier %e", name, (qp->tr_res)*qp->lam, qp->tr_res, qp->lam);
+    }
+    ck_assert_msg(fabs(qp->kkt_res) <= tol, "%s: Expected satisfaction of KKT condition, residual %e", name, qp->kkt_res);
+    ck_assert_msg(fabs(qp->obj - qp->obj_check) <= tol, "%s: Returned objective and computed objective mismatch: %e", name, qp->obj - qp->obj_check);
+
+}
+

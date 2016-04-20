@@ -63,7 +63,7 @@ Option                  | default | Description
 `TRLIB_TEST_PLOT`       | `OFF`   | use socket communication to send matrix data for plotting (only for debug purposes)
 
 ## Getting started
-- [C API](@ref src/trlib.c)
-- Python Library that shows how to use the low level reverse communication interface and the higher level driver interface
-  as well how to make use of these interfaces in a standard trust region algorithm: `examples/umin.py`
+- [C API](@ref src/trlib_krylov.c)
+- Python Library that shows how to use the low level reverse communication interface
+  and how to make use of it in a standard trust region algorithm: `examples/umin.py`
 - IPython Notebbok with standard trust region algorithm to minimize the Rosenbrock function: `examples/rosenbrock.ipynb`: `cd examples && ipython notebook rosenbrock`

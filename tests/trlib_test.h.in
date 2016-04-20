@@ -1,40 +1,47 @@
-#ifndef TRLIB_DRIVER_H
-#define TRLIB_DRIVER_H
+#ifndef TRLIB_TEST_H
+#define TRLIB_TEST_H
 
-#include "trlib.h"
+#cmakedefine TRLIB_TEST_PLOT 1
+#include <check.h>
+#include "trlib_krylov.h"
+#include "trlib_tri_factor.h"
+#if TRLIB_TEST_PLOT
+    #include <zmq.h>
+    #include "trlib_test_matrix_msg.pb-c.h"
+#endif
 
-#define TRLIB_DRIVER_DENSE_QP (0)
-#define TRLIB_DRIVER_TRI_QP   (1)
-#define TRLIB_DRIVER_OP_QP    (3)
+#define TRLIB_TEST_DENSE_QP (0)
+#define TRLIB_TEST_TRI_QP   (1)
+#define TRLIB_TEST_OP_QP    (3)
 
-#define TRLIB_DRIVER_SOLVER_KRYLOV (0)
-#define TRLIB_DRIVER_SOLVER_FACTOR (1)
+#define TRLIB_TEST_SOLVER_KRYLOV (0)
+#define TRLIB_TEST_SOLVER_FACTOR (1)
 
-struct trlib_driver_problem_dense {
+struct trlib_test_problem_dense {
     int n;                   ///< dimension
     double *hess;            ///< dense hessian
     double *grad;            ///< gradient of quadratic form
     double *sol;             ///< solution
 };
 
-struct trlib_driver_problem_tri {
+struct trlib_test_problem_tri {
     int n;                   ///< dimension
-    double *diag;            ///< diagonal in case of #TRLIB_DRIVER_TRI_QP
-    double *offdiag;         ///< offdiagonal in case of #TRLIB_DRIVER_TRI_QP
-    double *diag_fac;        ///< factorization of diagonal in case of #TRLIB_DRIVER_TRI_QP
-    double *offdiag_fac;     ///< factorization of offdiagonal in case of #TRLIB_DRIVER_TRI_QP
-    double *diag_fac0;       ///< factorization of diagonal in case of #TRLIB_DRIVER_TRI_QP
-    double *offdiag_fac0;    ///< factorization of offdiagonal in case of #TRLIB_DRIVER_TRI_QP
+    double *diag;            ///< diagonal in case of #TRLIB_TEST_TRI_QP
+    double *offdiag;         ///< offdiagonal in case of #TRLIB_TEST_TRI_QP
+    double *diag_fac;        ///< factorization of diagonal in case of #TRLIB_TEST_TRI_QP
+    double *offdiag_fac;     ///< factorization of offdiagonal in case of #TRLIB_TEST_TRI_QP
+    double *diag_fac0;       ///< factorization of diagonal in case of #TRLIB_TEST_TRI_QP
+    double *offdiag_fac0;    ///< factorization of offdiagonal in case of #TRLIB_TEST_TRI_QP
     double *grad;            ///< gradient of quadratic form
-    double *neggrad;         ///< negative of gradient in case of #TRLIB_DRIVER_TRI_QP
+    double *neggrad;         ///< negative of gradient in case of #TRLIB_TEST_TRI_QP
     double *sol;             ///< solution
     double *sol0;            ///< solution
-    int warm_fac;            ///< factorization is accurate in case of #TRLIB_DRIVER_TRI_QP
-    int warm_fac0;           ///< factorization is accurate in case of #TRLIB_DRIVER_TRI_QP
-    int pos_def;             ///< indicate if we know that hessian is positive definite in #TRLIB_DRIVER_TRI_QP
+    int warm_fac;            ///< factorization is accurate in case of #TRLIB_TEST_TRI_QP
+    int warm_fac0;           ///< factorization is accurate in case of #TRLIB_TEST_TRI_QP
+    int pos_def;             ///< indicate if we know that hessian is positive definite in #TRLIB_TEST_TRI_QP
 };
 
-struct trlib_driver_problem_op {
+struct trlib_test_problem_op {
     int n;                   ///< dimension
     double *grad;            ///< gradient
     double *sol;             ///< solution
@@ -42,7 +49,7 @@ struct trlib_driver_problem_op {
     void (*hv)(void *, int, double *, double *); ///< callback function for hessian vector product
 };
 
-struct trlib_driver_work_krylov {
+struct trlib_test_work_krylov {
     int *iwork;              ///< integer work space
     double *fwork;           ///< floating point workspace
     double *g;               ///< gradient
@@ -53,7 +60,7 @@ struct trlib_driver_work_krylov {
     double *orth_check;      ///< compute orthonormality of generated directions
 };
 
-struct trlib_driver_work_factor {
+struct trlib_test_work_factor {
     double *fwork;           ///< floating point workspace
     double *ones;            ///< array of all ones
     int nirblk;              ///< number of irreducible blocks
@@ -66,9 +73,9 @@ struct trlib_driver_work_factor {
     double lam0;             ///< multiplier corresponding to first block
 };
 
-struct trlib_driver_qp {
-    int qptype;              ///< either #TRLIB_DRIVER_DENSE_QP or #TRLIB_DRIVER_TRI_QP
-    int qpsolver;            ///< either #TRLIB_DRIVER_SOLVER_KRYLOV or #TRLIB_DRIVER_SOLVER_FACTOR
+struct trlib_test_qp {
+    int qptype;              ///< either #TRLIB_TEST_DENSE_QP or #TRLIB_TEST_TRI_QP
+    int qpsolver;            ///< either #TRLIB_TEST_SOLVER_KRYLOV or #TRLIB_TEST_SOLVER_FACTOR
     void* problem;           ///< problem specific storage
     void *work;              ///< solver specific workspace
     int itmax;               ///< maximum number of iterations
@@ -89,9 +96,9 @@ struct trlib_driver_qp {
     int ret;                 ///< return value from qp solver
     int sub_fail;            ///< return value from subroutines called by qp solver
     int iter;                ///< number of iterations
-    int ctl_invariant;       ///< in case of #TRLIB_DRIVER_SOLVER_KRYLOV behaviour towards multiple invariant subspaces
+    int ctl_invariant;       ///< in case of #TRLIB_TEST_SOLVER_KRYLOV behaviour towards multiple invariant subspaces
     double obj;              ///< objective
-    double obj_check;        ///< objective recomputed by trlib_driver_check_optimality
+    double obj_check;        ///< objective recomputed by trlib_test_check_optimality
     double pos_def_res;      ///< perturbation needed to obtain positive definiteness
     double kkt_res;          ///< KKT residual
     double tr_res;           ///< trust region residual
@@ -101,11 +108,12 @@ struct trlib_driver_qp {
 void dgemv_(char *trans, int *m, int *n, double *alpha, double *a, int *lda, double *x, int *incx, double *beta, double *y, int *incy);
 void dpotrf_(char *uplo, int *n, double *a, int *lda, int *info);
 
-int trlib_driver_malloc_qp(int qptype, int qpsolver, int n, int itmax, struct trlib_driver_qp *qp);
-int trlib_driver_free_qp(struct trlib_driver_qp *qp);
-int trlib_driver_solve_qp(struct trlib_driver_qp *qp);
-int trlib_driver_pos_def_perturb(struct trlib_driver_qp *qp);
-int trlib_driver_check_optimality(struct trlib_driver_qp *qp);
-int trlib_driver_problem_set_hvcb(struct trlib_driver_problem_op* problem, void *userdata, void (*hv_cb)(void *, int, double *, double *));
+int trlib_test_malloc_qp(int qptype, int qpsolver, int n, int itmax, struct trlib_test_qp *qp);
+int trlib_test_free_qp(struct trlib_test_qp *qp);
+int trlib_test_solve_qp(struct trlib_test_qp *qp);
+int trlib_test_pos_def_perturb(struct trlib_test_qp *qp);
+int trlib_test_check_optimality(struct trlib_test_qp *qp);
+int trlib_test_problem_set_hvcb(struct trlib_test_problem_op* problem, void *userdata, void (*hv_cb)(void *, int, double *, double *));
+void trlib_test_solve_check_qp(struct trlib_test_qp *qp, char *name, double tol, double lanczos_tol);
 
 #endif

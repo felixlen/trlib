@@ -1,0 +1,67 @@
+#ifndef TRLIB_EIGEN_INVERSE_H
+#define TRLIB_EIGEN_INVERSE_H
+#include "trlib.h"
+
+#define TRLIB_EIR_CONV          (0)
+#define TRLIB_EIR_ITMAX         (-1)
+#define TRLIB_EIR_FAIL_FACTOR   (-2)
+#define TRLIB_EIR_FAIL_LINSOLVE (-3)
+
+/** @brief Computes eigenvector to provided eigenvalue of symmetric tridiagonal matrix \f$ T \in \mathbb R^{n\times n} \f$,
+ *         using inverse iteration.
+ *
+ *  For a description of the method see <https://en.wikipedia.org/wiki/Inverse_iteration>.
+ *
+ *  Convergence
+ *  -----------
+ *  Convergence is reported if \f$ \vert \frac{1}{\Vert w_{i+1} \Vert} - \texttt{pert} \vert \le \texttt{tol_abs} \f$, where \f$ (T-\lambda I) w_{i+1} = v_i \f$, \f$ v_i \f$ the current normalized iterate and \f$ \texttt{pert} \f$ is the perturbation applied to the provided eigenvalue.
+ *
+ *  @param[in]     n dimension, ensure \f$ n > 0 \f$
+ *  @param[in]     diag pointer to array holding diagonal of \f$ T \f$, length \p n
+ *  @param[in]     offdiag pointer to array holding offdiagonal of \f$ T \f$, length \c n-1
+ *  @param[in]     lam_init estimation of eigenvalue corresponding to eigenvector to compute
+ *  @param[in]     itmax maximum number of iterations
+ *  @param[in]     tol_abs absolute stopping tolerance in inverse iteration, good default may be \f$ \sqrt{\texttt{macheps}} \f$
+ *  @param[in]     ones array with every value \c 1.0, length \p n
+ *  @param[in,out] diag_fac pointer to array holding diagonal of Cholesky factorization of \f$ T - \lambda I \f$, length \p n
+ *                 - on entry: allocated memory
+ *                 - on exit: factorization corresponding to computed eigenvalue @p lam
+ *  @param[in,out] offdiag_fac pointer to array holding offdiagonal of Cholesky factorization of \f$ T - \lambda I \f$, length \c n-1
+ *                 - on entry: allocated memory
+ *                 - on exit: factorization corresponding to computed eigenvalue @p lam
+ *  @param[in,out] eig pointer to array holding eigenvector, length \p n
+ *                 - on entry: random nonzero vector
+ *                 - on exit: eigenvector
+ *  @param[in]     verbose determines the verbosity level of output that is written to \p fout
+ *  @param[in]     unicode set to \c 1 if \p fout can handle unicode, otherwise to \c 0
+ *  @param[in]     prefix string that is printed before iteration output
+ *  @param[in]     fout output stream
+ *  @param[in,out] timing gives timing details, all values are multiples of nanoseconds, memory layout:
+ *                 index | value
+ *                 ------|------
+ *                 0     | total duration
+ *                 1     | copy
+ *                 2     | axpy
+ *                 3     | scal
+ *                 4     | nrm2
+ *                 5     | dot
+ *                 6     | pttrf
+ *                 7     | pttrs
+ *  @param[out]    lam_pert eigenvalue corresponding to eigenvector
+ *  @param[out]    pert perturbation applied to provided eigenvalue
+ *  @param[out]    iter_inv number of inverse iterations
+ *
+ *  @retval        #TRLIB_EIR_CONV          success
+ *  @retval        #TRLIB_EIR_ITMAX         iteration limit exceeded
+ *  @retval        #TRLIB_EIR_FAIL_FACTOR   failure on matrix factorization
+ *  @retval        #TRLIB_EIR_FAIL_LINSOLVE failure on backsolve
+ */
+
+int trlib_eigen_inverse(
+        int n, double *diag, double *offdiag, 
+        double lam_init, int itmax, double tol_abs,
+        double *ones, double *diag_fac, double *offdiag_fac,
+        double *eig, int verbose, int unicode, char *prefix, FILE *fout,
+        long *timing, double *lam_pert, double *pert, int *iter_inv);
+
+#endif

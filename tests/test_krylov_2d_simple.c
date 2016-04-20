@@ -2,11 +2,11 @@
 
 START_TEST (test_2d)
 {
-    struct trlib_driver_qp qp;
-    trlib_driver_malloc_qp(TRLIB_DRIVER_DENSE_QP, TRLIB_DRIVER_SOLVER_KRYLOV, 2, 10*2, &qp);
+    struct trlib_test_qp qp;
+    trlib_test_malloc_qp(TRLIB_TEST_DENSE_QP, TRLIB_TEST_SOLVER_KRYLOV, 2, 10*2, &qp);
     qp.verbose = 1;
 
-    struct trlib_driver_problem_dense* problem = (struct trlib_driver_problem_dense*) qp.problem;
+    struct trlib_test_problem_dense* problem = (struct trlib_test_problem_dense*) qp.problem;
     double *hess = problem->hess; double *grad = problem->grad;
 
     hess[0] = 1.107272566595126e3; hess[1] = 4.701123595505616e2;
@@ -20,7 +20,7 @@ START_TEST (test_2d)
     qp.radius = 0.5;
     qp.reentry = 1;
     trlib_test_solve_check_qp(&qp, "2D Simple Warmstart", 1e4*TRLIB_EPS, TRLIB_EPS);
-    trlib_driver_free_qp(&qp);
+    trlib_test_free_qp(&qp);
 }
 END_TEST
 

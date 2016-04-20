@@ -2,13 +2,13 @@
 
 START_TEST (test_rosenbrock)
 {
-    struct trlib_driver_qp qp;
-    trlib_driver_malloc_qp(TRLIB_DRIVER_DENSE_QP, TRLIB_DRIVER_SOLVER_KRYLOV, 100, 10*100, &qp);
+    struct trlib_test_qp qp;
+    trlib_test_malloc_qp(TRLIB_TEST_DENSE_QP, TRLIB_TEST_SOLVER_KRYLOV, 100, 10*100, &qp);
     qp.verbose = 1;
     qp.tol_rel_i = TRLIB_EPS;
     qp.tol_rel_b = TRLIB_EPS;
 
-    struct trlib_driver_problem_dense* problem = (struct trlib_driver_problem_dense*) qp.problem;
+    struct trlib_test_problem_dense* problem = (struct trlib_test_problem_dense*) qp.problem;
     double *hess = problem->hess; double *grad = problem->grad;
 
     hess[0] = 8.020000e+02;
@@ -419,7 +419,7 @@ START_TEST (test_rosenbrock)
     qp.radius = 0.1;
     qp.reentry = 1;
     trlib_test_solve_check_qp(&qp, "Lanczos Rosenbrock Warmstart", 1e7*TRLIB_EPS, 1e16*TRLIB_EPS);
-    trlib_driver_free_qp(&qp);
+    trlib_test_free_qp(&qp);
 }
 END_TEST
 

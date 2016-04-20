@@ -1,7 +1,12 @@
 find_package(BLAS REQUIRED)
 find_package(LAPACK REQUIRED)
 
-add_library(trlib SHARED ${CMAKE_SOURCE_DIR}/src/trlib.c ${CMAKE_SOURCE_DIR}/src/trlib_driver.c)
+add_library(trlib SHARED 
+    ${CMAKE_SOURCE_DIR}/src/trlib_krylov.c 
+    ${CMAKE_SOURCE_DIR}/src/trlib_tri_factor.c 
+    ${CMAKE_SOURCE_DIR}/src/trlib_leftmost.c 
+    ${CMAKE_SOURCE_DIR}/src/trlib_eigen_inverse.c 
+    ${CMAKE_SOURCE_DIR}/src/trlib_quadratic_zero.c)
 target_include_directories(trlib PUBLIC "${CMAKE_BINARY_DIR}/include")
 target_link_libraries(trlib ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES})
 set_property(TARGET trlib PROPERTY C_STANDARD 11)

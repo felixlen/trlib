@@ -1,4 +1,6 @@
-#include "trlib_test.h"
+#include <check.h>
+#include "trlib_leftmost.h"
+#include "trlib_eigen_inverse.h"
 
 START_TEST (test_trivial_exit)
 {

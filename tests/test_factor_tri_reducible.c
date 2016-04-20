@@ -2,11 +2,11 @@
 
 START_TEST (test_simple_reducible)
 {
-    struct trlib_driver_qp qp;
-    trlib_driver_malloc_qp(TRLIB_DRIVER_TRI_QP, TRLIB_DRIVER_SOLVER_FACTOR, 3, 10*3, &qp);
+    struct trlib_test_qp qp;
+    trlib_test_malloc_qp(TRLIB_TEST_TRI_QP, TRLIB_TEST_SOLVER_FACTOR, 3, 10*3, &qp);
     qp.verbose = 1;
 
-    struct trlib_driver_problem_tri* problem = (struct trlib_driver_problem_tri*) qp.problem;
+    struct trlib_test_problem_tri* problem = (struct trlib_test_problem_tri*) qp.problem;
     double *diag = problem->diag; double *offdiag = problem->offdiag; double *grad = problem->grad;
     
     diag[0] = 1.0; diag[1] = 2.0; diag[2] = -1.75; // first 1x1 block has eigenvalue 1.0; second 2x2 block has eigenvalue -2.0
@@ -25,7 +25,7 @@ START_TEST (test_simple_reducible)
     qp.radius = 0.1;
     trlib_test_solve_check_qp(&qp, "reducible", 1e5*TRLIB_EPS, TRLIB_EPS);
 
-    trlib_driver_free_qp(&qp);
+    trlib_test_free_qp(&qp);
 }
 END_TEST
 

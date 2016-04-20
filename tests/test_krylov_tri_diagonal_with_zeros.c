@@ -2,13 +2,13 @@
 
 START_TEST (test_expensive)
 {
-    struct trlib_driver_qp qp;
-    trlib_driver_malloc_qp(TRLIB_DRIVER_TRI_QP, TRLIB_DRIVER_SOLVER_KRYLOV, 300, 10*300, &qp);
+    struct trlib_test_qp qp;
+    trlib_test_malloc_qp(TRLIB_TEST_TRI_QP, TRLIB_TEST_SOLVER_KRYLOV, 300, 10*300, &qp);
     qp.tol_rel_i = TRLIB_EPS;
     qp.tol_rel_b = TRLIB_EPS;
     qp.verbose = 1;
 
-    struct trlib_driver_problem_tri* problem = (struct trlib_driver_problem_tri*) qp.problem;
+    struct trlib_test_problem_tri* problem = (struct trlib_test_problem_tri*) qp.problem;
     double *diag = problem->diag; double *offdiag = problem->offdiag; double *grad = problem->grad;
     
     diag[0] = 2.0; diag[1] = 2.0; diag[2] = 2.0;
@@ -21,7 +21,7 @@ START_TEST (test_expensive)
     qp.radius = 1e3;
     trlib_test_solve_check_qp(&qp, "Warmstart diagonal with zeros", 1e7*TRLIB_EPS, -1.0);
 
-    trlib_driver_free_qp(&qp);
+    trlib_test_free_qp(&qp);
 }
 END_TEST
 

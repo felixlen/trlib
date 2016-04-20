@@ -1,0 +1,145 @@
+#ifndef TRLIB_TRI_FACTOR_H
+#define TRLIB_TRI_FACTOR_H
+#include "trlib.h"
+#include "trlib_leftmost.h"
+#include "trlib_eigen_inverse.h"
+
+#define TRLIB_TTR_CONV_BOUND    (0)
+#define TRLIB_TTR_CONV_INTERIOR (1)
+#define TRLIB_TTR_HARD          (2)
+#define TRLIB_TTR_NEWTON_BREAK  (3)
+#define TRLIB_TTR_ITMAX         (-1)
+#define TRLIB_TTR_FAIL_FACTOR   (-2)
+#define TRLIB_TTR_FAIL_LINSOLVE (-3)
+#define TRLIB_TTR_FAIL_EIG      (-4)
+#define TRLIB_TTR_FAIL_LM       (-5)
+#define TRLIB_TTR_FAIL_HARD     (-10)
+
+/** @brief Solves tridiagonal trust region subproblem
+ *
+ *  Computes minimizer to
+ * 
+ *  \f$ \frac 12 \min \langle h, T h \rangle + \langle g, h \rangle \f$
+ *  subject to the trust region constraint \f$ \Vert h \Vert \le r \f$,
+ *  where \f$ T \in \mathbb R^{n \times n} \f$ is symmetric tridiagonal.
+ *
+ *  Let \f$ T = \begin{pmatrix} T_1 & & \\ & \ddots & \\ & & T_\ell \end{pmatrix} \f$
+ *  be composed into irreducible blocks \f$ T_i \f$.
+ * 
+ *  The minimizer is a global minimizer (modulo floating point).
+ * 
+ *  The algorithm is the Moré-Sorensen-Method as decribed as Algorithm 5.2 in:
+ *  >   Gould, Lucidi, Roma, Toint; SIAM J. Optim. 1999, Vol. 9, No. 2, pp. 504-525,
+ *  >   [doi:10.1137/S1052623497322735](http://dx.doi.org/10.1137/S1052623497322735):
+ *  >   _Solving The Trust-Region Subproblem Using The Lanczos Method_
+ *
+ *  Convergence
+ *  -----------
+ *  Exit with success is reported in several cases:
+ *  - interior solution: the stationary point \f$ T h = - g \f$ is suitable, iterative refinement is used in the solution of this system.
+ *  - hard case: the smallest eigenvalue \f$ -\theta \f$ was found to be degenerate and \f$ h = v + \alpha w \f$ is returned with \f$ v \f$ solution of \f$ (T + \theta I) v = -g \f$, \f$ w \f$ eigenvector corresponding to \f$ - \theta \f$ and \f$ \alpha \f$ chosen to satisfy the trust region constraint and being a minimizer.
+ *  - boundary and hard case: convergence in Newton iteration is reported if \f$ \Vert h(\lambda) \Vert - r \le \texttt{tol_rel} \, r \f$ with \f$ (T+\lambda I) h(\lambda) = -g \f$, Newton breakdown reported if \f$ \vert d\lambda \vert \le \texttt{macheps} \vert \lambda \vert \f$.
+ *
+ *  @param[in]     nirblk number of irreducible blocks \f$ \ell \f$, ensure \f$ \ell > 0 \f$
+ *  @param[in]     irblk pointer to indices of irreducible blocks, length `nirblk+1`:
+ *                 - `irblk[i]` is the start index of block \f$ i \f$ in \p diag and \p offdiag
+ *                 - `irblk[i+1] - 1` is the stop index of block \f$ i \f$
+ *                 - `irblk[i+1] - irred[i]` the dimension \f$ n_\ell \f$ of block \f$ i \f$
+ *                 - `irblk[nirred]` the dimension of \f$ T \f$
+ *  @param[in]     diag pointer to array holding diagonal of \f$ T \f$, length \p n
+ *  @param[in]     offdiag pointer to array holding offdiagonal of \f$ T \f$, length \p n-1
+ *  @param[in]     neglin pointer to array holding \f$ -g \f$, length \p n
+ *  @param[in]     radius trust region constraint radius \f$ r \f$
+ *  @param[in]     itmax maximum number of Newton iterations
+ *  @param[in]     tol_rel relative stopping tolerance in Newton iteration for @p lam, good default may be \f$ \texttt{macheps} \f$
+ *  @param[in]     pos_def set \c 1 if you know \f$ T \f$ to be positive definite, otherwise \c 0
+ *  @param[in]     equality set \c 1 if you want to enfore trust region constraint as equality, otherwise \c 0
+ *  @param[in,out] warm0 set \c 1 if you provide a valid value in @p lam0, otherwise \c 0
+ *  @param[in,out] lam0 Lagrange multiplier such that \f$ T_0+ \mathtt{lam0} I\f$ positive definite
+ *                 and \f$ (T_0+ \mathtt{lam0} I) \mathtt{sol0} = \mathtt{neglin} \f$
+ *                 - on entry: estimate suitable for warmstart
+ *                 - on exit: computed multiplier
+ *  @param[in,out] warm set \c 1 if you provide a valid value in @p lam, otherwise \c 0
+ *  @param[in,out] lam Lagrange multiplier such that \f$ T+ \mathtt{lam} I\f$ positive definite
+ *                 and \f$ (T+ \mathtt{lam} I) \mathtt{sol} = \mathtt{neglin} \f$
+ *                 - on entry: estimate suitable for warmstart
+ *                 - on exit: computed multiplier
+ *  @param[in,out] warm_leftmost
+ *                 - on entry: set \c 1 if you provide a valid value in leftmost section in @p fwork
+ *                 - on exit: \c 1 if leftmost section in @p fwork holds valid exit value, otherwise \c 0
+ *  @param[in,out] ileftmost: index to block with smallest leftmost eigenvalue
+ *  @param[in,out] leftmost: array holding leftmost eigenvalues of blocks
+ *  @param[in,out] warm_fac0 set \c 1 if you provide a valid factoricization in @p diag_fac0, @p offdiag_fac0
+ *  @param[in,out] diag_fac0 pointer to array holding diagonal of Cholesky factorization of \f$ T_0 + \texttt{lam0} I \f$, length \p irblk[1]
+ *                 - on entry: factorization corresponding to provided estimation @p lam0 on entry
+ *                 - on exit: factorization corresponding to computed multiplier @p lam0
+ *  @param[in,out] offdiag_fac0 pointer to array holding offdiagonal of Cholesky factorization of \f$ T_0 + \texttt{lam0} I \f$, length \p irblk[1]-1
+ *                 - on entry: factorization corresponding to provided estimation @p lam0 on entry
+ *                 - on exit: factorization corresponding to computed multiplier @p lam0
+ *  @param[in,out] warm_fac set \c 1 if you provide a valid factoricization in @p diag_fac, @p offdiag_fac
+ *  @param[in,out] diag_fac pointer to array of length \p n that holds the following:
+ *                 - let \f$ j = \texttt{ileftmost} \f$ and \f$ \theta = - \texttt{leftmost[ileftmost]} \f$
+ *                 - on position \f$ 0, \ldots, \texttt{irblk[1]} \f$: diagonal of factorization of \f$ T_0 + \theta I \f$
+ *                 - other positions have to be allocated
+ * @param[in,out] offdiag_fac pointer to array of length \p n-1 that holds the following:
+ *                 - let \f$ j = \texttt{ileftmost} \f$ and \f$ \theta = - \texttt{leftmost[ileftmost]} \f$
+ *                 - on position \f$ 0, \ldots, \texttt{irblk[1]}-1 \f$: offdiagonal of factorization of \f$ T_0 + \theta I \f$
+ *                 - other positions have to be allocated
+ *  @param[in,out] sol0 pointer to array holding solution, length \p irblk[1]
+ *  @param[in,out] sol pointer to array holding solution, length \p n
+ *  @param[in]     ones array with every value \c 1.0, length \p n
+ *  @param[in,out] fwork floating point workspace, must be allocated on input and can be discarded on output, memory layout:
+ *                 start                                     | end (excl)                                | description
+ *                 ------------------------------------------|-------------------------------------------|------------
+ *                 \c 0                                      | `n`                                       | auxiliary vector
+ *                 `n`                                       | \f$                   2 \, \texttt{n} \f$ | holds diagonal of \f$ T + \lambda I \f$
+ *                 \f$                   2 \, \texttt{n} \f$ | \f$                   4 \, \texttt{n} \f$ | workspace for iterative refinement
+ *  @param[in]     refine set to \c 1 if iterative refinement should be used on solving linear systems, otherwise to \c 0
+ *  @param[in]     verbose determines the verbosity level of output that is written to \p fout
+ *  @param[in]     unicode set to \c 1 if \p fout can handle unicode, otherwise to \c 0
+ *  @param[in]     prefix string that is printed before iteration output
+ *  @param[in]     fout output stream
+ *  @param[in,out] timing gives timing details, all values are multiples of nanoseconds, memory layout:
+ *                 start | end (excl) | value
+ *                 ------|------------|--------------
+ *                 0     | 1          | total duration
+ *                 1     | 2          | copy
+ *                 2     | 3          | axpy
+ *                 3     | 4          | scal
+ *                 4     | 5          | nrm2
+ *                 5     | 6          | ddot
+ *                 6     | 7          | pttrf
+ *                 7     | 8          | pttrs
+ *                 8     | 9          | ptrfs
+ *                 9     | 10         | lagtm
+ *                 10    | 11         | \p timing from #trlib_leftmost_irreducible
+ *                 11    | 19         | \p timing from #trlib_eigen_inverse
+ *  @param[out]    obj objective function value at solution point
+ *  @param[out]    iter_newton number of Newton iterations
+ *  @param[out]    sub_fail status code of subroutine if failure occured in subroutines called
+ *
+ *  @retval        #TRLIB_TTR_CONV_BOUND    success with solution on boundary
+ *  @retval        #TRLIB_TTR_CONV_INTERIOR success with interior solution
+ *  @retval        #TRLIB_TTR_HARD          success, but hard case encountered and solution may be approximate  
+ *  @retval        #TRLIB_TTR_NEWTON_BREAK  most likely success with accurate result; premature end of Newton iteration due to tiny step
+ *  @retval        #TRLIB_TTR_ITMAX         iteration limit exceeded
+ *  @retval        #TRLIB_TTR_FAIL_FACTOR   failure on matrix factorization
+ *  @retval        #TRLIB_TTR_FAIL_LINSOLVE failure on backsolve
+ *  @retval        #TRLIB_TTR_FAIL_EIG      failure on eigenvalue computation. status code of #trlib_eigen_inverse in @p sub_fail
+ *  @retval        #TRLIB_TTR_FAIL_LM       failure on leftmost eigenvalue computation. status code of #trlib_leftmost_irreducible in @p sub_fail
+ */
+
+int trlib_tri_factor_min(
+    int nirblk, int *irblk, double *diag, double *offdiag,
+    double *neglin, double radius, 
+    int itmax, double tol_rel, int pos_def, int equality,
+    int *warm0, double *lam0, int *warm, double *lam,
+    int *warm_leftmost, int *ileftmost, double *leftmost,
+    int *warm_fac0, double *diag_fac0, double *offdiag_fac0,
+    int *warm_fac, double *diag_fac, double *offdiag_fac,
+    double *sol0, double *sol, double *ones, double *fwork,
+    int refine,
+    int verbose, int unicode, char *prefix, FILE *fout,
+    long *timing, double *obj, int *iter_newton, int *sub_fail);
+
+#endif

@@ -1,0 +1,24 @@
+#ifndef TRLIB_QUADRATIC_ZERO_H
+#define TRLIB_QUADRATIC_ZERO_H
+#include "trlib.h"
+
+/** @brief Computes real zeros of normalized quadratic polynomial.
+ *
+ *  @param[in]     c_abs absolute coefficient
+ *  @param[in]     c_lin coefficinet of linear term
+ *  @param[in]     tol tolerance that indicates if ill-conditioning present, good default may be \f$ \texttt{macheps}^{3/4} \f$
+ *  @param[in]     verbose determines the verbosity level of output that is written to \p fout
+ *  @param[in]     unicode set to \c 1 if \p fout can handle unicode, otherwise to \c 0
+ *  @param[in]     prefix string that is printed before iteration output
+ *  @param[in]     fout output stream
+ *  @param[out]    t1 first zero, \f$ \texttt{t1} \le \texttt{t2} \f$
+ *  @param[out]    t2 second zero, \f$ \texttt{t1} \le \texttt{t2} \f$
+ *
+ *  @return        number of zeros
+ */
+
+int trlib_quadratic_zero(double c_abs, double c_lin, double tol,
+        int verbose, int unicode, char *prefix, FILE *fout,
+        double *t1, double *t2);
+
+#endif
