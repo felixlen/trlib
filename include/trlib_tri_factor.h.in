@@ -8,6 +8,7 @@
 #define TRLIB_TTR_CONV_INTERIOR (1)
 #define TRLIB_TTR_HARD          (2)
 #define TRLIB_TTR_NEWTON_BREAK  (3)
+#define TRLIB_TTR_HARD_INIT_LAM (4)
 #define TRLIB_TTR_ITMAX         (-1)
 #define TRLIB_TTR_FAIL_FACTOR   (-2)
 #define TRLIB_TTR_FAIL_LINSOLVE (-3)
@@ -114,6 +115,7 @@
  *  @retval        #TRLIB_TTR_CONV_INTERIOR success with interior solution
  *  @retval        #TRLIB_TTR_HARD          success, but hard case encountered and solution may be approximate  
  *  @retval        #TRLIB_TTR_NEWTON_BREAK  most likely success with accurate result; premature end of Newton iteration due to tiny step
+ *  @retval        #TRLIB_TTR_HARD_INIT_LAM hard case encountered without being able to find suitable initial \f$ \lambda \f$ for Newton iteration, returned approximate stationary point that maybe suboptimal
  *  @retval        #TRLIB_TTR_ITMAX         iteration limit exceeded
  *  @retval        #TRLIB_TTR_FAIL_FACTOR   failure on matrix factorization
  *  @retval        #TRLIB_TTR_FAIL_LINSOLVE failure on backsolve

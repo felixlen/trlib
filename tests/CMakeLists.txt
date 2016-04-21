@@ -27,6 +27,7 @@ if(CHECK_FOUND)
         factor_tri_simple_indef
         factor_tri_reducible
         factor_tri_expanding
+        factor_tri_narrow_lam
         krylov_2d_simple
         krylov_3d_all_cases 
         krylov_tri_simple

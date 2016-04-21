@@ -7,6 +7,7 @@
 #define TRLIB_CLR_CONV_INTERIOR (1)
 #define TRLIB_CLR_APPROX_HARD   (2)
 #define TRLIB_CLR_NEWTON_BREAK  (3)
+#define TRLIB_CLR_HARD_INIT_LAM (4)
 #define TRLIB_CLR_CONTINUE      (10)
 #define TRLIB_CLR_ITMAX         (-1)
 #define TRLIB_CLR_FAIL_FACTOR   (-3)
@@ -245,6 +246,7 @@
  *  @retval        #TRLIB_CLR_CONV_INTERIOR successful exit with converged interior solution, end reverse communication process
  *  @retval        #TRLIB_CLR_APPROX_HARD succesful exit with approximate solution, hard case occured, end reverse communication process
  *  @retval        #TRLIB_CLR_NEWTON_BREAK exit with breakdown in Newton iteration in #trlib_tri_factor_min, most likely converged to boundary solution
+ *  @retval        #TRLIB_TTR_HARD_INIT_LAM hard case encountered without being able to find suitable initial \f$ \lambda \f$ for Newton iteration, returned approximate stationary point that maybe suboptimal
  *  @retval        #TRLIB_CLR_ITMAX iteration limit exceeded, end reverse communication process
  *  @retval        #TRLIB_CLR_FAIL_FACTOR failure on factorization, end reverse communication process
  *  @retval        #TRLIB_CLR_FAIL_LINSOLVE failure on backsolve, end reverse communication process

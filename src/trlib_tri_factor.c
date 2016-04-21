@@ -45,7 +45,7 @@ int trlib_tri_factor_min(
     double *work = fwork+2*(irblk[nirblk]);          // workspace for iterative refinement
     double ferr = 0.0;                               // forward  error bound from iterative refinement
     double berr = 0.0;                               // backward error bound from iterative refinement
-    double dot = 0.0;                                // save dot products
+    double dot = 0.0, dot2 = 0.0;                    // save dot products
     double invD_norm_w_sq = 0.0;                     // || w ||_{D^-1}^2
 
     // FIXME: ensure diverse warmstarts work as expected
@@ -161,7 +161,41 @@ int trlib_tri_factor_min(
             }
             if (norm_sol0<radius) {
                 if(*lam0 == 0.0 && !equality) { ret = TRLIB_TTR_CONV_INTERIOR; }
-                else { TRLIB_PRINTLN_1(" \u03bb\u2080 = -leftmost = %e with \u2016h\u2080\u2016 = %e turned out to be unsuitable, should be in theory!", *lam0, norm_sol0) TRLIB_RETURN(TRLIB_TTR_FAIL_HARD) }
+                else { 
+                    TRLIB_PRINTLN_1(" \u03bb\u2080 = -leftmost = %e with \u2016h\u2080\u2016 = %e turned out to be unsuitable, should be in theory! Bail out with linear combination of stationary point and eigenvector", *lam0, norm_sol0)
+                    if(nirblk > 1) { ret = TRLIB_TTR_HARD_INIT_LAM; newton = 0; *lam0 = -*leftmost; }
+                    else {
+                        srand((unsigned) time(NULL));
+                        for( int kk = irblk[0]; kk < irblk[1]; ++kk ) { sol[kk] = ((double)rand()/(double)RAND_MAX); }
+                        *sub_fail = trlib_eigen_inverse(n0, diag, offdiag, 
+                                *leftmost, 10, TRLIB_EPS_POW_5, ones,
+                                diag_fac, offdiag_fac, sol, 
+                                verbose-2, unicode, " EI", NULL, eigen_timing, &ferr, &berr, &jj); // can savely overwrite ferr, berr, jj with results. only interesting: eigenvector
+                        if (*sub_fail != 0) { TRLIB_RETURN(TRLIB_TTR_FAIL_EIG) }
+                        // compute solution as linear combination of h0 and eigenvector
+                        // ||h0 + t*eig||^2 = ||h_0||^2 + t * <h0, eig> + t^2 = radius^2
+                        *lam = *lam0; // FIXME: better use lam_pert here?
+                        TRLIB_DDOT(dot, &n0, sol0, &inc, sol, &inc); // dot = <h0, eig>
+                        trlib_quadratic_zero( norm_sol0*norm_sol0 - radius*radius, 2.0*dot, TRLIB_EPS_POW_75, verbose - 3, unicode, prefix, fout, &ferr, &berr);
+                        // select solution that corresponds to smaller objective
+                        // quadratic as a function of t without offset
+                        // q(t) = 1/2 * leftmost * t^2 + (leftmost * <eig, h0> + <eig, lin>) * t
+                        TRLIB_DDOT(dot2, &n0, sol, &inc, neglin, &inc) // dot2 = - <eig, lin>
+                        if( .5*(*leftmost)*ferr*ferr + ((*leftmost)*dot - dot2)*ferr <= .5*(*leftmost)*berr*berr + ((*leftmost)*dot - dot2)*berr) {
+                            TRLIB_DAXPY(&n0, &ferr, sol, &inc, sol0, &inc)
+                        }
+                        else {
+                            TRLIB_DAXPY(&n0, &berr, sol, &inc, sol0, &inc)
+                        }
+                        TRLIB_DCOPY(&n0, sol0, &inc, sol, &inc) // sol <== sol0
+                        // compute objective. first store 2*gradient in w, then compute obj = .5*(sol, w)
+                        TRLIB_DCOPY(&n0, neglin, &inc, w, &inc) ferr = -2.0; TRLIB_DSCAL(&n0, &ferr, w, &inc) ferr = 1.0; // w <-- -2 neglin
+                        TRLIB_DLAGTM("N", &n0, &inc, &ferr, offdiag, diag, offdiag, sol, &n0, &ferr, w, &n0) // w <-- T*sol + w
+                        TRLIB_DDOT(dot, &n0, sol, &inc, w, &inc) *obj = 0.5*dot; // obj = .5*(sol, w)
+
+                        TRLIB_RETURN(TRLIB_TTR_HARD_INIT_LAM)
+                    }
+                }
             }
             else { newton = 1; }
             TRLIB_PRINTLN_1(" \u03bb\u2080 = %e suitable, \u2016h\u2080\u2016 = %e", *lam0, norm_sol0)
