@@ -279,6 +279,13 @@ int trlib_krylov_min(
                     *ityp = TRLIB_CLT_CG; *action = TRLIB_CLA_RETRANSF; returnvalue = TRLIB_CLR_FAIL_TTR; break;
                 }
 
+                ///* if tridiagonal problem cannot find suitable initial lambda it is most likely best to stop at this point
+                // * since this means that there is severe ill-conditioning and the user should better present a
+                // * better problem formulation. Continuing means most likely computing on garbage */
+                if (*exit_tri == TRLIB_TTR_HARD_INIT_LAM) {
+                    *ityp = TRLIB_CLT_CG; *action = TRLIB_CLA_RETRANSF; returnvalue = TRLIB_CLR_HARD_INIT_LAM; break;
+                }
+
                 // print some information
                 if (unicode) { TRLIB_PRINTLN_2("%s","") TRLIB_PRINTLN_1("%6s%6s%6s%14s%14s%14s%14s%14s%14s", " iter ", "inewton", " type ", "   objective  ", "   \u03b3\u1d62\u208a\u2081|h\u1d62|   ", "   leftmost   ", "      \u03bb       ", "      \u03b3       ", "      \u03b4       ") }
                 else { TRLIB_PRINTLN_2("%s","") TRLIB_PRINTLN_1("%6s%6s%6s%14s%14s%14s%14s%14s%14s", " iter ", "inewton", " type ", "   objective  ", "gam(i+1)|h(i)|", "   leftmost   ", "     lam      ", "    gamma     ", "    delta     ") }
@@ -293,6 +300,7 @@ int trlib_krylov_min(
                 else {
                     // prepare next iteration
                     if (lanczos_switch < 0) { *ityp = TRLIB_CLT_CG; *status = TRLIB_CLS_CG_UPDATE_P; *flt1 = -1.0; *flt2 = beta[*ii]; *action = TRLIB_CLA_UPDATE_DIR; break; }
+                    else { *ityp = TRLIB_CLT_L; *action = TRLIB_CLA_TRIVIAL; *status = TRLIB_CLS_L_NEW_ITER; break; }
                 }
                 break;
 
@@ -343,6 +351,14 @@ int trlib_krylov_min(
                    exit with error and ask the user to get (potentially invalid) solution candidate by backtransformation */
                 if (*exit_tri < 0 && *exit_tri != TRLIB_TTR_NEWTON_BREAK) {
                     *ityp = TRLIB_CLT_L; *action = TRLIB_CLA_RETRANSF; returnvalue = TRLIB_CLR_FAIL_TTR; break;
+                }
+
+                ///* if tridiagonal problem cannot find suitable initial lambda it is most likely best to stop at this point
+                // * since this means that there is severe ill-conditioning and the user should better present a
+                // * better problem formulation. Continuing means most likely computing on garbage.
+                // * Ill-conditioning is likely since we already are in Lanczos mode. */
+                if (*exit_tri == TRLIB_TTR_HARD_INIT_LAM) {
+                    *ityp = TRLIB_CLT_LANCZOS; *action = TRLIB_CLA_RETRANSF; returnvalue = TRLIB_CLR_HARD_INIT_LAM; break;
                 }
 
                 /* convergence check is logical at this position, *but* requires gamma(ii+1).

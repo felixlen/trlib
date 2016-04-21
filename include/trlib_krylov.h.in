@@ -132,6 +132,7 @@
  *  @param[in]     equality set to \c 1 if trust region constraint should be enforced as equality
  *  @param[in]     itmax maximum number of iterations
  *  @param[in]     itmax_lanczos maximum number of Lanczos type iterations.
+ *                 You are strongly advised to set this to a small number (say 25) unless you know better.
  *                 Keep in mind that Lanczos type iteration are only performed when curvature
  *                 information is flat and Lanczos may amplify rounding errors without
  *                 reorthogonalization. If you allow a lot of Lanczos type iterations
