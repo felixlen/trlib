@@ -58,10 +58,10 @@ START_TEST (test_narrow_lam)
     offdiag[21] = 4.1671561737e+02;
     offdiag[22] = 9.1771701683e+02;
 
-    qp.radius = 8.095430810031050583575e+00;
+    qp.radius = 27.61886142844956;
     trlib_test_solve_check_qp(&qp, "narrow suitable lam", 1e8*TRLIB_EPS, TRLIB_EPS);
     
-    qp.radius = 0.5;
+    qp.radius = 10.0;
     trlib_test_solve_check_qp(&qp, "narrow suitable lam", 1e13*TRLIB_EPS, TRLIB_EPS);
 
     trlib_test_free_qp(&qp);
