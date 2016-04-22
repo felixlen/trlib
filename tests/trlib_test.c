@@ -242,11 +242,47 @@ int trlib_test_solve_qp(struct trlib_test_qp *qp) {
                     p_dot_Hp = ddot_(&n, work->p, &inc, work->Hp, &inc);
                     if ( ityp == TRLIB_CLT_L) { dcopy_(&n, work->p, &inc, work->Q+(qp->iter)*n, &inc); } // Q(iter*n:(iter+1)*n) = p
                     break;
+                case TRLIB_CLA_CONV_HARD:
+                    itp1 = qp->iter+1;
+                    double *temp = malloc(n*sizeof(double));
+                    if(qp->qptype == TRLIB_TEST_DENSE_QP) { 
+                        dgemv_("N", &n, &n, &one, hess, &n, sol, &inc, &z, temp, &inc); // temp = H*s
+                    }
+                    if(qp->qptype == TRLIB_TEST_TRI_QP) { 
+                        dlagtm_("N", &n, &inc, &one, offdiag, diag, offdiag, sol, &inc, &z, temp, &inc); // temp = H*s
+                    }
+                    if(qp->qptype == TRLIB_TEST_OP_QP) {
+                        hv(userdata, n, sol, temp); // temp = H*s
+                    }
+                    daxpy_(&n, &one, work->g, &inc, temp, &inc); // temp = H*s + g
+                    daxpy_(&n, &flt1, sol, &inc, temp, &inc); // temp = H*s + g + flt1*s
+                    v_dot_g = ddot_(&n, temp, &inc, temp, &inc);
+                    free(temp);
+                    break;
+
                 case TRLIB_CLA_NEW_KRYLOV:
-                    // FIXME: implement this, exit right now...
+                    // FIXME: implement proper reorthogonalization
+                    memset(work->g, 0, n*sizeof(double));
+                    memset(work->gm, 0, n*sizeof(double));
+                    memset(work->p, 0, n*sizeof(double));
+                    (work->g)[0] = 1.0;
+                    v_dot_g = ddot_(&n, work->g, &inc, work->g, &inc);
+                    double iv = 1.0/sqrt(v_dot_g);
+                    daxpy_(&n, &iv, work->g, &inc, work->p, &inc);
+                    if(qp->qptype == TRLIB_TEST_DENSE_QP) { 
+                        dgemv_("N", &n, &n, &one, hess, &n, work->p, &inc, &z, work->Hp, &inc); // Hp = H*p
+                    }
+                    if(qp->qptype == TRLIB_TEST_TRI_QP) { 
+                        dlagtm_("N", &n, &inc, &one, offdiag, diag, offdiag, work->p, &inc, &z, work->Hp, &inc); // Hp = H*p
+                    }
+                    if(qp->qptype == TRLIB_TEST_OP_QP) {
+                        hv(userdata, n, work->p, work->Hp); // Hp = H*p
+                    }
+                    p_dot_Hp = ddot_(&n, work->p, &inc, work->Hp, &inc);
+                    dcopy_(&n, work->p, &inc, work->Q+(qp->iter)*n, &inc); // Q(iter*n:(iter1)*n) = p
                     break;
             }
-            if( qp->ret < 10 || action == TRLIB_CLA_NEW_KRYLOV ) { break; }
+            if( qp->ret < 10 ) { break; }
         }
 
         qp->lam = work->fwork[7];

@@ -179,7 +179,7 @@ int trlib_krylov_min(
                     }
                     /* call trlib_tri_factor_min to solve tridiagonal problem, store solution candidate in h
                        the criterion to specify the maximum number of iterations is weird. it should not be dependent on problem size rather than condition of the hessian... */
-                    irblk[1] = *ii+1;
+                    irblk[*nirblk] = *ii+1;
                     *exit_tri = trlib_tri_factor_min(
                         *nirblk, irblk, delta, gamma, neglin, radius, 100+3*(*ii), TRLIB_EPS, *pos_def, equality,
                         warm_lam0, lam0, warm_lam, lam, warm_leftmost, ileftmost, leftmost,
@@ -206,15 +206,20 @@ int trlib_krylov_min(
                 *ityp = TRLIB_CLT_CG; *status = TRLIB_CLS_CG_UPDATE_GV; *flt1 = alpha[*ii]; *flt2= *cgl; *action = TRLIB_CLA_UPDATE_GRAD;
                 break;
             case TRLIB_CLS_CG_UPDATE_GV:
-                // if g == 0 and interior ---> convergence
-                // otherwise if g == 0: Krylov breakdown
+                // if g == 0: Krylov breakdown or convergence
                 // if g != 0 and (v,g) <= 0 ---> preconditioner indefinite
-                if(g_dot_g <= 0.0 && *interior) { *action = TRLIB_CLA_TRIVIAL; returnvalue = TRLIB_CLR_CONV_INTERIOR; break; }
                 if(g_dot_g > 0.0 && v_dot_g <= 0.0) { if (*interior) {*action = TRLIB_CLA_TRIVIAL;} else {*ityp = TRLIB_CLT_CG; *action = TRLIB_CLA_RETRANSF;} returnvalue = TRLIB_CLR_PCINDEF; break; } // exit if M^-1 indefinite
                 if (g_dot_g <= 0.0) { // Krylov iteration breaks down
                     if ( ctl_invariant <= TRLIB_CLC_NO_EXP_INV ) {
-                        *ityp = TRLIB_CLT_CG; *action = TRLIB_CLA_RETRANSF;
-                        returnvalue = TRLIB_CLR_FAIL_HARD; break;
+                        if ( *interior ) { *action = TRLIB_CLA_TRIVIAL; } else { *action = TRLIB_CLA_RETRANSF; }
+                        *ityp = TRLIB_CLT_CG; returnvalue = TRLIB_CLR_FAIL_HARD; break;
+                    }
+                    else { 
+                        // FIXME: add the case ctl_invariant == TRLIB_CLC_EXP_INV_GLO
+                        /* decide if a new invariant Krylov subspace should be investigated
+                           therefore compute actual gradient at current point and test for convergence */
+                        if(*interior) { *action = TRLIB_CLA_TRIVIAL; } else { *action = TRLIB_CLA_RETRANSF; }
+                        *ityp = TRLIB_CLT_CG; *status = TRLIB_CLS_CG_IF_IRBLK_P; returnvalue = TRLIB_CLR_CONTINUE; break;
                     }
                 }
 
@@ -264,13 +269,37 @@ int trlib_krylov_min(
                 if (*ii >= itmax) { if (*interior) {*action = TRLIB_CLA_TRIVIAL;} else {*action = TRLIB_CLA_RETRANSF;} *ityp = TRLIB_CLT_CG; returnvalue = TRLIB_CLR_ITMAX; break; }
                 *ityp = TRLIB_CLT_CG; *status = TRLIB_CLS_CG_NEW_ITER; *action = TRLIB_CLA_TRIVIAL;
                 break;
+            case TRLIB_CLS_CG_IF_IRBLK_P:
+                // compute convergence criterion
+                *flt1 = *lam; *ityp = TRLIB_CLT_CG; *action = TRLIB_CLA_CONV_HARD;
+                *status = TRLIB_CLS_CG_IF_IRBLK_C; returnvalue = TRLIB_CLR_CONTINUE; break;
+            case TRLIB_CLS_CG_IF_IRBLK_C:
+                // print iteration details
+                // first print headline if necessary
+                TRLIB_PRINTLN_2("%s","") TRLIB_PRINTLN_1("%6s%6s%6s%14s%14s%14s%14s", " iter ", "inewton", " type ", "   objective  ", "||g(lam)||_iM", "   leftmost   ", "     lam      ")
+                TRLIB_PRINTLN_2("%s","") TRLIB_PRINTLN_1("%6d%6d%6s%14e%14e%14e%14e", *ii, *iter_tri, "cg_h", *obj, v_dot_g, *leftmost, *lam) TRLIB_PRINTLN_2("%s", "")
+                // check for convergence
+                if (v_dot_g <= *stop_b) { *ityp = TRLIB_CLT_CG; *action = TRLIB_CLA_TRIVIAL; returnvalue = TRLIB_CLR_APPROX_HARD; break; }
+                // if no convergence continue with next invariant Krylov subspace
+                TRLIB_PRINTLN_2("No convergence within invariant subspace. Investigate next invariant subspace") TRLIB_PRINTLN_2("%s","") 
+                *ityp = TRLIB_CLT_CG; *action = TRLIB_CLA_NEW_KRYLOV;
+                *status = TRLIB_CLS_CG_IF_IRBLK_N; returnvalue = TRLIB_CLR_CONTINUE; break;
+            case TRLIB_CLS_CG_IF_IRBLK_N:
+                irblk[*nirblk] = *ii+1;
+                (*nirblk)++;
+                gamma[*ii] = v_dot_g; // do not misinterpret this is as value of tridiagonal matrix, there it is 0
+                *lanczos_switch = *ii;
+                *ii += 1;
+                gamma[*ii] = sqrt(v_dot_g);
+                *ityp = TRLIB_CLT_CG; *action = TRLIB_CLA_TRIVIAL; *status = TRLIB_CLS_L_UPDATE_P;
+                returnvalue = TRLIB_CLR_CONTINUE; break;
             case TRLIB_CLS_HOTSTART:
                 /* reentry with smaller trust region radius
                    we implement hotstart by not making use of the CG basis but rather the Lanczos basis
                    as this covers both cases: the interior and the boundary cases
                    the additional cost by doing this is neglible since we most likely will just do one iteration */
                 // solve the corresponding tridiagonal problem, check for convergence and otherwise continue to iterate
-                irblk[1] = *ii+1;
+                irblk[*nirblk] = *ii+1;
                 *exit_tri = trlib_tri_factor_min(
                     *nirblk, irblk, delta, gamma, neglin, radius, 100+3*(*ii), TRLIB_EPS, *pos_def, equality,
                     warm_lam0, lam0, warm_lam, lam, warm_leftmost, ileftmost, leftmost,
@@ -344,7 +373,7 @@ int trlib_krylov_min(
                 }
                 /* call factor_min to solve tridiagonal problem, store solution candidate in h
                    the criterion to specify the maximum number of iterations is weird. it should not be dependent on problem size rather than condition of the hessian... */
-                irblk[1] = *ii+1;
+                irblk[*nirblk] = *ii+1;
                 *exit_tri = trlib_tri_factor_min(
                     *nirblk, irblk, delta, gamma, neglin, radius, 100+3*(*ii), TRLIB_EPS, *pos_def, equality,
                     warm_lam0, lam0, warm_lam, lam, warm_leftmost, ileftmost, leftmost,
@@ -371,17 +400,31 @@ int trlib_krylov_min(
                 // compute g^L(ii+1)
                 *flt1 = -delta[*ii]/gamma[*ii-1]; *flt2 = -gamma[*ii-1]/gamma[*ii-2]; *flt3 = 1.0;
                 // in the case that we just switched to Lanczos, we have to use different coefficients
-                if (*ii == *lanczos_switch) {
+                if (*ii == *lanczos_switch && *nirblk == 1) {
                     *flt1 = -delta[*ii]/sqrt(*v_g)*(*sigma); *flt2 = -gamma[*ii-1]*(*cgl); *flt3 = gamma[*ii-1]/sqrt(*v_g);
                     *cgl = 1.0; *cglm = 1.0;
                 }
-                *ityp = TRLIB_CLT_L;  *action = TRLIB_CLA_UPDATE_GRAD; *status = TRLIB_CLS_L_CHK_CONV;
+                // as well in the case that we have a new irreducible block
+                if (*ii == irblk[*nirblk-1]) {
+                    printf("Hallo %e %e\n", v_dot_g, gamma[*ii-1]);
+                    *flt1 = -delta[*ii]/sqrt(*v_g); *flt2 = 0; *flt3 = 1.0;
+                }
+                *ityp = TRLIB_CLT_L;  *action = TRLIB_CLA_UPDATE_GRAD; *status = TRLIB_CLS_L_CMP_CONV;
                 break;
-            case TRLIB_CLS_L_CHK_CONV:
+            case TRLIB_CLS_L_CMP_CONV:
                 // convergence check after new gradient has been computed
                 if (v_dot_g <= 0.0) { if (*interior) {*action = TRLIB_CLA_TRIVIAL;} else {*ityp = TRLIB_CLT_L; *action = TRLIB_CLA_RETRANSF;} returnvalue = TRLIB_CLR_PCINDEF; break; } // exit if M^-1 indefinite
                 gamma[*ii] = sqrt(v_dot_g);
-
+                if (*nirblk == 1) {
+                    // compute convergence indicator, store it in *v_g
+                    *v_g = v_dot_g * h[*ii]*h[*ii];
+                    *ityp = TRLIB_CLT_L; *action = TRLIB_CLA_TRIVIAL; *status = TRLIB_CLS_L_CHK_CONV;
+                }
+                else { *ityp = TRLIB_CLT_L; *action = TRLIB_CLA_CONV_HARD; *status = TRLIB_CLS_L_CHK_CONV; }
+                break;
+            case TRLIB_CLS_L_CHK_CONV:
+                // get convergence indicator in *v_g
+                if (*nirblk > 1 ) { *v_g = v_dot_g; }
                 // print some information
                 // first print headline if necessary
                 if (((*ii)-(*iter_last_head)) % 20 == 0 || *type_last_head != TRLIB_CLT_LANCZOS) {
@@ -390,11 +433,11 @@ int trlib_krylov_min(
                     *type_last_head = TRLIB_CLT_LANCZOS;
                     *iter_last_head = *ii;
                 }
-                TRLIB_PRINTLN_2("%s","") TRLIB_PRINTLN_1("%6d%6d%6s%14e%14e%14e%14e%14e%14e", *ii, *iter_tri, " lcz", *obj, gamma[*ii]*fabs(h[*ii]), *leftmost, *lam, *ii == 0 ? neglin[0] : gamma[*ii-1], delta[*ii]) TRLIB_PRINTLN_2("%s", "")
+                TRLIB_PRINTLN_2("%s","") TRLIB_PRINTLN_1("%6d%6d%6s%14e%14e%14e%14e%14e%14e", *ii, *iter_tri, " lcz", *obj, sqrt(*v_g), *leftmost, *lam, *ii == 0 ? neglin[0] : gamma[*ii-1], delta[*ii]) TRLIB_PRINTLN_2("%s", "")
 
                 // test for convergence
-                if ( (*exit_tri != TRLIB_TTR_CONV_INTERIOR) && gamma[*ii]*fabs(h[*ii]) <= *stop_b) { *ityp = TRLIB_CLT_L; *action = TRLIB_CLA_RETRANSF; returnvalue = *exit_tri; break; }
-                else if ( (*exit_tri == TRLIB_TTR_CONV_INTERIOR) && gamma[*ii]*fabs(h[*ii]) <= sqrt(*stop_i)) { *ityp = TRLIB_CLT_L; *action = TRLIB_CLA_RETRANSF; returnvalue = *exit_tri; break; }
+                if ( (*exit_tri != TRLIB_TTR_CONV_INTERIOR) && *v_g <= sqrt(*stop_b)) { *ityp = TRLIB_CLT_L; *action = TRLIB_CLA_RETRANSF; returnvalue = *exit_tri; break; }
+                else if ( (*exit_tri == TRLIB_TTR_CONV_INTERIOR) && *v_g <= sqrt(*stop_i)) { *ityp = TRLIB_CLT_L; *action = TRLIB_CLA_RETRANSF; returnvalue = *exit_tri; break; }
                 else {
                     // prepare next iteration
                     *ityp = TRLIB_CLT_L; *action = TRLIB_CLA_TRIVIAL; *status = TRLIB_CLS_L_NEW_ITER; break;

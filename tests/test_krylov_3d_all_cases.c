@@ -54,7 +54,8 @@ START_TEST (test_3d_hard)
 {
     struct trlib_test_qp qp;
     trlib_test_malloc_qp(TRLIB_TEST_DENSE_QP, TRLIB_TEST_SOLVER_KRYLOV, 3, 10*3, &qp);
-    qp.verbose = 1;
+    qp.verbose = 5;
+    qp.ctl_invariant = TRLIB_CLC_EXP_INV_LOC;
 
     struct trlib_test_problem_dense* problem = (struct trlib_test_problem_dense*) qp.problem;
     double *hess = problem->hess; double *grad = problem->grad;
@@ -65,6 +66,7 @@ START_TEST (test_3d_hard)
 
     grad[0] = 0.0; grad[1] = 2.0; grad[2] = 0.0;  // near hard case
     qp.radius = 1.0;
+    qp.itmax = 4;
 
     //trlib_test_solve_check_qp(&qp, "Near Hard 3D Coldstart", 1e7*TRLIB_EPS, 1e1*TRLIB_EPS);
 
