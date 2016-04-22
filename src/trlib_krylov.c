@@ -206,13 +206,18 @@ int trlib_krylov_min(
                 *ityp = TRLIB_CLT_CG; *status = TRLIB_CLS_CG_UPDATE_GV; *flt1 = alpha[*ii]; *flt2= *cgl; *action = TRLIB_CLA_UPDATE_GRAD;
                 break;
             case TRLIB_CLS_CG_UPDATE_GV:
-                if (v_dot_g <= 0.0 && g_dot_g > 0.0) { if (*interior) {*action = TRLIB_CLA_TRIVIAL;} else {*ityp = TRLIB_CLT_CG; *action = TRLIB_CLA_RETRANSF;} returnvalue = TRLIB_CLR_PCINDEF; break; } // exit if M^-1 indefinite
-                if (g_dot_g <= 0.0) { // check if Krylov iteration breaks down
-                    if ( ctl_invariant <= TRLIB_CLC_EXP_INV_GLO ) {
-                        if (*interior) {*action = TRLIB_CLA_TRIVIAL;} else {*ityp = TRLIB_CLT_CG; *action = TRLIB_CLA_RETRANSF;}
+                // if g == 0 and interior ---> convergence
+                // otherwise if g == 0: Krylov breakdown
+                // if g != 0 and (v,g) <= 0 ---> preconditioner indefinite
+                if(g_dot_g <= 0.0 && *interior) { *action = TRLIB_CLA_TRIVIAL; returnvalue = TRLIB_CLR_CONV_INTERIOR; break; }
+                if(g_dot_g > 0.0 && v_dot_g <= 0.0) { if (*interior) {*action = TRLIB_CLA_TRIVIAL;} else {*ityp = TRLIB_CLT_CG; *action = TRLIB_CLA_RETRANSF;} returnvalue = TRLIB_CLR_PCINDEF; break; } // exit if M^-1 indefinite
+                if (g_dot_g <= 0.0) { // Krylov iteration breaks down
+                    if ( ctl_invariant <= TRLIB_CLC_NO_EXP_INV ) {
+                        *ityp = TRLIB_CLT_CG; *action = TRLIB_CLA_RETRANSF;
                         returnvalue = TRLIB_CLR_FAIL_HARD; break;
-                        }
+                    }
                 }
+
                 beta[*ii] = v_dot_g/(*v_g);
                 /* prepare the next Lanczos tridiagonal matrix as far as possible
                    the diagonal term is given by delta(i+1) = 1/alpha(i+1) + beta(i)/alpha(i)
