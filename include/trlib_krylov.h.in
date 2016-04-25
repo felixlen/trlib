@@ -39,11 +39,12 @@
 #define TRLIB_CLS_LANCZOS_SWT   (8)
 #define TRLIB_CLS_L_UPDATE_P    (9)
 #define TRLIB_CLS_L_CMP_CONV    (10)
-#define TRLIB_CLS_L_CHK_CONV    (11)
-#define TRLIB_CLS_L_NEW_ITER    (12)
-#define TRLIB_CLS_CG_IF_IRBLK_P (13)
-#define TRLIB_CLS_CG_IF_IRBLK_C (14)
-#define TRLIB_CLS_CG_IF_IRBLK_N (15)
+#define TRLIB_CLS_L_CMP_CONV_RT (11)
+#define TRLIB_CLS_L_CHK_CONV    (12)
+#define TRLIB_CLS_L_NEW_ITER    (13)
+#define TRLIB_CLS_CG_IF_IRBLK_P (14)
+#define TRLIB_CLS_CG_IF_IRBLK_C (15)
+#define TRLIB_CLS_CG_IF_IRBLK_N (16)
 
 #define TRLIB_CLC_NO_EXP_INV    (0)
 #define TRLIB_CLC_EXP_INV_LOC   (1)
@@ -59,7 +60,7 @@
  *  Computes minimizer to
  * 
  *  \f$ \frac 12 \min \langle s, H s \rangle + \langle g_0, s \rangle \f$
- *  subject to the trust region constraint \f$ \Vert h \Vert_M \le r \f$,
+ *  subject to the trust region constraint \f$ \Vert s \Vert_M \le r \f$,
  *  where 
  *  - \f$ H \f$ is available via matrix-vector products \f$ v \mapsto Hv \f$,
  *  - \f$ \Vert s \Vert_M = \sqrt{\langle s, Ms \rangle} \f$ with \f$ M \f$ positive definite,
@@ -241,7 +242,7 @@
  *                 #TRLIB_CLA_UPDATE_DIR    | #TRLIB_CLT_CG         | \f$ p \leftarrow \texttt{flt1} \, v + \texttt{flt2} \, p \f$ with \f$ \texttt{flt1} = -1 \f$, \f$ \textit{Hp} \leftarrow Hp \f$, \f$ \texttt{p_dot_Hp} \leftarrow \langle p, \textit{Hp} \rangle \f$
  *                 #TRLIB_CLA_UPDATE_DIR    | #TRLIB_CLT_L          | \f$ p \leftarrow \texttt{flt1} \, v + \texttt{flt2} \, p \f$ with \f$ \texttt{flt2} = 0 \f$, \f$ p \leftarrow \perp_M Q_{i-1} \f$, \f$ \textit{Hp} \leftarrow Hp \f$, \f$ \texttt{p_dot_Hp} \leftarrow \langle p, \textit{Hp} \rangle \f$, \f$ q_i \leftarrow p \f$
  *                 #TRLIB_CLA_NEW_KRYLOV    | #TRLIB_CLT_CG, #TRLIB_CLT_L | \f$ g \leftarrow \texttt{rand}\perp Q_{i-1} \f$, \f$ g_- \leftarrow 0 \f$, \f$ v \leftarrow M^{-1} g \f$, \f$ \texttt{v_dot_g} \leftarrow \langle v, g \rangle \f$, \f$ p \leftarrow \frac{1}{\sqrt{\texttt{v_dot_g}}} v \f$, \f$ \texttt{p_dot_Hp} \leftarrow \langle p, \textit{Hp} \rangle \f$, \f$ q_i \leftarrow p \f$
- *                 #TRLIB_CLA_CONV_HARD     | #TRLIB_CLT_CG, #TRLIB_CLT_L | \f$ \texttt{v_dot_g} \leftarrow \langle Hs+g+\texttt{flt1}\, Ms, M^{-1}(Hs+g) + \texttt{flt1 } s \rangle \f$
+ *                 #TRLIB_CLA_CONV_HARD     | #TRLIB_CLT_CG, #TRLIB_CLT_L | \f$ \texttt{v_dot_g} \leftarrow \langle Hs+g_0+\texttt{flt1}\, Ms, M^{-1}(Hs+g_0) + \texttt{flt1 } s \rangle \f$
  *  @param[out]    iter iteration counter to tell user position in vector storage
  *  @param[out]    ityp iteration type, see \p action
  *  @param[out]    flt1 floating point value that user needs for actions
