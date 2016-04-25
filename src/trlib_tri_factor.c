@@ -144,7 +144,7 @@ int trlib_tri_factor_min(
                         }
                     }
                     else {
-                        TRLIB_PRINTLN_2(" %2d%14e%14e%14e%3s", jj, pert_low, lam_pert, pert_up, " -", "")
+                        TRLIB_PRINTLN_2(" %2d%14e%14e%14e%3s", jj, pert_low, lam_pert, pert_up, " -")
                         pert_low = lam_pert; // as factorization fails, it provides a upper bound
                         // now increase perturbation, either by bisection if there is a useful upper bound,
                         // otherwise by a small increment
@@ -250,7 +250,7 @@ int trlib_tri_factor_min(
     if ( fabs(radius - norm_sol0) >= TRLIB_EPS_POW_5*radius ) { 
         if(*lam0 == 0.0 && !equality) { ret = TRLIB_TTR_CONV_INTERIOR; }
         else { 
-            TRLIB_PRINTLN_1(" Found \u03bb\u2080 with tr residual %e! Bail out with h\u2080 + \u03b1 eig", *lam0, norm_sol0)
+            TRLIB_PRINTLN_1(" Found \u03bb\u2080 with tr residual %e! Bail out with h\u2080 + \u03b1 eig", radius - norm_sol0)
             srand((unsigned) time(NULL));
             for( int kk = irblk[0]; kk < irblk[1]; ++kk ) { sol[kk] = ((double)rand()/(double)RAND_MAX); }
             *sub_fail = trlib_eigen_inverse(n0, diag, offdiag, 
