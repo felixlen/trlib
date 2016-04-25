@@ -183,7 +183,7 @@ int trlib_test_solve_qp(struct trlib_test_qp *qp) {
         while(1) {
             qp->ret = trlib_krylov_min(init, qp->radius, qp->equality, qp->itmax, 100,
                     qp->tol_rel_i, qp->tol_abs_i, qp->tol_rel_b, qp->tol_abs_b,
-                    TRLIB_EPS, qp->ctl_invariant, v_dot_g, v_dot_g, p_dot_Hp, work->iwork, work->fwork, 
+                    TRLIB_EPS*TRLIB_EPS, qp->ctl_invariant, v_dot_g, v_dot_g, p_dot_Hp, work->iwork, work->fwork, 
                     qp->refine, qp->verbose, qp->unicode, qp->prefix, qp->stream, qp->timing,
                     &action, &(qp->iter), &ityp, &flt1, &flt2, &flt3);
             init = 0;
@@ -254,12 +254,11 @@ int trlib_test_solve_qp(struct trlib_test_qp *qp) {
                     if(qp->qptype == TRLIB_TEST_OP_QP) {
                         hv(userdata, n, sol, temp); // temp = H*s
                     }
-                    daxpy_(&n, &one, work->g, &inc, temp, &inc); // temp = H*s + g
+                    daxpy_(&n, &one, grad, &inc, temp, &inc); // temp = H*s + g
                     daxpy_(&n, &flt1, sol, &inc, temp, &inc); // temp = H*s + g + flt1*s
                     v_dot_g = ddot_(&n, temp, &inc, temp, &inc);
                     free(temp);
                     break;
-
                 case TRLIB_CLA_NEW_KRYLOV:
                     // FIXME: implement proper reorthogonalization
                     memset(work->g, 0, n*sizeof(double));
@@ -279,9 +278,10 @@ int trlib_test_solve_qp(struct trlib_test_qp *qp) {
                         hv(userdata, n, work->p, work->Hp); // Hp = H*p
                     }
                     p_dot_Hp = ddot_(&n, work->p, &inc, work->Hp, &inc);
-                    dcopy_(&n, work->p, &inc, work->Q+(qp->iter)*n, &inc); // Q(iter*n:(iter1)*n) = p
+                    dcopy_(&n, work->p, &inc, work->Q+(qp->iter+1)*n, &inc); // Q(iter*n:(iter1)*n) = p
                     break;
             }
+            //fprintf(stderr, "<g,g> = %e, <v,g> = %e, <p,Hp> = %e\n", v_dot_g, v_dot_g, p_dot_Hp);
             if( qp->ret < 10 ) { break; }
         }
 

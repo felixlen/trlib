@@ -125,9 +125,9 @@ int trlib_krylov_min(
                 neglin[0] = - sqrt(v_dot_g); // set neglin = - gamma_0 e_1 
                 *cgl = 1.0; *cglm = 1.0; // ratio between CG and Lanczos vectors is 1 in this and previous iteration
                 *sigma = 1.0; // sigma_0 = 1
-                *p_Mp = *v_g; // (p0, M p0) = (-v0, -M v0) = (v0, M M^-1 g0); (s, Mp) = (s, Ms) = 0 already properly initialized
                 *leftmost = 0.0; *lam = 0.0; // assume interior solution
                 *obj = 0.0; *s_Mp = 0.0; *p_Mp = 0.0; *s_Ms = 0.0; // safe initialization for scalar values
+                *p_Mp = *v_g; // (p0, M p0) = (-v0, -M v0) = (v0, M M^-1 g0); (s, Mp) = (s, Ms) = 0 already properly initialized
                 delta[0] = 0.0; // incremental updates in delta, have to initialize it
                 *ityp = TRLIB_CLT_CG; *status = TRLIB_CLS_CG_NEW_ITER; *action = TRLIB_CLA_TRIVIAL; // continue with CG iteration
                 break;
@@ -209,17 +209,16 @@ int trlib_krylov_min(
                 // if g == 0: Krylov breakdown or convergence
                 // if g != 0 and (v,g) <= 0 ---> preconditioner indefinite
                 if(g_dot_g > 0.0 && v_dot_g <= 0.0) { if (*interior) {*action = TRLIB_CLA_TRIVIAL;} else {*ityp = TRLIB_CLT_CG; *action = TRLIB_CLA_RETRANSF;} returnvalue = TRLIB_CLR_PCINDEF; break; } // exit if M^-1 indefinite
-                if (g_dot_g <= 0.0) { // Krylov iteration breaks down
+                if (g_dot_g <= zero) { // Krylov iteration breaks down
                     if ( ctl_invariant <= TRLIB_CLC_NO_EXP_INV ) {
                         if ( *interior ) { *action = TRLIB_CLA_TRIVIAL; } else { *action = TRLIB_CLA_RETRANSF; }
                         *ityp = TRLIB_CLT_CG; returnvalue = TRLIB_CLR_FAIL_HARD; break;
                     }
                     else { 
-                        // FIXME: add the case ctl_invariant == TRLIB_CLC_EXP_INV_GLO
                         /* decide if a new invariant Krylov subspace should be investigated
                            therefore compute actual gradient at current point and test for convergence */
                         if(*interior) { *action = TRLIB_CLA_TRIVIAL; } else { *action = TRLIB_CLA_RETRANSF; }
-                        *ityp = TRLIB_CLT_CG; *status = TRLIB_CLS_CG_IF_IRBLK_P; returnvalue = TRLIB_CLR_CONTINUE; break;
+                        *flt1 = *lam; *ityp = TRLIB_CLT_CG; *status = TRLIB_CLS_CG_IF_IRBLK_P; returnvalue = TRLIB_CLR_CONTINUE; break;
                     }
                 }
 
@@ -279,9 +278,14 @@ int trlib_krylov_min(
                 TRLIB_PRINTLN_2("%s","") TRLIB_PRINTLN_1("%6s%6s%6s%14s%14s%14s%14s", " iter ", "inewton", " type ", "   objective  ", "||g(lam)||_iM", "   leftmost   ", "     lam      ")
                 TRLIB_PRINTLN_2("%s","") TRLIB_PRINTLN_1("%6d%6d%6s%14e%14e%14e%14e", *ii, *iter_tri, "cg_h", *obj, v_dot_g, *leftmost, *lam) TRLIB_PRINTLN_2("%s", "")
                 // check for convergence
-                if (v_dot_g <= *stop_b) { *ityp = TRLIB_CLT_CG; *action = TRLIB_CLA_TRIVIAL; returnvalue = TRLIB_CLR_APPROX_HARD; break; }
-                // if no convergence continue with next invariant Krylov subspace
-                TRLIB_PRINTLN_2("No convergence within invariant subspace. Investigate next invariant subspace") TRLIB_PRINTLN_2("%s","") 
+                if (ctl_invariant <= TRLIB_CLC_EXP_INV_LOC && v_dot_g <= *stop_b) { *ityp = TRLIB_CLT_CG; *action = TRLIB_CLA_TRIVIAL; returnvalue = TRLIB_CLR_APPROX_HARD; break; }
+                // if no convergence or want to force to investigate all invariant subspaces, continue with next invariant Krylov subspace
+                if (ctl_invariant <= TRLIB_CLC_EXP_INV_LOC) {
+                    TRLIB_PRINTLN_2("No convergence within invariant subspace. Investigate next invariant subspace") TRLIB_PRINTLN_2("%s","")
+                }
+                else {
+                    TRLIB_PRINTLN_2("Investigate next invariant subspace") TRLIB_PRINTLN_2("%s","")
+                } 
                 *ityp = TRLIB_CLT_CG; *action = TRLIB_CLA_NEW_KRYLOV;
                 *status = TRLIB_CLS_CG_IF_IRBLK_N; returnvalue = TRLIB_CLR_CONTINUE; break;
             case TRLIB_CLS_CG_IF_IRBLK_N:
@@ -350,11 +354,12 @@ int trlib_krylov_min(
                 *ityp = TRLIB_CLT_L; *status = TRLIB_CLS_L_UPDATE_P; *flt1 = (*sigma)/sqrt(*v_g); *flt2 = 0.0; *action = TRLIB_CLA_UPDATE_DIR;
                 break;
             case TRLIB_CLS_L_UPDATE_P:
-                if ( fabs(p_dot_Hp) <= 0.0) { // Krylov iteration breaks down
+                if ( fabs(p_dot_Hp) <= zero ) { // Krylov iteration breaks down
+                    // FIXME: continue with next invariant Krylov subspace
                     if ( ctl_invariant <= TRLIB_CLC_EXP_INV_GLO ) {
                         *ityp = TRLIB_CLT_CG; *action = TRLIB_CLA_RETRANSF;
                         returnvalue = TRLIB_CLR_FAIL_HARD; break;
-                        }
+                    }
                 }
                 delta[*ii] = p_dot_Hp;
                 /* solve tridiagonal reduction
@@ -416,15 +421,21 @@ int trlib_krylov_min(
                 *ityp = TRLIB_CLT_L;  *action = TRLIB_CLA_UPDATE_GRAD; *status = TRLIB_CLS_L_CMP_CONV;
                 break;
             case TRLIB_CLS_L_CMP_CONV:
-                // convergence check after new gradient has been computed
-                if (v_dot_g <= 0.0) { if (*interior) {*action = TRLIB_CLA_TRIVIAL;} else {*ityp = TRLIB_CLT_L; *action = TRLIB_CLA_RETRANSF;} returnvalue = TRLIB_CLR_PCINDEF; break; } // exit if M^-1 indefinite
+                if (v_dot_g <= 0.0 && g_dot_g > 0.0) { if (*interior) {*action = TRLIB_CLA_TRIVIAL;} else {*ityp = TRLIB_CLT_L; *action = TRLIB_CLA_RETRANSF;} returnvalue = TRLIB_CLR_PCINDEF; break; } // exit if M^-1 indefinite
+                // FIXME: implement adding further invariant subspaces
+                if (g_dot_g <= zero) { if(*interior) {*action = TRLIB_CLA_TRIVIAL; } else {*ityp = TRLIB_CLT_L; *action = TRLIB_CLA_RETRANSF;} returnvalue = TRLIB_CLR_APPROX_HARD; }
                 gamma[*ii] = sqrt(v_dot_g);
+                // convergence check after new gradient has been computed
+                // first get norm of new gradient
                 if (*nirblk == 1) {
                     // compute convergence indicator, store it in *v_g
                     *v_g = v_dot_g * h[*ii]*h[*ii];
                     *ityp = TRLIB_CLT_L; *action = TRLIB_CLA_TRIVIAL; *status = TRLIB_CLS_L_CHK_CONV;
                 }
-                else { *ityp = TRLIB_CLT_L; *action = TRLIB_CLA_CONV_HARD; *status = TRLIB_CLS_L_CHK_CONV; }
+                else { *ityp = TRLIB_CLT_L; *action = TRLIB_CLA_RETRANSF; *status = TRLIB_CLS_L_CMP_CONV_RT; }
+                break;
+            case TRLIB_CLS_L_CMP_CONV_RT:
+                *flt1 = *lam; *ityp = TRLIB_CLT_L; *action = TRLIB_CLA_CONV_HARD; *status = TRLIB_CLS_L_CHK_CONV;
                 break;
             case TRLIB_CLS_L_CHK_CONV:
                 // get convergence indicator in *v_g
@@ -440,8 +451,8 @@ int trlib_krylov_min(
                 TRLIB_PRINTLN_2("%s","") TRLIB_PRINTLN_1("%6d%6d%6s%14e%14e%14e%14e%14e%14e", *ii, *iter_tri, " lcz", *obj, sqrt(*v_g), *leftmost, *lam, *ii == 0 ? neglin[0] : gamma[*ii-1], delta[*ii]) TRLIB_PRINTLN_2("%s", "")
 
                 // test for convergence
-                if ( (*exit_tri != TRLIB_TTR_CONV_INTERIOR) && *v_g <= sqrt(*stop_b)) { *ityp = TRLIB_CLT_L; *action = TRLIB_CLA_RETRANSF; returnvalue = *exit_tri; break; }
-                else if ( (*exit_tri == TRLIB_TTR_CONV_INTERIOR) && *v_g <= sqrt(*stop_i)) { *ityp = TRLIB_CLT_L; *action = TRLIB_CLA_RETRANSF; returnvalue = *exit_tri; break; }
+                if ( ctl_invariant <= TRLIB_CLC_EXP_INV_LOC && (*exit_tri != TRLIB_TTR_CONV_INTERIOR) && *v_g <= sqrt(*stop_b)) { *ityp = TRLIB_CLT_L; *action = TRLIB_CLA_RETRANSF; returnvalue = *exit_tri; break; }
+                else if ( ctl_invariant <= TRLIB_CLC_EXP_INV_LOC && (*exit_tri == TRLIB_TTR_CONV_INTERIOR) && *v_g <= sqrt(*stop_i)) { *ityp = TRLIB_CLT_L; *action = TRLIB_CLA_RETRANSF; returnvalue = *exit_tri; break; }
                 else {
                     // prepare next iteration
                     *ityp = TRLIB_CLT_L; *action = TRLIB_CLA_TRIVIAL; *status = TRLIB_CLS_L_NEW_ITER; break;

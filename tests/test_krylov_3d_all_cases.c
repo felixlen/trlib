@@ -41,11 +41,11 @@ START_TEST (test_3d_near_hard)
     grad[0] = 0.0; grad[1] = 2.0; grad[2] = 1e-6;  // near hard case
     qp.radius = 1.0;
 
-    trlib_test_solve_check_qp(&qp, "Near Hard 3D Coldstart", 1e7*TRLIB_EPS, 1e1*TRLIB_EPS);
+    trlib_test_solve_check_qp(&qp, "Near Hard Case 3D Coldstart", 1e7*TRLIB_EPS, 1e1*TRLIB_EPS);
 
     qp.radius = 0.5;
     qp.reentry = 1;
-    trlib_test_solve_check_qp(&qp, "Near Hard 3D Warmstart", 1e7*TRLIB_EPS, 1e1*TRLIB_EPS);
+    trlib_test_solve_check_qp(&qp, "Near Hard Case 3D Warmstart", 1e7*TRLIB_EPS, 1e1*TRLIB_EPS);
     trlib_test_free_qp(&qp);
 }
 END_TEST
@@ -54,8 +54,8 @@ START_TEST (test_3d_hard)
 {
     struct trlib_test_qp qp;
     trlib_test_malloc_qp(TRLIB_TEST_DENSE_QP, TRLIB_TEST_SOLVER_KRYLOV, 3, 10*3, &qp);
-    qp.verbose = 5;
-    qp.ctl_invariant = TRLIB_CLC_EXP_INV_LOC;
+    qp.verbose = 1;
+    qp.ctl_invariant = TRLIB_CLC_EXP_INV_GLO;
 
     struct trlib_test_problem_dense* problem = (struct trlib_test_problem_dense*) qp.problem;
     double *hess = problem->hess; double *grad = problem->grad;
@@ -64,15 +64,14 @@ START_TEST (test_3d_hard)
     hess[3] = 0.0; hess[4] = 2.0; hess[5] = 0.0;
     hess[6] = 4.0; hess[7] = 0.0; hess[8] = 3.0;
 
-    grad[0] = 0.0; grad[1] = 2.0; grad[2] = 0.0;  // near hard case
+    grad[0] = 0.0; grad[1] = 2.0; grad[2] = 0.0;  // hard case
     qp.radius = 1.0;
-    qp.itmax = 4;
 
-    //trlib_test_solve_check_qp(&qp, "Near Hard 3D Coldstart", 1e7*TRLIB_EPS, 1e1*TRLIB_EPS);
+    trlib_test_solve_check_qp(&qp, "Hard Case 3D Coldstart", 1e7*TRLIB_EPS, -1.0);
 
     qp.radius = 0.5;
     qp.reentry = 1;
-    //trlib_test_solve_check_qp(&qp, "Near Hard 3D Warmstart", 1e7*TRLIB_EPS, 1e1*TRLIB_EPS);
+    trlib_test_solve_check_qp(&qp, "Hard Case 3D Warmstart", 1e7*TRLIB_EPS, -1.0);
     trlib_test_free_qp(&qp);
 }
 END_TEST
