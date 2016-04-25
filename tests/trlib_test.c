@@ -171,8 +171,8 @@ int trlib_test_solve_qp(struct trlib_test_qp *qp) {
         }
         int init = 0; int inc = 1; int itp1 = 0;
         double minus = -1.0; double one = 1.0; double z = 0.0;
-        if(!qp->reentry) { init = 1; trlib_krylov_prepare_memory(qp->itmax, work->fwork); }
-        else { init = 2; }
+        if(!qp->reentry) { init = TRLIB_CLS_INIT; trlib_krylov_prepare_memory(qp->itmax, work->fwork); }
+        else { init = TRLIB_CLS_HOTSTART; }
 
         double v_dot_g = 0.0; double p_dot_Hp = 0.0; double flt1; double flt2; double flt3;
         int action; int ityp;
@@ -324,6 +324,65 @@ int trlib_test_solve_qp(struct trlib_test_qp *qp) {
     return 0;
 }
 
+int trlib_test_resolve_new_gradient(struct trlib_test_qp *qp) {
+    if(qp->qpsolver == TRLIB_TEST_SOLVER_KRYLOV) {
+        struct trlib_test_work_krylov * work = (struct trlib_test_work_krylov *)qp->work;
+        int n; double *grad; double *sol; double *hess; double *diag; double *offdiag;
+        void (*hv)(void *, int, double *, double *); double *userdata;
+        if(qp->qpsolver == TRLIB_TEST_DENSE_QP) { 
+            struct trlib_test_problem_dense* problem = (struct trlib_test_problem_dense *)qp->problem;
+            n = problem->n; grad = problem->grad; sol = problem->sol; hess = problem->hess;
+        }
+        if(qp->qptype == TRLIB_TEST_TRI_QP) {
+            struct trlib_test_problem_tri* problem = (struct trlib_test_problem_tri *)qp->problem;
+            n = problem->n; grad = problem->grad; sol = problem->sol; diag = problem->diag; offdiag = problem->offdiag;
+        }
+        if(qp->qptype == TRLIB_TEST_OP_QP) {
+            struct trlib_test_problem_op* problem = (struct trlib_test_problem_op *)qp->problem;
+            n = problem->n; grad = problem->grad; hv = problem->hv; userdata = problem->userdata; sol = problem->sol;
+        }
+        int init = 0; int inc = 1; int itp1 = 0;
+        double minus = -1.0; double one = 1.0; double z = 0.0;
+        init = TRLIB_CLS_HOTSTART_G;
+        double v_dot_g = 0.0; double p_dot_Hp = 0.0; double flt1; double flt2; double flt3;
+        int action; int ityp;
+
+        int gt_pointer;
+        trlib_krylov_gt(qp->itmax, &gt_pointer);
+
+        int iwork_size, fwork_size, h_pointer;
+        trlib_krylov_memory_size(qp->itmax, &iwork_size, &fwork_size, &h_pointer);
+
+        double nl0 = (work->fwork)[gt_pointer];
+
+        itp1 = qp->iter+1;
+        dgemv_("T", &n, &itp1, &minus, work->Q, &n, grad, &inc, &z, work->fwork+gt_pointer, &inc); // neglin = - Q_i * grad
+
+        while(1) {
+            qp->ret = trlib_krylov_min(init, qp->radius, qp->equality, qp->itmax, 100,
+                    qp->tol_rel_i, qp->tol_abs_i, qp->tol_rel_b, qp->tol_abs_b,
+                    TRLIB_EPS*TRLIB_EPS, qp->ctl_invariant, v_dot_g, v_dot_g, p_dot_Hp, work->iwork, work->fwork, 
+                    qp->refine, qp->verbose, qp->unicode, qp->prefix, qp->stream, qp->timing,
+                    &action, &(qp->iter), &ityp, &flt1, &flt2, &flt3);
+            init = 0;
+
+            if( qp->ret < 10 ) { break; }
+        }
+
+        itp1 = qp->iter+1;
+        dgemv_("N", &n, &itp1, &one, work->Q, &n, work->fwork+h_pointer, &inc, &z, sol, &inc); // s = Q_i * h_i
+        work->fwork[gt_pointer] = nl0;
+        memset(work->fwork+gt_pointer+1, 0, qp->iter*sizeof(double));
+
+        qp->lam = work->fwork[7];
+        qp->obj = work->fwork[8];
+        qp->sub_fail = work->iwork[9];
+
+    }
+
+    return 0;
+}
+
 int trlib_test_check_optimality(struct trlib_test_qp *qp) { 
     int n; int nn; int nm1; int jj; double *sol; double *grad; double perturbed;
     double *hess;  double *hess_lam;
@@ -421,9 +480,11 @@ int trlib_test_problem_set_hvcb(struct trlib_test_problem_op* problem, void *use
 void trlib_test_solve_check_qp(struct trlib_test_qp *qp, char *name, double tol, double lanczos_tol) {
     qp->stream = stderr;
     trlib_test_solve_qp(qp);
-
     trlib_test_check_optimality(qp);
+    trlib_test_print_result(qp, name, tol, lanczos_tol);
+}
 
+void trlib_test_print_result(struct trlib_test_qp *qp, char *name, double tol, double lanczos_tol) {
     printf("\n*************************************************************\n");
     printf("* Test Case   %-46s*\n", name);
     printf("*   Exit code:          %-2d (%-2d)%29s*\n", qp->ret, qp->sub_fail, "");

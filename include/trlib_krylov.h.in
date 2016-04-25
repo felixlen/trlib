@@ -31,20 +31,21 @@
 
 #define TRLIB_CLS_INIT          (1)
 #define TRLIB_CLS_HOTSTART      (2)
-#define TRLIB_CLS_VEC_INIT      (3)
-#define TRLIB_CLS_CG_NEW_ITER   (4)
-#define TRLIB_CLS_CG_UPDATE_S   (5)
-#define TRLIB_CLS_CG_UPDATE_GV  (6)
-#define TRLIB_CLS_CG_UPDATE_P   (7)
-#define TRLIB_CLS_LANCZOS_SWT   (8)
-#define TRLIB_CLS_L_UPDATE_P    (9)
-#define TRLIB_CLS_L_CMP_CONV    (10)
-#define TRLIB_CLS_L_CMP_CONV_RT (11)
-#define TRLIB_CLS_L_CHK_CONV    (12)
-#define TRLIB_CLS_L_NEW_ITER    (13)
-#define TRLIB_CLS_CG_IF_IRBLK_P (14)
-#define TRLIB_CLS_CG_IF_IRBLK_C (15)
-#define TRLIB_CLS_CG_IF_IRBLK_N (16)
+#define TRLIB_CLS_HOTSTART_G    (3)
+#define TRLIB_CLS_VEC_INIT      (4)
+#define TRLIB_CLS_CG_NEW_ITER   (5)
+#define TRLIB_CLS_CG_UPDATE_S   (6)
+#define TRLIB_CLS_CG_UPDATE_GV  (7)
+#define TRLIB_CLS_CG_UPDATE_P   (8)
+#define TRLIB_CLS_LANCZOS_SWT   (9)
+#define TRLIB_CLS_L_UPDATE_P    (10)
+#define TRLIB_CLS_L_CMP_CONV    (11)
+#define TRLIB_CLS_L_CMP_CONV_RT (12)
+#define TRLIB_CLS_L_CHK_CONV    (13)
+#define TRLIB_CLS_L_NEW_ITER    (14)
+#define TRLIB_CLS_CG_IF_IRBLK_P (15)
+#define TRLIB_CLS_CG_IF_IRBLK_C (16)
+#define TRLIB_CLS_CG_IF_IRBLK_N (17)
 
 #define TRLIB_CLC_NO_EXP_INV    (0)
 #define TRLIB_CLC_EXP_INV_LOC   (1)
@@ -133,6 +134,21 @@
  *  the computation from the previous stage. However as this is an untypical
  *  scenario, it has not been tested at all.
  *
+ *  Reentry with new gradient
+ *  -------------------------
+ *  You can efficiently hotstart from old results if you have a new problem
+ *  with changed \f$ g_0 \f$ where the previous sampled Krylov subspace is
+ *  large enough to contain the solution to the new problem, convergence will
+ *  *not* be checked:
+ *  - get pointer `gt` to negative gradient of tridiagonal problem in `fwork` with #trlib_krylov_gt
+ *  - store `gt[0]` and overwrite \f$ \texttt{gt} \leftarrow - Q_i^T \texttt{grad} \f$
+ *  - set `status` to #TRLIB_CLS_HOTSTART_G and start reverse communication process
+ *  - to reset data for new problem make sure that you restore `gt[0]` and set `gt[1:] = 0` for those elements previously overwritten
+ *
+ *  Hard case
+ *  ---------
+ *  If you want to investigate the problem also if the hard case, you can either sample through the invariant subspaces (`ctl_invariant` set to #TRLIB_CLC_EXP_INV_GLO) or solve the problem with a gradient for which the hard does not occur and then hotstart with the actual gradient.
+ *
  *  @param[in]     init set to #TRLIB_CLS_INIT on first call, to #TRLIB_CLS_HOTSTART on hotstart with smaller radius and otherwise to \c 0
  *  @param[in]     radius trust region radius
  *  @param[in]     equality set to \c 1 if trust region constraint should be enforced as equality
@@ -150,7 +166,6 @@
  *  @param[in]     zero threshold that determines when \f$ \langle p, Hp \rangle \f$ is considered to be zero and thus control eventual Lanczos switch
  *  @param[in]     ctl_invariant at the moment ignored, routine behaves as if set to #TRLIB_CLC_NO_EXP_INV
  *                 - set to #TRLIB_CLC_NO_EXP_INV if you want to search only in the first invariant Krylov subspace
- *                 - set to #TRLIB_CLC_EXP_INV_LOC if you want to search in further invariant Krylov subspace if there is no convergence to alocal minimizer in the subspaces sampled so far
  *                 - set to #TRLIB_CLC_EXP_INV_GLO if you want to continue to expand the Krylov subspaces even in the case of convergence to a local minimizer within in the subspaces sampled so far. Reverse communication continues as long as ctl_invariant is set to #TRLIB_CLC_EXP_INV_GLO, so you should reset \p ctl_invariant to either #TRLIB_CLC_EXP_INV_LOC or #TRLIB_CLC_EXP_INV_LOC if there is no reason to continue, for example because you cannot find a new nonzero random vector orthogonal to the sampled directions if \p action is #TRLIB_CLA_NEW_KRYLOV.
  *  @param[in]     g_dot_g dot product \f$ \langle g, g \rangle \f$
  *  @param[in]     v_dot_g dot product \f$ \langle v, g \rangle \f$
@@ -303,5 +318,15 @@ int trlib_krylov_memory_size(int itmax, int *iwork_size, int *fwork_size, int *h
 /** @brief size that has to be allocated for \p timing in #trlib_krylov_min
  */
 int trlib_krylov_timing_size();
+
+/** @brief Gives pointer to negative gradient of tridiagonal problem
+ *  
+ *  @param[in] itmax maximum number of iterations
+ *  @param[in,out] gt_pointer pointer to negative gradient of tridiagonal subproblem
+ *
+ *  @retval 0
+ */
+
+int trlib_krylov_gt(int itmax, int *gt_pointer);
 
 #endif

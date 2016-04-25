@@ -114,6 +114,8 @@ int trlib_test_solve_qp(struct trlib_test_qp *qp);
 int trlib_test_pos_def_perturb(struct trlib_test_qp *qp);
 int trlib_test_check_optimality(struct trlib_test_qp *qp);
 int trlib_test_problem_set_hvcb(struct trlib_test_problem_op* problem, void *userdata, void (*hv_cb)(void *, int, double *, double *));
+int trlib_test_resolve_new_gradient(struct trlib_test_qp *qp);
 void trlib_test_solve_check_qp(struct trlib_test_qp *qp, char *name, double tol, double lanczos_tol);
+void trlib_test_print_result(struct trlib_test_qp *qp, char *name, double tol, double lanczos_tol);
 
 #endif

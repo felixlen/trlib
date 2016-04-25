@@ -94,6 +94,7 @@ int trlib_krylov_min(
 
     if (init == TRLIB_CLS_INIT) { iwork[0] = TRLIB_CLS_INIT; }
     if (init == TRLIB_CLS_HOTSTART) { iwork[0] = TRLIB_CLS_HOTSTART; }
+    if (init == TRLIB_CLS_HOTSTART_G) { iwork[0] = TRLIB_CLS_HOTSTART_G; }
 
     while(1) {
         switch( *status ) {
@@ -340,7 +341,43 @@ int trlib_krylov_min(
                     else { *ityp = TRLIB_CLT_L; *action = TRLIB_CLA_TRIVIAL; *status = TRLIB_CLS_L_NEW_ITER; break; }
                 }
                 break;
+            case TRLIB_CLS_HOTSTART_G:
+                /* reentry with new gradient trust region radius
+                   we implement hotstart by not making use of the CG basis but rather the Lanczos basis
+                   as this covers both cases: the interior and the boundary cases
+                   the additional cost by doing this is neglible since we most likely will just do one iteration */
+                // solve the corresponding tridiagonal problem, check for convergence and otherwise continue to iterate
+                irblk[*nirblk] = *ii+1;
+                *exit_tri = trlib_tri_factor_min(
+                    *nirblk, irblk, delta, gamma, neglin, radius, 100+3*(*ii), TRLIB_EPS, *pos_def, equality,
+                    warm_lam0, lam0, warm_lam, lam, warm_leftmost, ileftmost, leftmost,
+                    &warm_fac0, delta_fac0, gamma_fac0, &warm_fac, delta_fac, gamma_fac,
+                    h0, h, ones, fwork_tr, refine, verbose-1, unicode, " TR ", fout,
+                    leftmost_timing, obj, iter_tri, sub_fail_tri);
 
+                /* check for failure, beware: newton break is ok as this means most likely convergence
+                   exit with error and ask the user to get (potentially invalid) solution candidate by backtransformation */
+                if (*exit_tri < 0 && *exit_tri != TRLIB_TTR_NEWTON_BREAK) {
+                    *ityp = TRLIB_CLT_CG; *action = TRLIB_CLA_RETRANSF; returnvalue = TRLIB_CLR_FAIL_TTR; break;
+                }
+
+                ///* if tridiagonal problem cannot find suitable initial lambda it is most likely best to stop at this point
+                // * since this means that there is severe ill-conditioning and the user should better present a
+                // * better problem formulation. Continuing means most likely computing on garbage */
+                if (*exit_tri == TRLIB_TTR_HARD_INIT_LAM) {
+                    *ityp = TRLIB_CLT_CG; *action = TRLIB_CLA_RETRANSF; returnvalue = TRLIB_CLR_HARD_INIT_LAM; break;
+                }
+
+                // print some information
+                if (unicode) { TRLIB_PRINTLN_2("%s","") TRLIB_PRINTLN_1("%6s%6s%6s%14s%14s%14s%14s%14s%14s", " iter ", "inewton", " type ", "   objective  ", "   \u03b3\u1d62\u208a\u2081|h\u1d62|   ", "   leftmost   ", "      \u03bb       ", "      \u03b3       ", "      \u03b4       ") }
+                else { TRLIB_PRINTLN_2("%s","") TRLIB_PRINTLN_1("%6s%6s%6s%14s%14s%14s%14s%14s%14s", " iter ", "inewton", " type ", "   objective  ", "gam(i+1)|h(i)|", "   leftmost   ", "     lam      ", "    gamma     ", "    delta     ") }
+                *type_last_head = TRLIB_CLT_HOTSTART;
+                *iter_last_head = *ii;
+
+                TRLIB_PRINTLN_1("%6d%6d%6s%14e%14e%14e%14e%14e%14e", *ii, *iter_tri, " hot_g", *obj, 0.0, *leftmost, *lam, *ii == 0 ? neglin[0] : gamma[*ii-1], delta[*ii]) TRLIB_PRINTLN_2("%s", "")
+                
+                // return without convergence check as indicated in API doc
+                *ityp = TRLIB_CLT_CG; *action = TRLIB_CLA_RETRANSF; returnvalue = *exit_tri; break;
             case TRLIB_CLS_LANCZOS_SWT:
                 /* switch from CG to Lanczos. perform the first iteration by hand, after the that the coefficients match
                    so far pCG has been used, which means there is some g^{CG}(ii), v^{CG}(ii), p^{CG}(ii) and H p^{CG}(ii)
@@ -492,3 +529,7 @@ int trlib_krylov_timing_size() {
     return 0;
 }
 
+int trlib_krylov_gt(int itmax, int *gt_pointer) {
+    *gt_pointer = 15 + 2*itmax;
+    return 0;
+}
