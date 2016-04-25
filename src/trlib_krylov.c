@@ -359,16 +359,22 @@ int trlib_krylov_min(
                 delta[*ii] = p_dot_Hp;
                 /* solve tridiagonal reduction
                    first try to update factorization if available to start tridiagonal problem warmstarted */
-                warm_fac0 = 0;
-                if (*warm_lam0) {
-                    // check if subminor regular, otherwise warmstart impossible
-                    warm_fac0 = delta_fac0[*ii-1] != 0.0;
-                    if (warm_fac0) {
-                        gamma_fac0[*ii-1] = gamma[*ii-1]/delta_fac0[*ii-1];
-                        delta_fac0[*ii] = delta[*ii] + *lam0 - gamma[*ii-1]*gamma[*ii-1]/delta_fac0[*ii-1];
-                        // check if regularized tridiagonal is still positive definite for warmstart
-                        warm_fac0 = delta_fac0[*ii] > 0.0;
+                if( nirblk == 1) {
+                    warm_fac0 = 0;
+                    if (*warm_lam0) {
+                        // check if subminor regular, otherwise warmstart impossible
+                        warm_fac0 = delta_fac0[*ii-1] != 0.0;
+                        if (warm_fac0) {
+                            gamma_fac0[*ii-1] = gamma[*ii-1]/delta_fac0[*ii-1];
+                            delta_fac0[*ii] = delta[*ii] + *lam0 - gamma[*ii-1]*gamma[*ii-1]/delta_fac0[*ii-1];
+                            // check if regularized tridiagonal is still positive definite for warmstart
+                            warm_fac0 = delta_fac0[*ii] > 0.0;
+                        }
                     }
+                }
+                else {
+                    // FIXME: implement proper warmstart
+                    *warm_lam0 = 0; *warm_lam = 0; *warm_leftmost = 0;
                 }
                 /* call factor_min to solve tridiagonal problem, store solution candidate in h
                    the criterion to specify the maximum number of iterations is weird. it should not be dependent on problem size rather than condition of the hessian... */
