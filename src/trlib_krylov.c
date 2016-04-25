@@ -406,8 +406,7 @@ int trlib_krylov_min(
                 }
                 // as well in the case that we have a new irreducible block
                 if (*ii == irblk[*nirblk-1]) {
-                    printf("Hallo %e %e\n", v_dot_g, gamma[*ii-1]);
-                    *flt1 = -delta[*ii]/sqrt(*v_g); *flt2 = 0; *flt3 = 1.0;
+                    *flt1 = -delta[*ii]/gamma[*ii-1]; *flt2 = 0; *flt3 = 1.0;
                 }
                 *ityp = TRLIB_CLT_L;  *action = TRLIB_CLA_UPDATE_GRAD; *status = TRLIB_CLS_L_CMP_CONV;
                 break;
