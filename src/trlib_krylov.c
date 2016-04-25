@@ -287,10 +287,9 @@ int trlib_krylov_min(
             case TRLIB_CLS_CG_IF_IRBLK_N:
                 irblk[*nirblk] = *ii+1;
                 (*nirblk)++;
-                gamma[*ii] = v_dot_g; // do not misinterpret this is as value of tridiagonal matrix, there it is 0
+                gamma[*ii] = sqrt(v_dot_g); // do not misinterpret this is as value of tridiagonal matrix, there it is 0
                 *lanczos_switch = *ii;
                 *ii += 1;
-                gamma[*ii] = sqrt(v_dot_g);
                 *ityp = TRLIB_CLT_CG; *action = TRLIB_CLA_TRIVIAL; *status = TRLIB_CLS_L_UPDATE_P;
                 returnvalue = TRLIB_CLR_CONTINUE; break;
             case TRLIB_CLS_HOTSTART:
