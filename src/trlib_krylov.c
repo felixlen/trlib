@@ -359,7 +359,7 @@ int trlib_krylov_min(
                 delta[*ii] = p_dot_Hp;
                 /* solve tridiagonal reduction
                    first try to update factorization if available to start tridiagonal problem warmstarted */
-                if( nirblk == 1) {
+                if(*nirblk == 1) {
                     warm_fac0 = 0;
                     if (*warm_lam0) {
                         // check if subminor regular, otherwise warmstart impossible
