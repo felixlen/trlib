@@ -12,6 +12,16 @@ target_link_libraries(trlib ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES})
 set_property(TARGET trlib PROPERTY C_STANDARD 11)
 install(TARGETS trlib DESTINATION ${CMAKE_BINARY_DIR}/lib)
 
+find_package(HDF5)
+
+if(HDF5_FOUND)
+    configure_file("${CMAKE_CURRENT_SOURCE_DIR}/trlib_driver.c.in" "${CMAKE_CURRENT_BINARY_DIR}/trlib_driver.c")
+    add_executable(driver ${CMAKE_CURRENT_BINARY_DIR}/trlib_driver.c)
+    set_property(TARGET driver PROPERTY C_STANDARD 11)
+    target_include_directories(driver PRIVATE ${HDF5_INCLUDE_DIRS})
+    target_link_libraries(driver trlib ${HDF5_C_LIBRARIES})
+endif(HDF5_FOUND)
+
 configure_file("${CMAKE_CURRENT_SOURCE_DIR}/trlib.pyx" ${CMAKE_CURRENT_BINARY_DIR})
 
 foreach(PY_VER "2" "3")

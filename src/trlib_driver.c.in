@@ -1,0 +1,271 @@
+#include <stdlib.h>
+#include <stdio.h>
+#include <argp.h>
+#include "string.h"
+#include "trlib_krylov.h"
+#include "hdf5.h"
+
+void dgemv_(char *trans, int *m, int *n, double *alpha, double *a, int *lda, double *x, int *incx, double *beta, double *y, int *incy);
+
+const char *argp_program_version = "${TRLIB_VERSION_MAJOR}.${TRLIB_VERSION_MINOR}";
+const char *argp_program_bug_address = "<felix.lenders@iwr.uni-heidelberg.de>";
+const char doc[] = "Driver Program to execute QP";
+static char args_doc[] = "PROBLEM_PATH";
+
+struct arguments {
+    int verbosity;
+    int check;
+    int itmax;
+    char *logfile;
+    FILE *logstream;
+    char *qpsolver;
+    char *args[1];
+};
+
+static struct argp_option options[] = {
+    {"verbose", 'v', "LEVEL", OPTION_ARG_OPTIONAL, "verbose output (default: 0)" },
+    {"itmax", 'i', "ITMAX", 0, "max # NLP iterations (default: max(500, 10*n))" },
+    {"logfile", 'l', "LOGFILE", 0, "redirect output to file instead of stdout"},
+    {0}
+};
+
+static error_t parse_opt(int key, char *arg, struct argp_state *state) {
+    struct arguments *arguments = state->input;
+
+    switch(key)
+    {
+        case 'v':
+            if(arg) { arguments->verbosity = atoi(arg); }
+            else { arguments->verbosity = 1; }
+            break;
+        case 'i':
+            if(arg) { arguments->itmax = atoi(arg); }
+            else { arguments->itmax = 0; }
+            break;
+        case 'l':
+            arguments->logfile = arg;
+            break;
+        case ARGP_KEY_ARG:
+            if (state->arg_num >= 1) argp_usage (state);
+            arguments->args[state->arg_num] = arg;
+            break;
+        case ARGP_KEY_END:
+            if (state->arg_num < 1) argp_usage (state);
+            break;
+        default:
+            return ARGP_ERR_UNKNOWN;
+    }
+    return 0;
+}
+
+static struct argp argp = { options, parse_opt, args_doc, doc};
+
+void matrix_csr_vec(int m, int n, int nnz, int *idx, int *ptr, double *val, double *vec, double *mv) {
+    for(int ii = 0; ii < m ; ++ii) {
+        mv[ii] = 0.0;
+        for(int jj = ptr[ii]; jj < ptr[ii+1]; ++jj) {
+            mv[ii] += val[jj] * vec[idx[jj]];
+        }
+    }
+}
+
+int main( int argc, char** argv ) {
+    // parse command line arguments
+    struct arguments arguments;
+    arguments.verbosity = 0;
+    arguments.itmax = 0;
+    arguments.check = 0;
+    arguments.logfile = NULL;
+    arguments.logstream = stdout;
+    argp_parse(&argp, argc, argv, 0, 0, &arguments);
+    if(arguments.logfile) { arguments.logstream = fopen(arguments.logfile, "w"); }
+
+    // read problem description from hdf5 with hessian given in csr of upper symmetric half
+
+    hid_t file_id,
+          dataset_n_id, dataspace_n_id,
+          dataset_grad_id, dataspace_grad_id,
+          hessian_id,
+          dataset_h_sym_csr_idx_id, dataspace_h_sym_csr_idx_id,
+          dataset_h_sym_csr_ptr_id, dataspace_h_sym_csr_ptr_id,
+          dataset_h_sym_csr_val_id, dataspace_h_sym_csr_val_id,
+          dataset_radius_id, dataspace_radius_id;
+    hsize_t scal_dim [1], rk1_n_dim [1], nnz_dim [1];
+    herr_t status;
+
+    file_id = H5Fopen(arguments.args[0], H5F_ACC_RDONLY, H5P_DEFAULT);
+
+    scal_dim[0] = 1;
+    int n = 0, nnz = 0;
+    dataset_n_id = H5Dopen2(file_id, "/nvar", H5P_DEFAULT);
+    status = H5Dread(dataset_n_id, H5T_NATIVE_INT, H5S_ALL, H5S_ALL, H5P_DEFAULT, &n);
+    status = H5Dclose(dataset_n_id);
+
+    double *grad = malloc(n*sizeof(double));
+    if(!grad) { exit(1); }
+
+    dataset_grad_id = H5Dopen2(file_id, "/grad", H5P_DEFAULT);
+    status = H5Dread(dataset_grad_id, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, grad);
+    status = H5Dclose(dataset_grad_id);
+
+    double radius;
+    dataset_radius_id = H5Dopen2(file_id, "/radius", H5P_DEFAULT);
+    status = H5Dread(dataset_radius_id, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, &radius);
+    status = H5Dclose(dataset_radius_id);
+
+    dataset_h_sym_csr_idx_id = H5Dopen2(file_id, "/hessian/idx", H5P_DEFAULT);
+    dataspace_h_sym_csr_idx_id = H5Dget_space(dataset_h_sym_csr_idx_id);
+    status = H5Sget_simple_extent_dims(dataspace_h_sym_csr_idx_id, nnz_dim, NULL);
+    nnz = nnz_dim[0];
+
+    double *h_sym_csr_idx = malloc(nnz*sizeof(int));
+    double *h_sym_csr_ptr = malloc((n+1)*sizeof(int));
+    double *h_sym_csr_val = malloc(nnz*sizeof(double));
+    if(!h_sym_csr_idx || !h_sym_csr_ptr || !h_sym_csr_val) { exit(1); }
+
+    status = H5Dread(dataset_h_sym_csr_idx_id, H5T_NATIVE_INT, H5S_ALL, H5S_ALL, H5P_DEFAULT, h_sym_csr_idx);
+    status = H5Sclose(dataspace_h_sym_csr_idx_id);
+    status = H5Dclose(dataset_h_sym_csr_idx_id);
+
+    dataset_h_sym_csr_ptr_id = H5Dopen2(file_id, "/hessian/ptr", H5P_DEFAULT);
+    status = H5Dread(dataset_h_sym_csr_ptr_id, H5T_NATIVE_INT, H5S_ALL, H5S_ALL, H5P_DEFAULT, h_sym_csr_ptr);
+    status = H5Dclose(dataset_h_sym_csr_ptr_id);
+
+    dataset_h_sym_csr_val_id = H5Dopen2(file_id, "/hessian/val", H5P_DEFAULT);
+    status = H5Dread(dataset_h_sym_csr_val_id, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, h_sym_csr_val);
+    status = H5Dclose(dataset_h_sym_csr_val_id);
+
+    status = H5Fclose(file_id);
+
+    // expand hessian to full hessian since this makes hessian vector products compuationally less memory expensive
+    // first pass: count number of nonzeros
+    int nnz_complete = 0;
+    for(int ii = 0; ii < n; ++ii) {
+        for(int jj = h_sym_csr_ptr[ii]; jj < h_sym_csr_ptr[ii+1]; ++jj) {
+            ++nnz_complete;
+            if( h_sym_csr_idx[jj] != ii ) { ++nnz_complete; } // offdiagonal elements count twice
+        }
+    }
+    // allocate memory
+    int *idx_complete = malloc( nnz_complete * sizeof(int) );
+    int *ptr_complete = malloc( (n+1) * sizeof(int) );
+    double *val_complete = malloc( nnz_complete * sizeof(double) );
+    if( !idx_complete || !ptr_complete || !val_complete ) { exit(1); }
+    // second pass: expand upper tridiagonal part to full matrix
+    int count = 0;
+    for(int ii = 0; ii < n; ++ii){
+        ptr_complete[ii] = count;
+        // get missing strict lower tridiagonal part of row, have to search in upper part
+        for(int jj = 0; jj < ii; ++jj) {
+            // search in jj-th row for occurence of column ii
+            for(int kk = h_sym_csr_ptr[jj]; kk < h_sym_csr_ptr[jj+1]; ++kk) {
+                if( h_sym_csr_idx[kk] == ii ) {
+                    val_complete[count] = h_sym_csr_val[kk];
+                    idx_complete[count] = jj;
+                    ++count;
+                }
+                if( h_sym_csr_idx[kk] > ii ) { break; }
+            }
+        }
+        // append upper tridiagonal part of row
+        for(int jj = h_sym_csr_ptr[ii]; jj < h_sym_csr_ptr[ii+1]; ++jj) {
+            val_complete[count] = h_sym_csr_val[jj];
+            idx_complete[count] = h_sym_csr_idx[jj];
+            ++count;
+        }
+    }
+    ptr_complete[n] = count;
+
+    // solve qp
+    int itmax = 10*n, ret, iter;
+    if(arguments.itmax != 0) { itmax = arguments.itmax; }
+    double *sol = malloc(n*sizeof(double));
+    long *timing = malloc(trlib_krylov_timing_size()*sizeof(long));
+    int iwork_size, fwork_size, h_pointer;
+    trlib_krylov_memory_size(itmax, &iwork_size, &fwork_size, &h_pointer);
+    int *iwork = malloc(iwork_size*sizeof(int));
+    double *fwork = malloc(fwork_size*sizeof(double));
+    double *g = malloc(n*sizeof(double));
+    double *gm = malloc(n*sizeof(double));
+    double *p = malloc(n*sizeof(double));
+    double *Hp = malloc(n*sizeof(double));
+    double *Q = malloc((itmax+1)*n*sizeof(double));
+    double *orth_check = malloc((itmax+1)*(itmax+1)*sizeof(double));
+    
+    int init = 0; int inc = 1; int itp1 = 0;
+    double minus = -1.0; double one = 1.0; double z = 0.0;
+    init = TRLIB_CLS_INIT; trlib_krylov_prepare_memory(itmax, fwork);
+
+    double v_dot_g = 0.0; double p_dot_Hp = 0.0; double flt1; double flt2; double flt3;
+    int action; int ityp;
+
+    while(1) {
+        ret = trlib_krylov_min(init, radius, 0, itmax, 100,
+                1.4901161193847656e-08, 0.0, 2.0134092876783674e-05, 0.0,
+                TRLIB_EPS*TRLIB_EPS, 0, v_dot_g, v_dot_g, p_dot_Hp, iwork, fwork, 
+                1, arguments.verbosity, 1, "", arguments.logstream, timing,
+                &action, &iter, &ityp, &flt1, &flt2, &flt3);
+        init = 0;
+        //fprintf(stderr, "action: %d, iter: %d, ityp: %d, flt1: %e, flt2: %e, flt3: %e\n",
+        //        action, iter, ityp, flt1, flt2, flt3);
+        switch(action) {
+            case TRLIB_CLA_INIT:
+                memset(sol, 0, n*sizeof(double)); memset(gm, 0, n*sizeof(double));
+                dcopy_(&n, grad, &inc, g, &inc);
+                v_dot_g = ddot_(&n, g, &inc, g, &inc);
+                dcopy_(&n, g, &inc, p, &inc); dscal_(&n, &minus, p, &inc); // p = -g
+                matrix_csr_vec(n, n, nnz_complete, idx_complete, ptr_complete, val_complete, p, Hp); // Hp = H*p
+                p_dot_Hp = ddot_(&n, p, &inc, Hp, &inc);
+                dcopy_(&n, g, &inc, Q, &inc); // Q(0:n) = g
+                flt1 = 1.0/sqrt(v_dot_g); dscal_(&n, &flt1, Q, &inc); // Q(0:n) = g/sqrt(<g,g>)
+                break;
+            case TRLIB_CLA_RETRANSF:
+                itp1 = iter+1;
+                dgemv_("N", &n, &itp1, &one, Q, &n, fwork+h_pointer, &inc, &z, sol, &inc); // s = Q_i * h_i
+                break;
+            case TRLIB_CLA_UPDATE_STATIO:
+                if (ityp == TRLIB_CLT_CG) { daxpy_(&n, &flt1, p, &inc, sol, &inc); }; // s += flt1*p
+                break;
+            case TRLIB_CLA_UPDATE_GRAD:
+                if (ityp == TRLIB_CLT_CG) {
+                    dcopy_(&n, g, &inc, Q+iter*n, &inc); dscal_(&n, &flt2, Q+iter*n, &inc); // Q(iter*n:(iter+1)*n) = flt2*g
+                    dcopy_(&n, g, &inc, gm, &inc); daxpy_(&n, &flt1, Hp, &inc, g, &inc); // gm = g; g += flt1*Hp
+                }
+                if (ityp == TRLIB_CLT_L) {
+                    dcopy_(&n, Hp, &inc, sol, &inc); daxpy_(&n, &flt1, g, &inc, sol, &inc); daxpy_(&n, &flt2, gm, &inc, sol, &inc); // s = Hp + flt1*g + flt2*gm
+                    dcopy_(&n, g, &inc, gm, &inc); dscal_(&n, &flt3, gm, &inc); // gm = flt3*g
+                    dcopy_(&n, sol, &inc, g, &inc); // g = s
+                }
+                v_dot_g = ddot_(&n, g, &inc, g, &inc);
+                break;
+            case TRLIB_CLA_UPDATE_DIR:
+                if (ityp == TRLIB_CLT_CG) { dscal_(&n, &flt2, p, &inc); daxpy_(&n, &minus, g, &inc, p, &inc); } // p = -g + flt2 * p
+                if (ityp == TRLIB_CLT_L) { dcopy_(&n, g, &inc, p, &inc); dscal_(&n, &flt1, p, &inc); } // p = flt1*g
+                matrix_csr_vec(n, n, nnz_complete, idx_complete, ptr_complete, val_complete, p, Hp); // Hp = H*p
+                p_dot_Hp = ddot_(&n, p, &inc, Hp, &inc);
+                if ( ityp == TRLIB_CLT_L) { dcopy_(&n, p, &inc, Q+iter*n, &inc); } // Q(iter*n:(iter+1)*n) = p
+                break;
+            case TRLIB_CLA_CONV_HARD:
+                itp1 = iter+1;
+                double *temp = malloc(n*sizeof(double));
+                matrix_csr_vec(n, n, nnz_complete, idx_complete, ptr_complete, val_complete, sol, temp); // temp = H*s
+                daxpy_(&n, &one, grad, &inc, temp, &inc); // temp = H*s + g
+                daxpy_(&n, &flt1, sol, &inc, temp, &inc); // temp = H*s + g + flt1*s
+                v_dot_g = ddot_(&n, temp, &inc, temp, &inc);
+                free(temp);
+                break;
+        }
+        ////fprintf(stderr, "<g,g> = %e, <v,g> = %e, <p,Hp> = %e\n", v_dot_g, v_dot_g, p_dot_Hp);
+        if( ret < 10 ) { break; }
+    }
+
+    // cleanup
+    if(arguments.logfile) { fclose(arguments.logstream); arguments.logstream = NULL; }
+    
+    free(grad); free(h_sym_csr_val); free(h_sym_csr_ptr); free(h_sym_csr_idx);
+    free(idx_complete); free(ptr_complete); free(val_complete);
+    free(sol); free(timing); free(iwork); free(fwork);
+    free(g); free(gm); free(p); free(Hp); free(Q); free(orth_check);
+
+    return 0;
+}
