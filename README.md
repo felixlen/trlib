@@ -9,6 +9,8 @@ You have to make sure that the following requirements are provided:
 - BLAS
 - LAPACK
 - CMake
+- HDF5 (only if you want to run problems with the driver interface that are described in hdf5)
+- SuiteSparse (only if you want  to run problems with the driver interface that are described in hdf5)
 - Doxygen (only needed if you want to read the documentation)
 - Graphviz (only needed if you want to read the documentation)
 - Check (only needed if you want to run the unittests)

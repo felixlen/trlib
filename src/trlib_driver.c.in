@@ -4,6 +4,7 @@
 #include "string.h"
 #include "trlib_krylov.h"
 #include "hdf5.h"
+#include "cholmod.h"
 
 void dgemv_(char *trans, int *m, int *n, double *alpha, double *a, int *lda, double *x, int *incx, double *beta, double *y, int *incy);
 
@@ -259,7 +260,7 @@ int main( int argc, char** argv ) {
     }
 
     // compute optimality criteria
-    double tr_res, kkt_res, lam, orth_res;
+    double tr_res, kkt_res, lam, lam_pert, posdef_res;
     lam = fwork[7];
     tr_res = radius - dnrm2_(&n, sol, &inc);
     double *resv = malloc(n*sizeof(double));
@@ -267,6 +268,32 @@ int main( int argc, char** argv ) {
     daxpy_(&n, &lam, sol, &inc, resv, &inc); // resv = (H+lam*I)*sol
     daxpy_(&n, &one, grad, &inc, resv, &inc); // resv = (H+lam*I)*sol + grad
     kkt_res = dnrm2_(&n, resv, &inc);
+    cholmod_common c;
+    cholmod_start(&c);
+    c.print = 0;
+    cholmod_sparse *h = cholmod_allocate_sparse(n, n, nnz, 1, 1, 1, CHOLMOD_REAL, &c);
+    memcpy(h->p, h_sym_csr_ptr, (n+1)*sizeof(int));
+    memcpy(h->i, h_sym_csr_idx, nnz*sizeof(int));
+    memcpy(h->x, h_sym_csr_ptr, nnz*sizeof(double));
+    cholmod_sparse *e = cholmod_speye(n, n, CHOLMOD_REAL, &c);
+    cholmod_sparse *sum_pattern = cholmod_add(h, e, &one, &one, 0, 0, &c);
+    cholmod_factor *fac = cholmod_analyze(sum_pattern, &c);
+    int jj = 0;
+    while( jj < 500 ) {
+        if( jj == 0 ) { posdef_res = 0.0; }
+        if( jj == 1 ) { posdef_res = TRLIB_EPS; }
+        if( jj > 1 ) { posdef_res = 2.0*posdef_res; }
+        lam_pert = lam + posdef_res;
+        cholmod_sparse *sum = cholmod_add(h, e, &one, &lam_pert, 1, 0, &c);
+        cholmod_factorize(sum, fac, &c);
+        if(c.status != CHOLMOD_NOT_POSDEF) { cholmod_free_sparse(&sum, &c); break; } 
+        jj++;
+    }
+    cholmod_free_factor(&fac, &c);
+    cholmod_free_sparse(&sum_pattern, &c);
+    cholmod_free_sparse(&h, &c);
+    cholmod_free_sparse(&e, &c);
+    cholmod_finish(&c);
 
     // show a summary
     printf("\n*************************************************************\n");
@@ -275,7 +302,7 @@ int main( int argc, char** argv ) {
     printf("*   TR radius:       %15e%24s*\n", radius, "");
     printf("*   multiplier:      %15e%24s*\n", lam, "");
     printf("*   TR residual:     %15e (inequality requested)%1s*\n", tr_res, "");
-    //printf("*   pos def perturb: %15e%24s*\n", qp->pos_def_res, "");
+    printf("*   pos def perturb: %15e%24s*\n", posdef_res, "");
     printf("*   KKT residual:    %15e%24s*\n", kkt_res, "");
     printf("*************************************************************\n\n");
 
