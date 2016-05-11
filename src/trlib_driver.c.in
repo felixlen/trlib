@@ -270,7 +270,7 @@ int main( int argc, char** argv ) {
 
     // show a summary
     printf("\n*************************************************************\n");
-    printf("* Drvier      %-46s*\n", arguments.args[0]);
+    printf("* Driver      %-46s*\n", arguments.args[0]);
     printf("*   Exit code:          %-2d (%-2d)%29s*\n", ret, iwork[9], "");
     printf("*   TR radius:       %15e%24s*\n", radius, "");
     printf("*   multiplier:      %15e%24s*\n", lam, "");
