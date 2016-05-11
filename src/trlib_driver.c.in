@@ -190,7 +190,6 @@ int main( int argc, char** argv ) {
     double *p = malloc(n*sizeof(double));
     double *Hp = malloc(n*sizeof(double));
     double *Q = malloc((itmax+1)*n*sizeof(double));
-    double *orth_check = malloc((itmax+1)*(itmax+1)*sizeof(double));
     
     int init = 0; int inc = 1; int itp1 = 0;
     double minus = -1.0; double one = 1.0; double z = 0.0;
@@ -259,13 +258,35 @@ int main( int argc, char** argv ) {
         if( ret < 10 ) { break; }
     }
 
+    // compute optimality criteria
+    double tr_res, kkt_res, lam, orth_res;
+    lam = fwork[7];
+    tr_res = radius - dnrm2_(&n, sol, &inc);
+    double *resv = malloc(n*sizeof(double));
+    matrix_csr_vec(n, n, nnz_complete, idx_complete, ptr_complete, val_complete, sol, resv); // resv = H*sol
+    daxpy_(&n, &lam, sol, &inc, resv, &inc); // resv = (H+lam*I)*sol
+    daxpy_(&n, &one, grad, &inc, resv, &inc); // resv = (H+lam*I)*sol + grad
+    kkt_res = dnrm2_(&n, resv, &inc);
+
+    // show a summary
+    printf("\n*************************************************************\n");
+    printf("* Drvier      %-46s*\n", arguments.args[0]);
+    printf("*   Exit code:          %-2d (%-2d)%29s*\n", ret, iwork[9], "");
+    printf("*   TR radius:       %15e%24s*\n", radius, "");
+    printf("*   multiplier:      %15e%24s*\n", lam, "");
+    printf("*   TR residual:     %15e (inequality requested)%1s*\n", tr_res, "");
+    //printf("*   pos def perturb: %15e%24s*\n", qp->pos_def_res, "");
+    printf("*   KKT residual:    %15e%24s*\n", kkt_res, "");
+    printf("*************************************************************\n\n");
+
     // cleanup
     if(arguments.logfile) { fclose(arguments.logstream); arguments.logstream = NULL; }
     
+    free(resv);
     free(grad); free(h_sym_csr_val); free(h_sym_csr_ptr); free(h_sym_csr_idx);
     free(idx_complete); free(ptr_complete); free(val_complete);
     free(sol); free(timing); free(iwork); free(fwork);
-    free(g); free(gm); free(p); free(Hp); free(Q); free(orth_check);
+    free(g); free(gm); free(p); free(Hp); free(Q);
 
     return 0;
 }
