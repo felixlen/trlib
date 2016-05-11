@@ -118,8 +118,8 @@ int main( int argc, char** argv ) {
     status = H5Sget_simple_extent_dims(dataspace_h_sym_csr_idx_id, nnz_dim, NULL);
     nnz = nnz_dim[0];
 
-    double *h_sym_csr_idx = malloc(nnz*sizeof(int));
-    double *h_sym_csr_ptr = malloc((n+1)*sizeof(int));
+    int *h_sym_csr_idx = malloc(nnz*sizeof(int));
+    int *h_sym_csr_ptr = malloc((n+1)*sizeof(int));
     double *h_sym_csr_val = malloc(nnz*sizeof(double));
     if(!h_sym_csr_idx || !h_sym_csr_ptr || !h_sym_csr_val) { exit(1); }
 
