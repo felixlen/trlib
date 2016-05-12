@@ -42,6 +42,7 @@ int trlib_leftmost_irreducible(
     double up = 0.0;                        // upper bracket variable:        leftmost <= up for desired value
     *leftmost = 0.0;                        // estimation of desired leftmost eigenvalue
     double leftmost_attempt = 0.0;          // trial step for leftmost eigenvalue
+    double dleftmost = 0.0;                 // increment
     double prlp = 0.0;                      // value of Parlett-Reid-Last-Pivot function
     double dprlp = 0.0;                     // derivative of Parlett-Reid-Last-Pivot function wrt to leftmost
     int n_neg_piv = 0;                      // number of negative pivots in factorization
@@ -127,7 +128,7 @@ int trlib_leftmost_irreducible(
 
         // print iteration headline every 10 iterations
         if (*iter_pr % 10 == 1) {
-            TRLIB_PRINTLN_1("%6s%8s%14s%14s%14s%14s%6s%6s", "  it  ", " action ", "     low      ", "   leftmost   ", "      up      ", "      prlp    ", " nneg ", "  br  ")
+            TRLIB_PRINTLN_1("%6s%8s%14s%14s%14s%14s%14s%6s%6s", "  it  ", " action ", "     low      ", "   leftmost   ", "      up      ", "   dleftmost  ", "      prlp    ", " nneg ", "  br  ")
         }
         TRLIB_PRINTLN_1("%6d%8s%14e%14e%14e", *iter_pr, "  entry ", low, *leftmost, up)
 
@@ -170,7 +171,7 @@ int trlib_leftmost_irreducible(
         }
 
         if (continue_outer_loop) { 
-            TRLIB_PRINTLN_1("%6s%8s%14e%14e%14e%14e%6d%6d", "", " bisecp ", low, *leftmost, up, prlp, n_neg_piv, jj)
+            TRLIB_PRINTLN_1("%6s%8s%14e%14e%14e%14s%14e%6d%6d", "", " bisecp ", low, *leftmost, up, "", prlp, n_neg_piv, jj)
             continue; 
         }
 
@@ -182,7 +183,7 @@ int trlib_leftmost_irreducible(
 
         // test if bracket interval is small or last pivot has converged to zero
         if (up-low <= tol_abs * fmax(1.0, fmax(fabs(low), fabs(up))) || fabs(prlp) <= tol_abs) { 
-            TRLIB_PRINTLN_1("%6s%8s%14e%14e%14e%14e%6d%6d", "", "  conv  ", low, *leftmost, up, prlp, n_neg_piv, jj)
+            TRLIB_PRINTLN_1("%6s%8s%14e%14e%14e%14s%14e%6d%6d", "", "  conv  ", low, *leftmost, up, "", prlp, n_neg_piv, jj)
             TRLIB_RETURN(TRLIB_LMR_CONV)
         }
 
@@ -195,17 +196,19 @@ int trlib_leftmost_irreducible(
             quad_lin = -(2.0*(*leftmost)+prlp+((*leftmost)-leftmost_minor)*dprlp);
             quad_abs = -(((*leftmost)-leftmost_minor)*prlp+(*leftmost)*(quad_lin+(*leftmost)));
             trlib_quadratic_zero(quad_abs, quad_lin, TRLIB_EPS_POW_75, 0, 0, "", NULL, &leftmost_attempt, &zerodum);
+            dleftmost = leftmost_attempt - *leftmost;
         }
-        else { leftmost_attempt = *leftmost - prlp/dprlp; } // Newton step
+        else { dleftmost = -prlp/dprlp; leftmost_attempt = *leftmost + dleftmost; } // Newton step
 
         // assess if we can use trial step
         if (low <= leftmost_attempt && leftmost_attempt <= up) { 
-            if ( warm ) { TRLIB_PRINTLN_1("%6s%8s%14e%14e%14e%14e%6d%6d", "", " qmodel ", low, *leftmost, up, prlp, n_neg_piv, jj) }
-            else { TRLIB_PRINTLN_1("%6s%8s%14e%14e%14e%14e%6d%6d", "", " newton ", low, *leftmost, up, prlp, n_neg_piv, jj) }
+            if( fabs(dleftmost) <= tol_abs * fmax(1.0, fmax(fabs(low), fabs(up))) ) { TRLIB_RETURN(TRLIB_LMR_NEWTON_BREAK) }
+            if ( warm ) { TRLIB_PRINTLN_1("%6s%8s%14e%14e%14e%14e%14e%6d%6d", "", " qmodel ", low, *leftmost, up, dleftmost, prlp, n_neg_piv, jj) }
+            else { TRLIB_PRINTLN_1("%6s%8s%14e%14e%14e%14e%14e%6d%6d", "", " newton ", low, *leftmost, up, dleftmost, prlp, n_neg_piv, jj) }
             *leftmost = leftmost_attempt;
         }
         else { 
-            TRLIB_PRINTLN_1("%6s%8s%14e%14e%14e%14e%6d%6d", "", " bisecs ", low, *leftmost, up, prlp, n_neg_piv, jj)
+            TRLIB_PRINTLN_1("%6s%8s%14e%14e%14e%14e%14e%6d%6d", "", " bisecs ", low, *leftmost, up, .5*(up-low), prlp, n_neg_piv, jj)
             *leftmost = .5*(low+up);
         }
     }

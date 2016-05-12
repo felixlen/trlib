@@ -169,13 +169,16 @@ int trlib_krylov_min(
                        first try to update factorization if available to start tridiagonal problem warmstarted */
                     warm_fac0 = 0;
                     if (*warm_lam0) {
+                        TRLIB_PRINTLN_2("Trying to update factorization")
                         // check if subminor regular, otherwise warmstart impossible
                         warm_fac0 = delta_fac0[*ii-1] != 0.0;
+                        if(warm_fac0) { TRLIB_PRINTLN_2("Nonzero pivot. Continue") } else { TRLIB_PRINTLN_2("Zero pivot. Failure!") }
                         if (warm_fac0) {
                             gamma_fac0[*ii-1] = gamma[*ii-1]/delta_fac0[*ii-1];
                             delta_fac0[*ii] = delta[*ii] + *lam0 - gamma[*ii-1]*gamma[*ii-1]/delta_fac0[*ii-1];
                             // check if regularized tridiagonal is still positive definite for warmstart
                             warm_fac0 = delta_fac0[*ii] > 0.0;
+                            if(warm_fac0) { TRLIB_PRINTLN_2("Factorization update succesful, still pos def!") } else { TRLIB_PRINTLN_2("Factorization update failed, got negative diagonal %e!", delta_fac0[*ii]) }
                         }
                     }
                     /* call trlib_tri_factor_min to solve tridiagonal problem, store solution candidate in h

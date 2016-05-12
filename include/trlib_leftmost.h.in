@@ -5,6 +5,7 @@
 
 #define TRLIB_LMR_CONV          (0)
 #define TRLIB_LMR_ITMAX         (-1)
+#define TRLIB_LMR_NEWTON_BREAK  (3)
 
 /** @brief Computes smallest eigenvalue of symmetric tridiagonal matrix
  *         \f$ T \in \mathbb R^{n\times n} \f$,
