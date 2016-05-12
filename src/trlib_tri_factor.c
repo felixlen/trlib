@@ -86,7 +86,7 @@ int trlib_tri_factor_min(
                 // solve for h0(lam0) and compute norm
                 TRLIB_DCOPY(&n0, neglin, &inc, sol0, &inc) // sol0 <-- neglin
                 TRLIB_DPTTRS(&n0, &inc, diag_fac0, offdiag_fac0, sol0, &n0, &info_fac) // sol <-- (T+lam0 I)^-1 sol
-                if(info_fac!=0) { TRLIB_RETURN(TRLIB_TTR_FAIL_LINSOLVE) }
+                if(info_fac!=0) { TRLIB_PRINTLN_2("Failure on computing h\u2080 upon initialization") TRLIB_RETURN(TRLIB_TTR_FAIL_LINSOLVE) }
                 TRLIB_DNRM2(norm_sol0, &n0, sol0, &inc)
                 if (norm_sol0 >= radius) { *warm0 = 1; newton = 1; } else { *warm0 = 0; }
             }
@@ -102,7 +102,7 @@ int trlib_tri_factor_min(
                 // test if lam0 = 0 is suitable
                 TRLIB_DCOPY(&n0, neglin, &inc, sol0, &inc) // sol0 <-- neglin
                 TRLIB_DPTTRS(&n0, &inc, diag_fac0, offdiag_fac0, sol0, &n0, &info_fac) // sol0 <-- T0^-1 sol0
-                if (info_fac != 0) { TRLIB_RETURN(TRLIB_TTR_FAIL_LINSOLVE) }
+                if (info_fac != 0) { TRLIB_PRINTLN_2("Failure on computing h\u2080 upon initialization") TRLIB_RETURN(TRLIB_TTR_FAIL_LINSOLVE) }
                 TRLIB_DNRM2(norm_sol0, &n0, sol0, &inc)
                 if (norm_sol0<radius && equality) { info_fac = 1; } // in equality case we have to find suitable lam
             }
@@ -132,7 +132,7 @@ int trlib_tri_factor_min(
                         pert_up = lam_pert; // as this ensures a factorization, it provides a upper bound
                         TRLIB_DCOPY(&n0, neglin, &inc, sol0, &inc) // sol0 <-- neglin
                         TRLIB_DPTTRS(&n0, &inc, diag_fac0, offdiag_fac0, sol0, &n0, &info_fac) // sol0 <-- T0^-1 sol0
-                        if (info_fac != 0) { TRLIB_RETURN(TRLIB_TTR_FAIL_LINSOLVE) }
+                        if (info_fac != 0) { TRLIB_PRINTLN_2("Failure on computing h\u2080 in safeguarded initialization iteration") TRLIB_RETURN(TRLIB_TTR_FAIL_LINSOLVE) }
                         TRLIB_DNRM2(norm_sol0, &n0, sol0, &inc)
                         TRLIB_PRINTLN_2(" %2d%14e%14e%14e%3s%14e", jj, pert_low, lam_pert, pert_up, " +", norm_sol0 - radius)
                         if(norm_sol0 >= radius) { 
@@ -168,7 +168,7 @@ int trlib_tri_factor_min(
                     TRLIB_DPTTRF(&n0, diag_fac0, offdiag_fac0, &info_fac) // compute factorization
                     if(info_fac != 0) { TRLIB_RETURN(TRLIB_TTR_FAIL_FACTOR) }
                     TRLIB_DPTTRS(&n0, &inc, diag_fac0, offdiag_fac0, sol0, &n0, &info_fac) // sol0 <-- T0^-1 sol0
-                    if (info_fac != 0) { TRLIB_RETURN(TRLIB_TTR_FAIL_LINSOLVE) }
+                    if (info_fac != 0) { TRLIB_PRINTLN_2("Failure on computing h\u2080 upon after factorization was ensured") TRLIB_RETURN(TRLIB_TTR_FAIL_LINSOLVE) }
                     TRLIB_DNRM2(norm_sol0, &n0, sol0, &inc)
                 }
             }
@@ -223,9 +223,9 @@ int trlib_tri_factor_min(
             // step (2) Solving (T+lam I)*h = -lin
             TRLIB_DCOPY(&n0, neglin, &inc, sol0, &inc) // sol <-- neglin
             TRLIB_DPTTRS(&n0, &inc, diag_fac0, offdiag_fac0, sol0, &n0, &info_fac) // sol <-- (T+lam I)^-1 sol
-            if (info_fac != 0) { TRLIB_RETURN(TRLIB_TTR_FAIL_LINSOLVE) }
+            if (info_fac != 0) { TRLIB_PRINTLN_2("Failure on computing h\u2080 in newton iteration") TRLIB_RETURN(TRLIB_TTR_FAIL_LINSOLVE) }
             if (refine) { TRLIB_DPTRFS(&n0, &inc, diag_lam, offdiag, diag_fac0, offdiag_fac0, neglin, &n0, sol0, &n0, &ferr, &berr, work, &info_fac) }
-            if (info_fac != 0) { TRLIB_RETURN(TRLIB_TTR_FAIL_LINSOLVE) }
+            if (info_fac != 0) { TRLIB_PRINTLN_2("Failure on computing h\u2080 in refinement in newton iteration") TRLIB_RETURN(TRLIB_TTR_FAIL_LINSOLVE) }
             TRLIB_DNRM2(norm_sol0, &n0, sol0, &inc)
     
             if (*iter_newton % 20 == 1) {
@@ -257,7 +257,8 @@ int trlib_tri_factor_min(
                     *leftmost, 10, TRLIB_EPS_POW_5, ones,
                     diag_fac, offdiag_fac, sol, 
                     verbose-2, unicode, " EI", NULL, eigen_timing, &ferr, &berr, &jj); // can savely overwrite ferr, berr, jj with results. only interesting: eigenvector
-            if (*sub_fail != 0) { TRLIB_RETURN(TRLIB_TTR_FAIL_EIG) }
+            if (*sub_fail != 0 && *sub_fail != -1) { TRLIB_PRINTLN_2("Failure in eigenvector computation: %d", *sub_fail) TRLIB_RETURN(TRLIB_TTR_FAIL_EIG) }
+            if (*sub_fail == -1) { TRLIB_PRINTLN_2("In eigenvector computation itmax reached, continue with approximate eigenvector") }
             // compute solution as linear combination of h0 and eigenvector
             // ||h0 + t*eig||^2 = ||h_0||^2 + t * <h0, eig> + t^2 = radius^2
             TRLIB_DDOT(dot, &n0, sol0, &inc, sol, &inc); // dot = <h0, eig>
@@ -329,9 +330,9 @@ int trlib_tri_factor_min(
         }
         *warm_fac = 1;
         TRLIB_DPTTRS(&n0, &inc, diag_fac, offdiag_fac, sol, &n0, &info_fac) // sol <-- (T+lam I)^-1 sol
-        if (info_fac != 0) { TRLIB_RETURN(TRLIB_TTR_FAIL_LINSOLVE) }
+        if (info_fac != 0) { TRLIB_PRINTLN_2("Failure on computing h") TRLIB_RETURN(TRLIB_TTR_FAIL_LINSOLVE) }
         if (refine) { TRLIB_DPTRFS(&n0, &inc, diag_lam, offdiag, diag_fac, offdiag_fac, neglin, &n0, sol, &n0, &ferr, &berr, work, &info_fac) }
-        if (info_fac != 0) { TRLIB_RETURN(TRLIB_TTR_FAIL_LINSOLVE) }
+        if (info_fac != 0) { TRLIB_PRINTLN_2("Failure on refining h") TRLIB_RETURN(TRLIB_TTR_FAIL_LINSOLVE) }
         TRLIB_DNRM2(norm_sol0, &n0, sol, &inc)
 
         // compute normalized eigenvector u corresponding to leftmost of block ileftmost

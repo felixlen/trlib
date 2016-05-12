@@ -38,7 +38,7 @@ int trlib_eigen_inverse(
     }
     *lam_pert = -minuslam;
 
-    if ( *iter_inv == TRLIB_EIR_FAIL_FACTOR ) { TRLIB_RETURN(TRLIB_EIR_FAIL_FACTOR) }
+    if ( *iter_inv == TRLIB_EIR_FAIL_FACTOR ) { TRLIB_PRINTLN_2("Failure on factorizing in inverse correction!") TRLIB_RETURN(TRLIB_EIR_FAIL_FACTOR) }
 
     TRLIB_DNRM2(invnorm, &n, eig, &inc) invnorm = 1.0/invnorm;
     TRLIB_DSCAL(&n, &invnorm, eig, &inc) // normalize eig
@@ -50,7 +50,7 @@ int trlib_eigen_inverse(
 
         // solve (T - lam*I)*eig_new = eig_old
         TRLIB_DPTTRS(&n, &inc, diag_fac, offdiag_fac, eig, &n, &info_fac)
-        if( info_fac != 0 ) { TRLIB_RETURN(TRLIB_EIR_FAIL_LINSOLVE) }
+        if( info_fac != 0 ) { TRLIB_PRINTLN_2("Failure on solving inverse correction!") TRLIB_RETURN(TRLIB_EIR_FAIL_LINSOLVE) }
 
         // normalize eig
         TRLIB_DNRM2(invnorm, &n, eig, &inc) invnorm = 1.0/invnorm;
