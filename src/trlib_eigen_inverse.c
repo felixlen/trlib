@@ -1,3 +1,4 @@
+#include "trlib_private.h"
 #include "trlib_eigen_inverse.h"
 
 trlib_int_t trlib_eigen_inverse(

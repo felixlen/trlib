@@ -1,4 +1,5 @@
 #include "trlib_test.h"
+#include "trlib_tri_factor.h"
 
 START_TEST (test_simple_reducible)
 {

@@ -1,3 +1,5 @@
+#include "trlib_private.h"
+#include "trlib_tri_factor.h"
 #include "trlib_krylov.h"
 
 trlib_int_t trlib_krylov_min(

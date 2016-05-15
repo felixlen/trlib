@@ -1,3 +1,4 @@
+#include "trlib_private.h"
 #include "trlib_quadratic_zero.h"
 
 trlib_int_t trlib_quadratic_zero(trlib_flt_t c_abs, trlib_flt_t c_lin, trlib_flt_t tol,

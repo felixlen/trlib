@@ -1,4 +1,5 @@
 #include "trlib_test.h"
+#include "trlib_leftmost.h"
 
 trlib_flt_t factorization_zero(trlib_int_t n, trlib_flt_t lam, trlib_flt_t *diag, trlib_flt_t *offdiag) {
     trlib_int_t inc = 1, ifail = 0, jj;

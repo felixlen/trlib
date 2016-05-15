@@ -1,7 +1,6 @@
 #ifndef TRLIB_KRYLOV_H
 #define TRLIB_KRYLOV_H
 #include "trlib.h"
-#include "trlib_tri_factor.h"
 
 #define TRLIB_CLR_CONV_BOUND    (0)
 #define TRLIB_CLR_CONV_INTERIOR (1)

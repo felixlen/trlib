@@ -3,6 +3,7 @@
 #include <argp.h>
 #include "string.h"
 #include "trlib_krylov.h"
+#include "trlib_private.h"
 #include "hdf5.h"
 #include "cholmod.h"
 
