@@ -1,22 +1,22 @@
 #include "trlib_tri_factor.h"
 
-int trlib_tri_factor_min(
-    int nirblk, int *irblk, double *diag, double *offdiag,
-    double *neglin, double radius, 
-    int itmax, double tol_rel, int pos_def, int equality,
-    int *warm0, double *lam0, int *warm, double *lam,
-    int *warm_leftmost, int *ileftmost, double *leftmost,
-    int *warm_fac0, double *diag_fac0, double *offdiag_fac0,
-    int *warm_fac, double *diag_fac, double *offdiag_fac,
-    double *sol0, double *sol, double *ones, double *fwork,
-    int refine,
-    int verbose, int unicode, char *prefix, FILE *fout,
-    long *timing, double *obj, int *iter_newton, int *sub_fail) {
+trlib_int_t trlib_tri_factor_min(
+    trlib_int_t nirblk, trlib_int_t *irblk, trlib_flt_t *diag, trlib_flt_t *offdiag,
+    trlib_flt_t *neglin, trlib_flt_t radius, 
+    trlib_int_t itmax, trlib_flt_t tol_rel, trlib_int_t pos_def, trlib_int_t equality,
+    trlib_int_t *warm0, trlib_flt_t *lam0, trlib_int_t *warm, trlib_flt_t *lam,
+    trlib_int_t *warm_leftmost, trlib_int_t *ileftmost, trlib_flt_t *leftmost,
+    trlib_int_t *warm_fac0, trlib_flt_t *diag_fac0, trlib_flt_t *offdiag_fac0,
+    trlib_int_t *warm_fac, trlib_flt_t *diag_fac, trlib_flt_t *offdiag_fac,
+    trlib_flt_t *sol0, trlib_flt_t *sol, trlib_flt_t *ones, trlib_flt_t *fwork,
+    trlib_int_t refine,
+    trlib_int_t verbose, trlib_int_t unicode, char *prefix, FILE *fout,
+    trlib_int_t *timing, trlib_flt_t *obj, trlib_int_t *iter_newton, trlib_int_t *sub_fail) {
     // use notation of Gould paper
     // h = h(lam) denotes solution of (T+lam I) * h = -lin
 
-    long *leftmost_timing = NULL;
-    long *eigen_timing = NULL;
+    trlib_int_t *leftmost_timing = NULL;
+    trlib_int_t *eigen_timing = NULL;
     // local variables
     #if TRLIB_MEASURE_TIME
         struct timespec verystart, start, end;
@@ -27,27 +27,27 @@ int trlib_tri_factor_min(
     /* this is based on Theorem 5.8 in Gould paper,
      * the data for the first block has a 0 suffix,
      * the data for the \ell block has a l suffix */
-    int n0 = irblk[1];                               // dimension of first block
-    int nl;                                          // dimension of block corresponding to leftmost
-    int nm0 = irblk[1]-1;                            // length of offdiagonal of first block
-    int info_fac = 0;                                // factorization information
-    int ret = 0;                                     // return code
-    int newton = 0;                                  // perform newton iteration
-    double lam_pert = 0.0;                           // perturbation of leftmost eigenvalue as starting value for lam
-    double norm_sol0 = 0.0;                          // norm of h_0(lam)
-    int interior = 0;                                // solution is interior
+    trlib_int_t n0 = irblk[1];                               // dimension of first block
+    trlib_int_t nl;                                          // dimension of block corresponding to leftmost
+    trlib_int_t nm0 = irblk[1]-1;                            // length of offdiagonal of first block
+    trlib_int_t info_fac = 0;                                // factorization information
+    trlib_int_t ret = 0;                                     // return code
+    trlib_int_t newton = 0;                                  // perform newton iteration
+    trlib_flt_t lam_pert = 0.0;                           // perturbation of leftmost eigenvalue as starting value for lam
+    trlib_flt_t norm_sol0 = 0.0;                          // norm of h_0(lam)
+    trlib_int_t interior = 0;                                // solution is interior
     *iter_newton = 0;                                // newton iteration counter
-    int jj = 0;                                      // local iteration counter
-    double dlam     = 0.0;                           // increment in newton iteration
-    int inc = 1;                                     // increment in vector storage
-    double *w = fwork;                               // auxiliary vector to be used in newton iteration
-    double *diag_lam = fwork+(irblk[nirblk]);        // vector that holds diag + lam, could be saved if we would implement iterative refinement ourselve
-    double *work = fwork+2*(irblk[nirblk]);          // workspace for iterative refinement
-    double ferr = 0.0;                               // forward  error bound from iterative refinement
-    double berr = 0.0;                               // backward error bound from iterative refinement
-    double pert_low, pert_up;                        // lower and upper bound on perturbation of lambda
-    double dot = 0.0, dot2 = 0.0;                    // save dot products
-    double invD_norm_w_sq = 0.0;                     // || w ||_{D^-1}^2
+    trlib_int_t jj = 0;                                      // local iteration counter
+    trlib_flt_t dlam     = 0.0;                           // increment in newton iteration
+    trlib_int_t inc = 1;                                     // increment in vector storage
+    trlib_flt_t *w = fwork;                               // auxiliary vector to be used in newton iteration
+    trlib_flt_t *diag_lam = fwork+(irblk[nirblk]);        // vector that holds diag + lam, could be saved if we would implement iterative refinement ourselve
+    trlib_flt_t *work = fwork+2*(irblk[nirblk]);          // workspace for iterative refinement
+    trlib_flt_t ferr = 0.0;                               // forward  error bound from iterative refinement
+    trlib_flt_t berr = 0.0;                               // backward error bound from iterative refinement
+    trlib_flt_t pert_low, pert_up;                        // lower and upper bound on perturbation of lambda
+    trlib_flt_t dot = 0.0, dot2 = 0.0;                    // save dot products
+    trlib_flt_t invD_norm_w_sq = 0.0;                     // || w ||_{D^-1}^2
 
     // FIXME: ensure diverse warmstarts work as expected
     
@@ -55,7 +55,7 @@ int trlib_tri_factor_min(
     *sub_fail = 0;
 
     // set sol to 0 as a safeguard
-    memset(sol, 0, irblk[nirblk]*sizeof(double));
+    memset(sol, 0, irblk[nirblk]*sizeof(trlib_flt_t));
 
     // first make sure that lam0, h_0 is accurate
     TRLIB_PRINTLN_1("Solving trust region problem, radius %e; starting on first irreducible block", radius)
@@ -252,7 +252,7 @@ int trlib_tri_factor_min(
         else { 
             TRLIB_PRINTLN_1(" Found \u03bb\u2080 with tr residual %e! Bail out with h\u2080 + \u03b1 eig", radius - norm_sol0)
             srand((unsigned) time(NULL));
-            for( int kk = irblk[0]; kk < irblk[1]; ++kk ) { sol[kk] = ((double)rand()/(double)RAND_MAX); }
+            for( trlib_int_t kk = irblk[0]; kk < irblk[1]; ++kk ) { sol[kk] = ((trlib_flt_t)rand()/(trlib_flt_t)RAND_MAX); }
             *sub_fail = trlib_eigen_inverse(n0, diag, offdiag, 
                     *leftmost, 10, TRLIB_EPS_POW_5, ones,
                     diag_fac, offdiag_fac, sol, 
@@ -337,7 +337,7 @@ int trlib_tri_factor_min(
 
         // compute normalized eigenvector u corresponding to leftmost of block ileftmost
         srand((unsigned) time(NULL));
-        for( int kk = irblk[*ileftmost]; kk < irblk[*ileftmost+1]; ++kk ) { sol[kk] = ((double)rand()/(double)RAND_MAX); }
+        for( trlib_int_t kk = irblk[*ileftmost]; kk < irblk[*ileftmost+1]; ++kk ) { sol[kk] = ((trlib_flt_t)rand()/(trlib_flt_t)RAND_MAX); }
         nl = irblk[*ileftmost+1]-irblk[*ileftmost];
         *sub_fail = trlib_eigen_inverse(nl, diag+irblk[*ileftmost], offdiag+irblk[*ileftmost], 
                 leftmost[*ileftmost], 10, TRLIB_EPS_POW_5, ones,
@@ -365,14 +365,14 @@ int trlib_tri_factor_min(
     }
 }
 
-int trlib_tri_timing_size() {
+trlib_int_t trlib_tri_timing_size() {
 #if TRLIB_MEASURE_TIME
     return 1+TRLIB_SIZE_TIMING_LINALG+trlib_leftmost_timing_size()+trlib_eigen_timing_size();
 #endif
     return 0;
 }
 
-int trlib_tri_factor_memory_size(int n) {
+trlib_int_t trlib_tri_factor_memory_size(trlib_int_t n) {
     return 4*n;
 }
 

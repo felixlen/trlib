@@ -280,15 +280,15 @@
  *
  */
 
-int trlib_krylov_min(
-    int init, double radius, int equality, int itmax, int itmax_lanczos,
-    double tol_rel_i, double tol_abs_i,
-    double tol_rel_b, double tol_abs_b, double zero,
-    int ctl_invariant, double g_dot_g, double v_dot_g, double p_dot_Hp,
-    int *iwork, double *fwork, int refine,
-    int verbose, int unicode, char *prefix, FILE *fout, long *timing,
-    int *action, int *iter, int *ityp,
-    double *flt1, double *flt2, double *flt3
+trlib_int_t trlib_krylov_min(
+    trlib_int_t init, trlib_flt_t radius, trlib_int_t equality, trlib_int_t itmax, trlib_int_t itmax_lanczos,
+    trlib_flt_t tol_rel_i, trlib_flt_t tol_abs_i,
+    trlib_flt_t tol_rel_b, trlib_flt_t tol_abs_b, trlib_flt_t zero,
+    trlib_int_t ctl_invariant, trlib_flt_t g_dot_g, trlib_flt_t v_dot_g, trlib_flt_t p_dot_Hp,
+    trlib_int_t *iwork, trlib_flt_t *fwork, trlib_int_t refine,
+    trlib_int_t verbose, trlib_int_t unicode, char *prefix, FILE *fout, trlib_int_t *timing,
+    trlib_int_t *action, trlib_int_t *iter, trlib_int_t *ityp,
+    trlib_flt_t *flt1, trlib_flt_t *flt2, trlib_flt_t *flt3
 );
 
 /** @brief Prepares floating point workspace for #trlib_krylov_min
@@ -301,7 +301,7 @@ int trlib_krylov_min(
  *  @retval 0
  */
 
-int trlib_krylov_prepare_memory(int itmax, double *fwork);
+trlib_int_t trlib_krylov_prepare_memory(trlib_int_t itmax, trlib_flt_t *fwork);
 
 /** @brief Gives information on memory that has to be allocated for #trlib_krylov_min
  *  
@@ -313,11 +313,11 @@ int trlib_krylov_prepare_memory(int itmax, double *fwork);
  *  @retval 0
  */
 
-int trlib_krylov_memory_size(int itmax, int *iwork_size, int *fwork_size, int *h_pointer);
+trlib_int_t trlib_krylov_memory_size(trlib_int_t itmax, trlib_int_t *iwork_size, trlib_int_t *fwork_size, trlib_int_t *h_pointer);
 
 /** @brief size that has to be allocated for \p timing in #trlib_krylov_min
  */
-int trlib_krylov_timing_size();
+trlib_int_t trlib_krylov_timing_size();
 
 /** @brief Gives pointer to negative gradient of tridiagonal problem
  *  
@@ -327,6 +327,6 @@ int trlib_krylov_timing_size();
  *  @retval 0
  */
 
-int trlib_krylov_gt(int itmax, int *gt_pointer);
+trlib_int_t trlib_krylov_gt(trlib_int_t itmax, trlib_int_t *gt_pointer);
 
 #endif

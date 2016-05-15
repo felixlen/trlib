@@ -9,19 +9,29 @@
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
+#include "trlib_types.h"
 
 // blas
-void daxpy_(int *n, double *alpha, double *x, int *incx, double *y, int *incy);
-void dscal_(int *n, double *alpha, double *x, int *incx);
-void dcopy_(int *n, double *x, int *incx, double *y, int *incy);
-double dnrm2_(int *n, double *x, int *incx);
-double ddot_(int *n, double *x, int *incx, double *y, int *incy);
+void daxpy_(trlib_int_t *n, trlib_flt_t *alpha, trlib_flt_t *x, trlib_int_t *incx, trlib_flt_t *y, trlib_int_t *incy);
+//void daxpy_(int *n, double *alpha, double *x, int *incx, double *y, int *incy);
+void dscal_(trlib_int_t *n, trlib_flt_t *alpha, trlib_flt_t *x, trlib_int_t *incx);
+//void dscal_(int *n, double *alpha, double *x, int *incx);
+void dcopy_(trlib_int_t *n, trlib_flt_t *x, trlib_int_t *incx, trlib_flt_t *y, trlib_int_t *incy);
+//void dcopy_(int *n, double *x, int *incx, double *y, int *incy);
+trlib_flt_t dnrm2_(trlib_int_t *n, trlib_flt_t *x, trlib_int_t *incx);
+//double dnrm2_(int *n, double *x, int *incx);
+trlib_flt_t ddot_(trlib_int_t *n, trlib_flt_t *x, trlib_int_t *incx, trlib_flt_t *y, trlib_int_t *incy);
+//double ddot_(int *n, double *x, int *incx, double *y, int *incy);
 
 // lapack
-void dpttrf_(int *n, double *d, double *e, int *info);
-void dpttrs_(int *n, int *nrhs, double *d, double *e, double *b, int *ldb, int *info);
-void dptrfs_(int *n, int *nrhs, double *d, double *e, double *df, double *ef, double *b, int *ldb, double *x, int *ldx, double *ferr, double *berr, double *work, int *info);
-void dlagtm_(char *trans, int *n, int *nrhs, double *alpha, double *dl, double *d, double *du, double *x, int *ldx, double *beta, double *b, int *ldb);
+void dpttrf_(trlib_int_t *n, trlib_flt_t *d, trlib_flt_t *e, trlib_int_t *info);
+//void dpttrf_(int *n, double *d, double *e, int *info);
+void dpttrs_(trlib_int_t *n, trlib_int_t *nrhs, trlib_flt_t *d, trlib_flt_t *e, trlib_flt_t *b, trlib_int_t *ldb, trlib_int_t *info);
+//void dpttrs_(int *n, int *nrhs, double *d, double *e, double *b, int *ldb, int *info);
+void dptrfs_(trlib_int_t *n, trlib_int_t *nrhs, trlib_flt_t *d, trlib_flt_t *e, trlib_flt_t *df, trlib_flt_t *ef, trlib_flt_t *b, trlib_int_t *ldb, trlib_flt_t *x, trlib_int_t *ldx, trlib_flt_t *ferr, trlib_flt_t *berr, trlib_flt_t *work, trlib_int_t *info);
+//void dptrfs_(int *n, int *nrhs, double *d, double *e, double *df, double *ef, double *b, int *ldb, double *x, int *ldx, double *ferr, double *berr, double *work, int *info);
+void dlagtm_(char *trans, trlib_int_t *n, trlib_int_t *nrhs, trlib_flt_t *alpha, trlib_flt_t *dl, trlib_flt_t *d, trlib_flt_t *du, trlib_flt_t *x, trlib_int_t *ldx, trlib_flt_t *beta, trlib_flt_t *b, trlib_int_t *ldb);
+//void dlagtm_(char *trans, int *n, int *nrhs, double *alpha, double *dl, double *d, double *du, double *x, int *ldx, double *beta, double *b, int *ldb);
 
 #if TRLIB_MEASURE_TIME
     #define TRLIB_TIC(X) { clock_gettime(CLOCK_MONOTONIC, &X); }
@@ -52,10 +62,5 @@ void dlagtm_(char *trans, int *n, int *nrhs, double *alpha, double *dl, double *
 #define TRLIB_PRINTLN_2(...) if (verbose > 1) { fprintf(fout, "%s", prefix); fprintf(fout, __VA_ARGS__); fprintf(fout, "\n"); }
 
 #define TRLIB_PRINT_VEC(P, N, X) { for(int vc = 0; vc < N; ++vc) { printf("%s %d: %e\n", P, vc, *(X+vc)); } }
-
-#define TRLIB_EPS            (2.2204460492503131e-16)
-#define TRLIB_EPS_POW_4      (5.4774205922939014e-07)
-#define TRLIB_EPS_POW_5      (1.4901161193847656e-08)
-#define TRLIB_EPS_POW_75     (1.8189894035458565e-12)
 
 #endif

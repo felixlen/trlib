@@ -17,8 +17,8 @@
  *  @return        number of zeros
  */
 
-int trlib_quadratic_zero(double c_abs, double c_lin, double tol,
-        int verbose, int unicode, char *prefix, FILE *fout,
-        double *t1, double *t2);
+trlib_int_t trlib_quadratic_zero(trlib_flt_t c_abs, trlib_flt_t c_lin, trlib_flt_t tol,
+        trlib_int_t verbose, trlib_int_t unicode, char *prefix, FILE *fout,
+        trlib_flt_t *t1, trlib_flt_t *t2);
 
 #endif

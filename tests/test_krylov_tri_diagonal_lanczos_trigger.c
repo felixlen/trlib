@@ -9,10 +9,10 @@ START_TEST (test_1)
     qp.tol_rel_b = 1e5*TRLIB_EPS;
 
     struct trlib_test_problem_tri* problem = (struct trlib_test_problem_tri*) qp.problem;
-    double *diag = problem->diag; double *offdiag = problem->offdiag; double *grad = problem->grad;
+    trlib_flt_t *diag = problem->diag, *offdiag = problem->offdiag, *grad = problem->grad;
     
     diag[0] = -1.0; diag[1] = 2.0; diag[2] = 2.0; diag[3] = 2.0;
-    for(int ii = 0; ii < problem->n; ++ii) { grad[ii] = 1.0; }
+    for(trlib_int_t ii = 0; ii < problem->n; ++ii) { grad[ii] = 1.0; }
 
     qp.radius = 3.2e3;
     trlib_test_solve_check_qp(&qp, "Coldstart diagonal with zeros", 1e9*TRLIB_EPS, 1e1*TRLIB_EPS);
@@ -34,10 +34,10 @@ START_TEST (test_2)
     qp.tol_rel_b = 1e5*TRLIB_EPS;
 
     struct trlib_test_problem_tri* problem = (struct trlib_test_problem_tri*) qp.problem;
-    double *diag = problem->diag; double *offdiag = problem->offdiag; double *grad = problem->grad;
+    trlib_flt_t *diag = problem->diag, *offdiag = problem->offdiag, *grad = problem->grad;
     
     diag[0] = -1.0; diag[1] = 3.0; diag[2] = 2.0; diag[3] = 2.0;
-    for(int ii = 0; ii < problem->n; ++ii) { grad[ii] = 1.0; }
+    for(trlib_int_t ii = 0; ii < problem->n; ++ii) { grad[ii] = 1.0; }
 
     qp.radius = 3.2e3;
     trlib_test_solve_check_qp(&qp, "Coldstart diagonal with zeros", 1e9*TRLIB_EPS, 1e3*TRLIB_EPS);
@@ -59,10 +59,10 @@ START_TEST (test_3)
     qp.tol_rel_b = 1e5*TRLIB_EPS;
 
     struct trlib_test_problem_tri* problem = (struct trlib_test_problem_tri*) qp.problem;
-    double *diag = problem->diag; double *offdiag = problem->offdiag; double *grad = problem->grad;
+    trlib_flt_t *diag = problem->diag, *offdiag = problem->offdiag, *grad = problem->grad;
     
     diag[0] = 3.0; diag[1] = 1.0; diag[2] = 2.0; diag[3] = 2.0;
-    for(int ii = 0; ii < problem->n; ++ii) { grad[ii] = 1.0; }
+    for(trlib_int_t ii = 0; ii < problem->n; ++ii) { grad[ii] = 1.0; }
 
     qp.radius = 3.2e3;
     trlib_test_solve_check_qp(&qp, "Coldstart diagonal with zeros", 1e9*TRLIB_EPS, 1e2*TRLIB_EPS);
@@ -84,10 +84,10 @@ START_TEST (test_4)
     qp.tol_rel_b = 1e5*TRLIB_EPS;
 
     struct trlib_test_problem_tri* problem = (struct trlib_test_problem_tri*) qp.problem;
-    double *diag = problem->diag; double *offdiag = problem->offdiag; double *grad = problem->grad;
+    trlib_flt_t *diag = problem->diag, *offdiag = problem->offdiag, *grad = problem->grad;
     
     diag[0] = -1.0; diag[1] = -1.0; diag[2] = 2.0; diag[3] = 2.0;
-    for(int ii = 0; ii < problem->n; ++ii) { grad[ii] = 1.0; }
+    for(trlib_int_t ii = 0; ii < problem->n; ++ii) { grad[ii] = 1.0; }
 
     qp.radius = 3.2e3;
     trlib_test_solve_check_qp(&qp, "Coldstart diagonal with zeros", 1e9*TRLIB_EPS, TRLIB_EPS);

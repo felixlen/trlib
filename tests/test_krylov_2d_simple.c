@@ -7,7 +7,7 @@ START_TEST (test_2d)
     qp.verbose = 1;
 
     struct trlib_test_problem_dense* problem = (struct trlib_test_problem_dense*) qp.problem;
-    double *hess = problem->hess; double *grad = problem->grad;
+    trlib_flt_t *hess = problem->hess, *grad = problem->grad;
 
     hess[0] = 1.107272566595126e3; hess[1] = 4.701123595505616e2;
     hess[2] = 4.701123595505616e2; hess[3] = -1.222067920715109e-1;

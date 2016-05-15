@@ -18,104 +18,104 @@
 #define TRLIB_TEST_SOLVER_FACTOR (1)
 
 struct trlib_test_problem_dense {
-    int n;                   ///< dimension
-    double *hess;            ///< dense hessian
-    double *grad;            ///< gradient of quadratic form
-    double *sol;             ///< solution
+    trlib_int_t n;                   ///< dimension
+    trlib_flt_t *hess;            ///< dense hessian
+    trlib_flt_t *grad;            ///< gradient of quadratic form
+    trlib_flt_t *sol;             ///< solution
 };
 
 struct trlib_test_problem_tri {
-    int n;                   ///< dimension
-    double *diag;            ///< diagonal in case of #TRLIB_TEST_TRI_QP
-    double *offdiag;         ///< offdiagonal in case of #TRLIB_TEST_TRI_QP
-    double *diag_fac;        ///< factorization of diagonal in case of #TRLIB_TEST_TRI_QP
-    double *offdiag_fac;     ///< factorization of offdiagonal in case of #TRLIB_TEST_TRI_QP
-    double *diag_fac0;       ///< factorization of diagonal in case of #TRLIB_TEST_TRI_QP
-    double *offdiag_fac0;    ///< factorization of offdiagonal in case of #TRLIB_TEST_TRI_QP
-    double *grad;            ///< gradient of quadratic form
-    double *neggrad;         ///< negative of gradient in case of #TRLIB_TEST_TRI_QP
-    double *sol;             ///< solution
-    double *sol0;            ///< solution
-    int warm_fac;            ///< factorization is accurate in case of #TRLIB_TEST_TRI_QP
-    int warm_fac0;           ///< factorization is accurate in case of #TRLIB_TEST_TRI_QP
-    int pos_def;             ///< indicate if we know that hessian is positive definite in #TRLIB_TEST_TRI_QP
+    trlib_int_t n;                   ///< dimension
+    trlib_flt_t *diag;            ///< diagonal in case of #TRLIB_TEST_TRI_QP
+    trlib_flt_t *offdiag;         ///< offdiagonal in case of #TRLIB_TEST_TRI_QP
+    trlib_flt_t *diag_fac;        ///< factorization of diagonal in case of #TRLIB_TEST_TRI_QP
+    trlib_flt_t *offdiag_fac;     ///< factorization of offdiagonal in case of #TRLIB_TEST_TRI_QP
+    trlib_flt_t *diag_fac0;       ///< factorization of diagonal in case of #TRLIB_TEST_TRI_QP
+    trlib_flt_t *offdiag_fac0;    ///< factorization of offdiagonal in case of #TRLIB_TEST_TRI_QP
+    trlib_flt_t *grad;            ///< gradient of quadratic form
+    trlib_flt_t *neggrad;         ///< negative of gradient in case of #TRLIB_TEST_TRI_QP
+    trlib_flt_t *sol;             ///< solution
+    trlib_flt_t *sol0;            ///< solution
+    trlib_int_t warm_fac;            ///< factorization is accurate in case of #TRLIB_TEST_TRI_QP
+    trlib_int_t warm_fac0;           ///< factorization is accurate in case of #TRLIB_TEST_TRI_QP
+    trlib_int_t pos_def;             ///< indicate if we know that hessian is positive definite in #TRLIB_TEST_TRI_QP
 };
 
 struct trlib_test_problem_op {
-    int n;                   ///< dimension
-    double *grad;            ///< gradient
-    double *sol;             ///< solution
+    trlib_int_t n;                   ///< dimension
+    trlib_flt_t *grad;            ///< gradient
+    trlib_flt_t *sol;             ///< solution
     void *userdata;          ///< context pointer
-    void (*hv)(void *, int, double *, double *); ///< callback function for hessian vector product
+    void (*hv)(void *, trlib_int_t, trlib_flt_t *, trlib_flt_t *); ///< callback function for hessian vector product
 };
 
 struct trlib_test_work_krylov {
-    int *iwork;              ///< integer work space
-    double *fwork;           ///< floating point workspace
-    double *g;               ///< gradient
-    double *gm;              ///< previous gradient
-    double *p;               ///< direction
-    double *Hp;              ///< hessian product
-    double *Q;               ///< matrix with Lanczos directions
-    double *orth_check;      ///< compute orthonormality of generated directions
+    trlib_int_t *iwork;              ///< integer work space
+    trlib_flt_t *fwork;           ///< floating point workspace
+    trlib_flt_t *g;               ///< gradient
+    trlib_flt_t *gm;              ///< previous gradient
+    trlib_flt_t *p;               ///< direction
+    trlib_flt_t *Hp;              ///< hessian product
+    trlib_flt_t *Q;               ///< matrix with Lanczos directions
+    trlib_flt_t *orth_check;      ///< compute orthonormality of generated directions
 };
 
 struct trlib_test_work_factor {
-    double *fwork;           ///< floating point workspace
-    double *ones;            ///< array of all ones
-    int nirblk;              ///< number of irreducible blocks
-    int *irblk;              ///< indices of irreducible blocks
-    double* leftmost;        ///< estimation of leftmost eigenvalues for blocks
-    int ileftmost;           ///< index to block with smallest leftmost
-    int warm_leftmost;       ///< leftmost is accurate
-    int warm_lam;            ///< lam is accurate
-    int warm_lam0;           ///< lam0 is accurate
-    double lam0;             ///< multiplier corresponding to first block
+    trlib_flt_t *fwork;           ///< floating point workspace
+    trlib_flt_t *ones;            ///< array of all ones
+    trlib_int_t nirblk;              ///< number of irreducible blocks
+    trlib_int_t *irblk;              ///< indices of irreducible blocks
+    trlib_flt_t *leftmost;        ///< estimation of leftmost eigenvalues for blocks
+    trlib_int_t ileftmost;           ///< index to block with smallest leftmost
+    trlib_int_t warm_leftmost;       ///< leftmost is accurate
+    trlib_int_t warm_lam;            ///< lam is accurate
+    trlib_int_t warm_lam0;           ///< lam0 is accurate
+    trlib_flt_t lam0;             ///< multiplier corresponding to first block
 };
 
 struct trlib_test_qp {
-    int qptype;              ///< either #TRLIB_TEST_DENSE_QP or #TRLIB_TEST_TRI_QP
-    int qpsolver;            ///< either #TRLIB_TEST_SOLVER_KRYLOV or #TRLIB_TEST_SOLVER_FACTOR
+    trlib_int_t qptype;              ///< either #TRLIB_TEST_DENSE_QP or #TRLIB_TEST_TRI_QP
+    trlib_int_t qpsolver;            ///< either #TRLIB_TEST_SOLVER_KRYLOV or #TRLIB_TEST_SOLVER_FACTOR
     void* problem;           ///< problem specific storage
     void *work;              ///< solver specific workspace
-    int itmax;               ///< maximum number of iterations
+    trlib_int_t itmax;               ///< maximum number of iterations
     char *prefix;            ///< prefix that is printed
-    int verbose;             ///< print level
-    int unicode;             ///< output stream supports unicode
+    trlib_int_t verbose;             ///< print level
+    trlib_int_t unicode;             ///< output stream supports unicode
     FILE *stream;            ///< output stream
-    double radius;           ///< trust region radius
-    int equality;            ///< consider trust region constraint as equality
-    int reentry;             ///< hotstart on problem?
-    int refine;              ///< use iterative refinement on solution of linear equations
-    long *timing;            ///< statistics
-    double lam;              ///< lagrange multiplier
-    double tol_rel_i;        ///< relative stop tolerance interior case
-    double tol_abs_i;        ///< absolute stop tolerance interior case
-    double tol_rel_b;        ///< relative stop tolerance boundary case
-    double tol_abs_b;        ///< absolute stop tolerance boundary case
-    int ret;                 ///< return value from qp solver
-    int sub_fail;            ///< return value from subroutines called by qp solver
-    int iter;                ///< number of iterations
-    int ctl_invariant;       ///< in case of #TRLIB_TEST_SOLVER_KRYLOV behaviour towards multiple invariant subspaces
-    double obj;              ///< objective
-    double obj_check;        ///< objective recomputed by trlib_test_check_optimality
-    double pos_def_res;      ///< perturbation needed to obtain positive definiteness
-    double kkt_res;          ///< KKT residual
-    double tr_res;           ///< trust region residual
-    double orth_res;         ///< orthonormality residual
+    trlib_flt_t radius;           ///< trust region radius
+    trlib_int_t equality;            ///< consider trust region constraint as equality
+    trlib_int_t reentry;             ///< hotstart on problem?
+    trlib_int_t refine;              ///< use iterative refinement on solution of linear equations
+    trlib_int_t *timing;            ///< statistics
+    trlib_flt_t lam;              ///< lagrange multiplier
+    trlib_flt_t tol_rel_i;        ///< relative stop tolerance interior case
+    trlib_flt_t tol_abs_i;        ///< absolute stop tolerance interior case
+    trlib_flt_t tol_rel_b;        ///< relative stop tolerance boundary case
+    trlib_flt_t tol_abs_b;        ///< absolute stop tolerance boundary case
+    trlib_int_t ret;                 ///< return value from qp solver
+    trlib_int_t sub_fail;            ///< return value from subroutines called by qp solver
+    trlib_int_t iter;                ///< number of iterations
+    trlib_int_t ctl_invariant;       ///< in case of #TRLIB_TEST_SOLVER_KRYLOV behaviour towards multiple invariant subspaces
+    trlib_flt_t obj;              ///< objective
+    trlib_flt_t obj_check;        ///< objective recomputed by trlib_test_check_optimality
+    trlib_flt_t pos_def_res;      ///< perturbation needed to obtain positive definiteness
+    trlib_flt_t kkt_res;          ///< KKT residual
+    trlib_flt_t tr_res;           ///< trust region residual
+    trlib_flt_t orth_res;         ///< orthonormality residual
 };
 
-void dgemv_(char *trans, int *m, int *n, double *alpha, double *a, int *lda, double *x, int *incx, double *beta, double *y, int *incy);
-void dpotrf_(char *uplo, int *n, double *a, int *lda, int *info);
+void dgemv_(char *trans, trlib_int_t *m, trlib_int_t *n, trlib_flt_t *alpha, trlib_flt_t *a, trlib_int_t *lda, trlib_flt_t *x, trlib_int_t *incx, trlib_flt_t *beta, trlib_flt_t *y, trlib_int_t *incy);
+void dpotrf_(char *uplo, trlib_int_t *n, trlib_flt_t *a, trlib_int_t *lda, trlib_int_t *info);
 
-int trlib_test_malloc_qp(int qptype, int qpsolver, int n, int itmax, struct trlib_test_qp *qp);
-int trlib_test_free_qp(struct trlib_test_qp *qp);
-int trlib_test_solve_qp(struct trlib_test_qp *qp);
-int trlib_test_pos_def_perturb(struct trlib_test_qp *qp);
-int trlib_test_check_optimality(struct trlib_test_qp *qp);
-int trlib_test_problem_set_hvcb(struct trlib_test_problem_op* problem, void *userdata, void (*hv_cb)(void *, int, double *, double *));
-int trlib_test_resolve_new_gradient(struct trlib_test_qp *qp);
-void trlib_test_solve_check_qp(struct trlib_test_qp *qp, char *name, double tol, double lanczos_tol);
-void trlib_test_print_result(struct trlib_test_qp *qp, char *name, double tol, double lanczos_tol);
+trlib_int_t trlib_test_malloc_qp(trlib_int_t qptype, trlib_int_t qpsolver, trlib_int_t n, trlib_int_t itmax, struct trlib_test_qp *qp);
+trlib_int_t trlib_test_free_qp(struct trlib_test_qp *qp);
+trlib_int_t trlib_test_solve_qp(struct trlib_test_qp *qp);
+trlib_int_t trlib_test_pos_def_perturb(struct trlib_test_qp *qp);
+trlib_int_t trlib_test_check_optimality(struct trlib_test_qp *qp);
+trlib_int_t trlib_test_problem_set_hvcb(struct trlib_test_problem_op* problem, void *userdata, void (*hv_cb)(void *, trlib_int_t, trlib_flt_t *, trlib_flt_t *));
+trlib_int_t trlib_test_resolve_new_gradient(struct trlib_test_qp *qp);
+void trlib_test_solve_check_qp(struct trlib_test_qp *qp, char *name, trlib_flt_t tol, trlib_flt_t lanczos_tol);
+void trlib_test_print_result(struct trlib_test_qp *qp, char *name, trlib_flt_t tol, trlib_flt_t lanczos_tol);
 
 #endif

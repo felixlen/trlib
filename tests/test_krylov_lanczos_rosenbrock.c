@@ -9,7 +9,7 @@ START_TEST (test_rosenbrock)
     qp.tol_rel_b = TRLIB_EPS;
 
     struct trlib_test_problem_dense* problem = (struct trlib_test_problem_dense*) qp.problem;
-    double *hess = problem->hess; double *grad = problem->grad;
+    trlib_flt_t *hess = problem->hess; trlib_flt_t *grad = problem->grad;
 
     hess[0] = 8.020000e+02;
     hess[1] = -4.000000e+02;

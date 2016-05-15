@@ -1,12 +1,12 @@
 #include "trlib_test.h"
 
-double factorization_zero(int n, double lam, double *diag, double *offdiag) {
-    int inc = 1; int ifail = 0; int jj;
-    double perturb = 0.0; double perturbed;
-    double *diag_lam = malloc(n*sizeof(double));
-    double *ones = malloc(n*sizeof(double));
-    double *offdiag_lam = malloc((n-1)*sizeof(double));
-    for(int ii = 0; ii < n; ++ii) { ones[ii] = 1.0; }
+trlib_flt_t factorization_zero(trlib_int_t n, trlib_flt_t lam, trlib_flt_t *diag, trlib_flt_t *offdiag) {
+    trlib_int_t inc = 1, ifail = 0, jj;
+    trlib_flt_t perturb = 0.0, perturbed;
+    trlib_flt_t *diag_lam = malloc(n*sizeof(trlib_flt_t));
+    trlib_flt_t *ones = malloc(n*sizeof(trlib_flt_t));
+    trlib_flt_t *offdiag_lam = malloc((n-1)*sizeof(trlib_flt_t));
+    for(trlib_int_t ii = 0; ii < n; ++ii) { ones[ii] = 1.0; }
     perturbed = -lam;
     dcopy_(&n, diag, &inc, diag_lam, &inc); dcopy_(&n, offdiag, &inc, offdiag_lam, &inc);
     daxpy_(&n, &perturbed, ones, &inc, diag_lam, &inc); dpttrf_(&n, diag_lam, offdiag_lam, &ifail);
@@ -34,10 +34,10 @@ double factorization_zero(int n, double lam, double *diag, double *offdiag) {
 
 START_TEST (test_trivial_exit)
 {
-    double diag = 3.0;
-    double leftmost = 0.0;
-    long *timing = malloc(trlib_leftmost_timing_size()*sizeof(long));
-    int iter_pr = 0; int ret = 0;
+    trlib_flt_t diag = 3.0;
+    trlib_flt_t leftmost = 0.0;
+    trlib_int_t *timing = malloc(trlib_leftmost_timing_size()*sizeof(trlib_int_t));
+    trlib_int_t iter_pr = 0, ret = 0;
     ret = trlib_leftmost_irreducible(1, &diag, NULL, 0, 0.0, 1, TRLIB_EPS, 1, 1, "", stderr, timing,
            &leftmost, &iter_pr);
     ck_assert_msg(leftmost == diag, "One-Dimensional: Eigenvalue = Diagonal not satisfied, lam = %e, diag = %e", leftmost, diag);
@@ -47,14 +47,14 @@ END_TEST
 
 START_TEST (test_nontrivial)
 {
-    int n = 10; int nm = n-1;
-    double *diag = malloc(n*sizeof(double));
-    double *offdiag = malloc((n-1)*sizeof(double));
-    long *timing = malloc(trlib_leftmost_timing_size()*sizeof(long));
-    double leftmost = 0.0; double leftmost_minor; double perturb;
-    int iter_pr = 0; int ret = 0;
-    for(int ii = 0; ii < n; ++ii) {
-        diag[ii] = 2.0+((double)ii)/n;
+    trlib_int_t n = 10, nm = n-1;
+    trlib_flt_t *diag = malloc(n*sizeof(trlib_flt_t));
+    trlib_flt_t *offdiag = malloc((n-1)*sizeof(trlib_flt_t));
+    trlib_int_t *timing = malloc(trlib_leftmost_timing_size()*sizeof(trlib_int_t));
+    trlib_flt_t leftmost = 0.0, leftmost_minor, perturb;
+    trlib_int_t iter_pr = 0, ret = 0;
+    for(trlib_int_t ii = 0; ii < n; ++ii) {
+        diag[ii] = 2.0+((trlib_flt_t)ii)/n;
         if ( ii < n-1 ) { offdiag[ii] = -1.0 - (2.0*ii)/n; }
     }
     trlib_leftmost_irreducible(nm, diag, offdiag, 0, 0.0, 10*n, TRLIB_EPS, 1, 1, "", stderr, timing,

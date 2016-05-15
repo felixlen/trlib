@@ -3,19 +3,19 @@
 
 START_TEST (test_diagonal)
 {
-    int n = 10; int nirblk = n;
-    double *diag = malloc(n*sizeof(double));
-    double *offdiag = calloc((n-1), sizeof(double));
-    double *leftmost = malloc(nirblk*sizeof(double));
-    int *irblk = malloc((nirblk+1)*sizeof(int));
-    long *timing = malloc(trlib_leftmost_timing_size()*sizeof(long));
-    int ileftmost; int ret = 0;
-    for(int ii = 0; ii < nirblk+1; ++ii) { irblk[ii] = ii; }
+    trlib_int_t n = 10, nirblk = n;
+    trlib_flt_t *diag = malloc(n*sizeof(trlib_flt_t));
+    trlib_flt_t *offdiag = calloc((n-1), sizeof(trlib_flt_t));
+    trlib_flt_t *leftmost = malloc(nirblk*sizeof(trlib_flt_t));
+    trlib_int_t *irblk = malloc((nirblk+1)*sizeof(trlib_int_t));
+    trlib_int_t *timing = malloc(trlib_leftmost_timing_size()*sizeof(trlib_int_t));
+    trlib_int_t ileftmost; trlib_int_t ret = 0;
+    for(trlib_int_t ii = 0; ii < nirblk+1; ++ii) { irblk[ii] = ii; }
 
     diag[0] = 10.0; diag[1] = 9.0; diag[2] = -10.0; diag[3] = 4.0; diag[4] = 0.0; diag[5] = 6.0; diag[6] = 0.0; diag[7] = -1.0; diag[8] = -10.0; diag[9] = 1.0;
     trlib_leftmost(nirblk, irblk, diag, offdiag, 0, 0.0, 10*n, TRLIB_EPS, 1, 1, "", stderr, timing,
            &ileftmost, leftmost);
-    for(int ii = 0; ii < nirblk; ++ii) { ck_assert_msg(leftmost[ii] == diag[ii], "diagonal matrix: lefmost[%d] = %e should equal diag[%d] = %e", ii, leftmost[ii], ii, diag[ii]); }
+    for(trlib_int_t ii = 0; ii < nirblk; ++ii) { ck_assert_msg(leftmost[ii] == diag[ii], "diagonal matrix: lefmost[%d] = %e should equal diag[%d] = %e", ii, leftmost[ii], ii, diag[ii]); }
     ck_assert_msg(ileftmost == 2, "block that corresponds to smallest eigenvalue has index 2, but received %d", ileftmost);
 
     free(diag); free(offdiag); free(leftmost); free(irblk); free(timing);
@@ -24,13 +24,13 @@ END_TEST
 
 START_TEST (test_warm)
 {
-    int n = 3; int nirblk = 2;
-    double *diag = malloc(n*sizeof(double));
-    double *offdiag = calloc((n-1), sizeof(double));
-    double *leftmost = malloc(nirblk*sizeof(double));
-    int *irblk = malloc((nirblk+1)*sizeof(int));
-    long *timing = malloc(trlib_leftmost_timing_size()*sizeof(long));
-    int ileftmost; int ret = 0;
+    trlib_int_t n = 3; trlib_int_t nirblk = 2;
+    trlib_flt_t *diag = malloc(n*sizeof(trlib_flt_t));
+    trlib_flt_t *offdiag = calloc((n-1), sizeof(trlib_flt_t));
+    trlib_flt_t *leftmost = malloc(nirblk*sizeof(trlib_flt_t));
+    trlib_int_t *irblk = malloc((nirblk+1)*sizeof(trlib_int_t));
+    trlib_int_t *timing = malloc(trlib_leftmost_timing_size()*sizeof(trlib_int_t));
+    trlib_int_t ileftmost; trlib_int_t ret = 0;
     irblk[0] = 0; irblk[1] = 1; irblk[2] = 3;
 
     diag[0] = 1.0; diag[1] = 2.0; diag[2] = -1.75;

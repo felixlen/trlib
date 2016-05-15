@@ -7,7 +7,7 @@ START_TEST (test_3d_easy)
     qp.verbose = 1;
 
     struct trlib_test_problem_dense* problem = (struct trlib_test_problem_dense*) qp.problem;
-    double *hess = problem->hess; double *grad = problem->grad;
+    trlib_flt_t *hess = problem->hess, *grad = problem->grad;
 
     hess[0] = 1.0; hess[1] = 0.0; hess[2] = 4.0;
     hess[3] = 0.0; hess[4] = 2.0; hess[5] = 0.0;
@@ -32,7 +32,7 @@ START_TEST (test_3d_near_hard)
     qp.verbose = 1;
 
     struct trlib_test_problem_dense* problem = (struct trlib_test_problem_dense*) qp.problem;
-    double *hess = problem->hess; double *grad = problem->grad;
+    trlib_flt_t *hess = problem->hess, *grad = problem->grad;
 
     hess[0] = 1.0; hess[1] = 0.0; hess[2] = 4.0;
     hess[3] = 0.0; hess[4] = 2.0; hess[5] = 0.0;
@@ -58,7 +58,7 @@ START_TEST (test_3d_hard)
     qp.ctl_invariant = TRLIB_CLC_EXP_INV_GLO;
 
     struct trlib_test_problem_dense* problem = (struct trlib_test_problem_dense*) qp.problem;
-    double *hess = problem->hess; double *grad = problem->grad;
+    trlib_flt_t *hess = problem->hess, *grad = problem->grad;
 
     hess[0] = 1.0; hess[1] = 0.0; hess[2] = 4.0;
     hess[3] = 0.0; hess[4] = 2.0; hess[5] = 0.0;
@@ -84,7 +84,7 @@ START_TEST (test_3d_hard_as_resolve)
     qp.ctl_invariant = TRLIB_CLC_EXP_INV_GLO;
 
     struct trlib_test_problem_dense* problem = (struct trlib_test_problem_dense*) qp.problem;
-    double *hess = problem->hess; double *grad = problem->grad;
+    trlib_flt_t *hess = problem->hess, *grad = problem->grad;
 
     hess[0] = 1.0; hess[1] = 0.0; hess[2] = 4.0;
     hess[3] = 0.0; hess[4] = 2.0; hess[5] = 0.0;

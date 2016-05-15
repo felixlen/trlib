@@ -46,11 +46,11 @@
  *  @retval        #TRLIB_LMR_ITMAX iteration limit exceeded
  */
 
-int trlib_leftmost(
-        int nirblk, int *irblk, double *diag, double *offdiag,
-        int warm, double leftmost_minor, int itmax, double tol_abs,
-        int verbose, int unicode, char *prefix, FILE *fout,
-        long *timing, int *ileftmost, double *leftmost);
+trlib_int_t trlib_leftmost(
+        trlib_int_t nirblk, trlib_int_t *irblk, trlib_flt_t *diag, trlib_flt_t *offdiag,
+        trlib_int_t warm, trlib_flt_t leftmost_minor, trlib_int_t itmax, trlib_flt_t tol_abs,
+        trlib_int_t verbose, trlib_int_t unicode, char *prefix, FILE *fout,
+        trlib_int_t *timing, trlib_int_t *ileftmost, trlib_flt_t *leftmost);
 
 /** @brief Computes smallest eigenvalue of irreducible symmetric tridiagonal matrix
  *         \f$ T \in \mathbb R^{n\times n} \f$,
@@ -90,14 +90,14 @@ int trlib_leftmost(
  *  @retval        #TRLIB_LMR_ITMAX iteration limit exceeded
  */
 
-int trlib_leftmost_irreducible(
-        int n, double *diag, double *offdiag,
-        int warm, double leftmost_minor, int itmax, double tol_abs,
-        int verbose, int unicode, char *prefix, FILE *fout,
-        long *timing, double *leftmost, int *iter_pr);
+trlib_int_t trlib_leftmost_irreducible(
+        trlib_int_t n, trlib_flt_t *diag, trlib_flt_t *offdiag,
+        trlib_int_t warm, trlib_flt_t leftmost_minor, trlib_int_t itmax, trlib_flt_t tol_abs,
+        trlib_int_t verbose, trlib_int_t unicode, char *prefix, FILE *fout,
+        trlib_int_t *timing, trlib_flt_t *leftmost, trlib_int_t *iter_pr);
 
 /** @brief size that has to be allocated for \p timing in #trlib_leftmost_irreducible and #trlib_leftmost
  */
-int trlib_leftmost_timing_size();
+trlib_int_t trlib_leftmost_timing_size();
 
 #endif

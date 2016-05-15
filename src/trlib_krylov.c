@@ -1,14 +1,14 @@
 #include "trlib_krylov.h"
 
-int trlib_krylov_min(
-    int init, double radius, int equality, int itmax, int itmax_lanczos,
-    double tol_rel_i, double tol_abs_i,
-    double tol_rel_b, double tol_abs_b, double zero,
-    int ctl_invariant, double g_dot_g, double v_dot_g, double p_dot_Hp,
-    int *iwork, double *fwork, int refine,
-    int verbose, int unicode, char *prefix, FILE *fout, long *timing,
-    int *action, int *iter, int *ityp,
-    double *flt1, double *flt2, double *flt3) {
+trlib_int_t trlib_krylov_min(
+    trlib_int_t init, trlib_flt_t radius, trlib_int_t equality, trlib_int_t itmax, trlib_int_t itmax_lanczos,
+    trlib_flt_t tol_rel_i, trlib_flt_t tol_abs_i,
+    trlib_flt_t tol_rel_b, trlib_flt_t tol_abs_b, trlib_flt_t zero,
+    trlib_int_t ctl_invariant, trlib_flt_t g_dot_g, trlib_flt_t v_dot_g, trlib_flt_t p_dot_Hp,
+    trlib_int_t *iwork, trlib_flt_t *fwork, trlib_int_t refine,
+    trlib_int_t verbose, trlib_int_t unicode, char *prefix, FILE *fout, trlib_int_t *timing,
+    trlib_int_t *action, trlib_int_t *iter, trlib_int_t *ityp,
+    trlib_flt_t *flt1, trlib_flt_t *flt2, trlib_flt_t *flt3) {
     /* The algorithm runs by solving the trust region subproblem restricted to a Krylov subspace K(ii)
        The Krylov space K(ii) can be either described by the pCG iterates: (notation iM = M^-1)
          K(ii) = span(p_0, ..., p_ii)
@@ -34,63 +34,63 @@ int trlib_krylov_min(
              diag(T_ii) = (delta_0, ..., delta_ii) and offdiag(T_ii) = (gamma_1, ..., gamma_ii)
        (c) test for convergence */
 
-    long *leftmost_timing = NULL;
+    trlib_int_t *leftmost_timing = NULL;
     #if TRLIB_MEASURE_TIME
         struct timespec verystart, start, end;
         leftmost_timing = timing + 1;
         TRLIB_TIC(verystart)
     #endif
     // sane names for workspace variables
-    int *status = iwork;
-    int *ii = iwork+1; *iter = *ii;
-    int *pos_def = iwork+2;
-    int *interior = iwork+3;
-    int *warm_leftmost = iwork+4;
-    int *ileftmost = iwork+5;
-    int *warm_lam0 = iwork+6;
-    int *warm_lam = iwork+7;
-    int *lanczos_switch = iwork+8;
-    int *exit_tri = iwork+9;
-    int *sub_fail_tri = iwork+10;
-    int *iter_tri = iwork+11;
-    int *iter_last_head = iwork+12;
-    int *type_last_head = iwork+13;
-    int *nirblk = iwork + 14;
-    int *irblk = iwork+15;
+    trlib_int_t *status = iwork;
+    trlib_int_t *ii = iwork+1; *iter = *ii;
+    trlib_int_t *pos_def = iwork+2;
+    trlib_int_t *interior = iwork+3;
+    trlib_int_t *warm_leftmost = iwork+4;
+    trlib_int_t *ileftmost = iwork+5;
+    trlib_int_t *warm_lam0 = iwork+6;
+    trlib_int_t *warm_lam = iwork+7;
+    trlib_int_t *lanczos_switch = iwork+8;
+    trlib_int_t *exit_tri = iwork+9;
+    trlib_int_t *sub_fail_tri = iwork+10;
+    trlib_int_t *iter_tri = iwork+11;
+    trlib_int_t *iter_last_head = iwork+12;
+    trlib_int_t *type_last_head = iwork+13;
+    trlib_int_t *nirblk = iwork + 14;
+    trlib_int_t *irblk = iwork+15;
 
-    double *stop_i = fwork;
-    double *stop_b = fwork+1;
-    double *v_g = fwork+2;
-    double *p_Hp = fwork+3;
-    double *cgl = fwork+4;
-    double *cglm = fwork+5;
-    double *lam0 = fwork+6;
-    double *lam = fwork+7;
-    double *obj = fwork+8;
-    double *s_Mp = fwork+9;
-    double *p_Mp = fwork+10;
-    double *s_Ms = fwork+11;
-    double *sigma = fwork+12;
-    double *alpha = fwork+13;
-    double *beta = fwork+13+itmax+1;
-    double *neglin = fwork+13+2*(itmax+1);
-    double *h0 = fwork+13+3*(itmax+1);
-    double *h = fwork+13+4*(itmax+1);
-    double *delta =  fwork+13+5*(itmax+1);
-    double *delta_fac0 = fwork+13+6*(itmax+1);
-    double *delta_fac = fwork+13+7*(itmax+1);
-    double *gamma = fwork+13+8*(itmax+1); // note that this is shifted by 1, so gamma[0] is gamma_1
-    double *gamma_fac0 = fwork+13+8+9*itmax;
-    double *gamma_fac = fwork+13+8+10*itmax;
-    double *ones = fwork+13+8+11*itmax;
-    double *leftmost = fwork+13+9+12*itmax;
-    double *fwork_tr = fwork+13+10+13*itmax;
+    trlib_flt_t *stop_i = fwork;
+    trlib_flt_t *stop_b = fwork+1;
+    trlib_flt_t *v_g = fwork+2;
+    trlib_flt_t *p_Hp = fwork+3;
+    trlib_flt_t *cgl = fwork+4;
+    trlib_flt_t *cglm = fwork+5;
+    trlib_flt_t *lam0 = fwork+6;
+    trlib_flt_t *lam = fwork+7;
+    trlib_flt_t *obj = fwork+8;
+    trlib_flt_t *s_Mp = fwork+9;
+    trlib_flt_t *p_Mp = fwork+10;
+    trlib_flt_t *s_Ms = fwork+11;
+    trlib_flt_t *sigma = fwork+12;
+    trlib_flt_t *alpha = fwork+13;
+    trlib_flt_t *beta = fwork+13+itmax+1;
+    trlib_flt_t *neglin = fwork+13+2*(itmax+1);
+    trlib_flt_t *h0 = fwork+13+3*(itmax+1);
+    trlib_flt_t *h = fwork+13+4*(itmax+1);
+    trlib_flt_t *delta =  fwork+13+5*(itmax+1);
+    trlib_flt_t *delta_fac0 = fwork+13+6*(itmax+1);
+    trlib_flt_t *delta_fac = fwork+13+7*(itmax+1);
+    trlib_flt_t *gamma = fwork+13+8*(itmax+1); // note that this is shifted by 1, so gamma[0] is gamma_1
+    trlib_flt_t *gamma_fac0 = fwork+13+8+9*itmax;
+    trlib_flt_t *gamma_fac = fwork+13+8+10*itmax;
+    trlib_flt_t *ones = fwork+13+8+11*itmax;
+    trlib_flt_t *leftmost = fwork+13+9+12*itmax;
+    trlib_flt_t *fwork_tr = fwork+13+10+13*itmax;
 
     // local variables
-    int returnvalue = TRLIB_CLR_CONTINUE;
-    int warm_fac0 = 0; // flag that indicates if you we could successfully update the factorization
-    int warm_fac = 0; // flag that indicates if you we could successfully update the factorization
-    double sp_Msp = 0.0; // (s+, Ms+)
+    trlib_int_t returnvalue = TRLIB_CLR_CONTINUE;
+    trlib_int_t warm_fac0 = 0; // flag that indicates if you we could successfully update the factorization
+    trlib_int_t warm_fac = 0; // flag that indicates if you we could successfully update the factorization
+    trlib_flt_t sp_Msp = 0.0; // (s+, Ms+)
 
     if (init == TRLIB_CLS_INIT) { iwork[0] = TRLIB_CLS_INIT; }
     if (init == TRLIB_CLS_HOTSTART) { iwork[0] = TRLIB_CLS_HOTSTART; }
@@ -512,27 +512,27 @@ int trlib_krylov_min(
     TRLIB_RETURN(returnvalue)
 }
 
-int trlib_krylov_prepare_memory(int itmax, double *fwork) {
-    for(int jj = 21+11*itmax; jj<22+12*itmax; ++jj) { *(fwork+jj) = 1.0; } // everything to 1.0 in ones
-    memset(fwork+15+2*itmax, 0, itmax*sizeof(double)); // neglin = - gamma_0 e1, thus set neglin[1:] = 0
+trlib_int_t trlib_krylov_prepare_memory(trlib_int_t itmax, trlib_flt_t *fwork) {
+    for(trlib_int_t jj = 21+11*itmax; jj<22+12*itmax; ++jj) { *(fwork+jj) = 1.0; } // everything to 1.0 in ones
+    memset(fwork+15+2*itmax, 0, itmax*sizeof(trlib_flt_t)); // neglin = - gamma_0 e1, thus set neglin[1:] = 0
     return 0;
 }
 
-int trlib_krylov_memory_size(int itmax, int *iwork_size, int *fwork_size, int *h_pointer) {
+trlib_int_t trlib_krylov_memory_size(trlib_int_t itmax, trlib_int_t *iwork_size, trlib_int_t *fwork_size, trlib_int_t *h_pointer) {
     *iwork_size = 16+itmax;
     *fwork_size = 23+13*itmax+trlib_tri_factor_memory_size(itmax+1);
     *h_pointer = 17+4*itmax;
     return 0;
 }
 
-int trlib_krylov_timing_size() {
+trlib_int_t trlib_krylov_timing_size() {
 #if TRLIB_MEASURE_TIME
     return 1 + trlib_tri_timing_size();
 #endif
     return 0;
 }
 
-int trlib_krylov_gt(int itmax, int *gt_pointer) {
+trlib_int_t trlib_krylov_gt(trlib_int_t itmax, trlib_int_t *gt_pointer) {
     *gt_pointer = 15 + 2*itmax;
     return 0;
 }

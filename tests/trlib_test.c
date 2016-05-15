@@ -1,6 +1,6 @@
 #include "trlib_test.h"
 
-int trlib_test_malloc_qp(int qptype, int qpsolver, int n, int itmax, struct trlib_test_qp *qp) {
+trlib_int_t trlib_test_malloc_qp(trlib_int_t qptype, trlib_int_t qpsolver, trlib_int_t n, trlib_int_t itmax, struct trlib_test_qp *qp) {
     qp->qptype = qptype;
     qp->qpsolver = qpsolver;
     qp->radius = 0.0;
@@ -22,24 +22,24 @@ int trlib_test_malloc_qp(int qptype, int qpsolver, int n, int itmax, struct trli
         qp->problem = (void *)malloc(sizeof(struct trlib_test_problem_dense));
         struct trlib_test_problem_dense* problem = (struct trlib_test_problem_dense *)qp->problem;
         problem->n = n;
-        problem->hess = calloc(n*n, sizeof(double));
-        problem->grad = calloc(n, sizeof(double));
-        problem->sol = malloc(n*sizeof(double));
+        problem->hess = calloc(n*n, sizeof(trlib_flt_t));
+        problem->grad = calloc(n, sizeof(trlib_flt_t));
+        problem->sol = malloc(n*sizeof(trlib_flt_t));
     }
     if(qptype == TRLIB_TEST_TRI_QP) {
         qp->problem = (void *)malloc(sizeof(struct trlib_test_problem_tri));
         struct trlib_test_problem_tri* problem = (struct trlib_test_problem_tri *)qp->problem;
         problem->n = n;
-        problem->diag = calloc(n, sizeof(double));
-        problem->offdiag = calloc(n-1, sizeof(double));
-        problem->diag_fac = malloc(n*sizeof(double));
-        problem->diag_fac0 = malloc(n*sizeof(double));
-        problem->offdiag_fac = malloc((n-1)*sizeof(double));
-        problem->offdiag_fac0 = malloc((n-1)*sizeof(double));
-        problem->grad = calloc(n, sizeof(double));
-        problem->neggrad = calloc(n, sizeof(double));
-        problem->sol = malloc(n*sizeof(double));
-        problem->sol0 = malloc(n*sizeof(double));
+        problem->diag = calloc(n, sizeof(trlib_flt_t));
+        problem->offdiag = calloc(n-1, sizeof(trlib_flt_t));
+        problem->diag_fac = malloc(n*sizeof(trlib_flt_t));
+        problem->diag_fac0 = malloc(n*sizeof(trlib_flt_t));
+        problem->offdiag_fac = malloc((n-1)*sizeof(trlib_flt_t));
+        problem->offdiag_fac0 = malloc((n-1)*sizeof(trlib_flt_t));
+        problem->grad = calloc(n, sizeof(trlib_flt_t));
+        problem->neggrad = calloc(n, sizeof(trlib_flt_t));
+        problem->sol = malloc(n*sizeof(trlib_flt_t));
+        problem->sol0 = malloc(n*sizeof(trlib_flt_t));
         problem->warm_fac = 0;
         problem->warm_fac0 = 0;
         problem->pos_def = 0;
@@ -48,44 +48,44 @@ int trlib_test_malloc_qp(int qptype, int qpsolver, int n, int itmax, struct trli
         qp->problem = (void *)malloc(sizeof(struct trlib_test_problem_op));
         struct trlib_test_problem_op* problem = (struct trlib_test_problem_op *)qp->problem;
         problem->n = n;
-        problem->grad = calloc(n, sizeof(double));
-        problem->sol = malloc(n*sizeof(double));
+        problem->grad = calloc(n, sizeof(trlib_flt_t));
+        problem->sol = malloc(n*sizeof(trlib_flt_t));
     }
 
     if(qpsolver == TRLIB_TEST_SOLVER_KRYLOV) {
-        qp->timing = malloc(trlib_krylov_timing_size()*sizeof(long));
+        qp->timing = malloc(trlib_krylov_timing_size()*sizeof(trlib_int_t));
         qp->work = (void *)malloc(sizeof(struct trlib_test_work_krylov));
         struct trlib_test_work_krylov * work = (struct trlib_test_work_krylov *)qp->work;
-        int iwork_size, fwork_size, h_pointer;
+        trlib_int_t iwork_size, fwork_size, h_pointer;
         trlib_krylov_memory_size(itmax, &iwork_size, &fwork_size, &h_pointer);
-        work->iwork = malloc(iwork_size*sizeof(int));
-        work->fwork = malloc(fwork_size*sizeof(double));
-        work->g = malloc(n*sizeof(double));
-        work->gm = malloc(n*sizeof(double));
-        work->p = malloc(n*sizeof(double));
-        work->Hp = malloc(n*sizeof(double));
-        work->Q = malloc((itmax+1)*n*sizeof(double));
-        work->orth_check = malloc((itmax+1)*(itmax+1)*sizeof(double));
+        work->iwork = malloc(iwork_size*sizeof(trlib_int_t));
+        work->fwork = malloc(fwork_size*sizeof(trlib_flt_t));
+        work->g = malloc(n*sizeof(trlib_flt_t));
+        work->gm = malloc(n*sizeof(trlib_flt_t));
+        work->p = malloc(n*sizeof(trlib_flt_t));
+        work->Hp = malloc(n*sizeof(trlib_flt_t));
+        work->Q = malloc((itmax+1)*n*sizeof(trlib_flt_t));
+        work->orth_check = malloc((itmax+1)*(itmax+1)*sizeof(trlib_flt_t));
     }
     if(qpsolver == TRLIB_TEST_SOLVER_FACTOR) {
-        qp->timing = malloc(trlib_tri_timing_size()*sizeof(long));
+        qp->timing = malloc(trlib_tri_timing_size()*sizeof(trlib_int_t));
         qp->work = (void *)malloc(sizeof(struct trlib_test_work_factor));
         struct trlib_test_work_factor * work = (struct trlib_test_work_factor *)qp->work;
-        work->fwork = malloc(4*n*sizeof(double));
-        work->ones = malloc(n*sizeof(double));
+        work->fwork = malloc(4*n*sizeof(trlib_flt_t));
+        work->ones = malloc(n*sizeof(trlib_flt_t));
         work->nirblk = 0;
         work->warm_lam = 0;
         work->warm_lam0 = 0;
         work->lam0 = 0.0;
         work->warm_leftmost = 0;
         work->ileftmost = 0;
-        for(int ii = 0; ii < n; ++ii) { work->ones[ii] = 1.0; }
+        for(trlib_int_t ii = 0; ii < n; ++ii) { work->ones[ii] = 1.0; }
     }
 
     return 0;
 }
 
-int trlib_test_free_qp(struct trlib_test_qp *qp) {
+trlib_int_t trlib_test_free_qp(struct trlib_test_qp *qp) {
     if(qp->prefix != NULL) { free(qp->prefix); }
     if(qp->timing != NULL) { free(qp->timing); }
     if(qp->qptype == TRLIB_TEST_DENSE_QP) {
@@ -152,11 +152,11 @@ int trlib_test_free_qp(struct trlib_test_qp *qp) {
     return 0;
 }
 
-int trlib_test_solve_qp(struct trlib_test_qp *qp) { 
+trlib_int_t trlib_test_solve_qp(struct trlib_test_qp *qp) { 
     if(qp->qpsolver == TRLIB_TEST_SOLVER_KRYLOV) {
         struct trlib_test_work_krylov * work = (struct trlib_test_work_krylov *)qp->work;
-        int n; double *grad; double *sol; double *hess; double *diag; double *offdiag;
-        void (*hv)(void *, int, double *, double *); double *userdata;
+        trlib_int_t n; trlib_flt_t *grad, *sol, *hess, *diag, *offdiag;
+        void (*hv)(void *, trlib_int_t, trlib_flt_t *, trlib_flt_t *); trlib_flt_t *userdata;
         if(qp->qpsolver == TRLIB_TEST_DENSE_QP) { 
             struct trlib_test_problem_dense* problem = (struct trlib_test_problem_dense *)qp->problem;
             n = problem->n; grad = problem->grad; sol = problem->sol; hess = problem->hess;
@@ -169,15 +169,15 @@ int trlib_test_solve_qp(struct trlib_test_qp *qp) {
             struct trlib_test_problem_op* problem = (struct trlib_test_problem_op *)qp->problem;
             n = problem->n; grad = problem->grad; hv = problem->hv; userdata = problem->userdata; sol = problem->sol;
         }
-        int init = 0; int inc = 1; int itp1 = 0;
-        double minus = -1.0; double one = 1.0; double z = 0.0;
+        trlib_int_t init = 0, inc = 1, itp1 = 0;
+        trlib_flt_t minus = -1.0, one = 1.0, z = 0.0;
         if(!qp->reentry) { init = TRLIB_CLS_INIT; trlib_krylov_prepare_memory(qp->itmax, work->fwork); }
         else { init = TRLIB_CLS_HOTSTART; }
 
-        double v_dot_g = 0.0; double p_dot_Hp = 0.0; double flt1; double flt2; double flt3;
-        int action; int ityp;
+        trlib_flt_t v_dot_g = 0.0, p_dot_Hp = 0.0, flt1, flt2, flt3;
+        trlib_int_t action, ityp;
 
-        int iwork_size, fwork_size, h_pointer;
+        trlib_int_t iwork_size, fwork_size, h_pointer;
         trlib_krylov_memory_size(qp->itmax, &iwork_size, &fwork_size, &h_pointer);
 
         while(1) {
@@ -191,7 +191,7 @@ int trlib_test_solve_qp(struct trlib_test_qp *qp) {
             //        action, qp->iter, ityp, flt1, flt2, flt3);
             switch(action) {
                 case TRLIB_CLA_INIT:
-                    memset(sol, 0, n*sizeof(double)); memset(work->gm, 0, n*sizeof(double));
+                    memset(sol, 0, n*sizeof(trlib_flt_t)); memset(work->gm, 0, n*sizeof(trlib_flt_t));
                     dcopy_(&n, grad, &inc, work->g, &inc);
                     v_dot_g = ddot_(&n, work->g, &inc, work->g, &inc);
                     dcopy_(&n, work->g, &inc, work->p, &inc); dscal_(&n, &minus, work->p, &inc); // p = -g
@@ -244,7 +244,7 @@ int trlib_test_solve_qp(struct trlib_test_qp *qp) {
                     break;
                 case TRLIB_CLA_CONV_HARD:
                     itp1 = qp->iter+1;
-                    double *temp = malloc(n*sizeof(double));
+                    trlib_flt_t *temp = malloc(n*sizeof(trlib_flt_t));
                     if(qp->qptype == TRLIB_TEST_DENSE_QP) { 
                         dgemv_("N", &n, &n, &one, hess, &n, sol, &inc, &z, temp, &inc); // temp = H*s
                     }
@@ -261,12 +261,12 @@ int trlib_test_solve_qp(struct trlib_test_qp *qp) {
                     break;
                 case TRLIB_CLA_NEW_KRYLOV:
                     // FIXME: implement proper reorthogonalization
-                    memset(work->g, 0, n*sizeof(double));
-                    memset(work->gm, 0, n*sizeof(double));
-                    memset(work->p, 0, n*sizeof(double));
+                    memset(work->g, 0, n*sizeof(trlib_flt_t));
+                    memset(work->gm, 0, n*sizeof(trlib_flt_t));
+                    memset(work->p, 0, n*sizeof(trlib_flt_t));
                     (work->g)[0] = 1.0;
                     v_dot_g = ddot_(&n, work->g, &inc, work->g, &inc);
-                    double iv = 1.0/sqrt(v_dot_g);
+                    trlib_flt_t iv = 1.0/sqrt(v_dot_g);
                     daxpy_(&n, &iv, work->g, &inc, work->p, &inc);
                     if(qp->qptype == TRLIB_TEST_DENSE_QP) { 
                         dgemv_("N", &n, &n, &one, hess, &n, work->p, &inc, &z, work->Hp, &inc); // Hp = H*p
@@ -292,7 +292,7 @@ int trlib_test_solve_qp(struct trlib_test_qp *qp) {
     }
 
     if (qp->qpsolver == TRLIB_TEST_SOLVER_FACTOR) { 
-        int inc = 1; double minus = -1.0;
+        trlib_int_t inc = 1; trlib_flt_t minus = -1.0;
         struct trlib_test_work_factor * work = (struct trlib_test_work_factor *)qp->work;
         struct trlib_test_problem_tri* problem = (struct trlib_test_problem_tri *)qp->problem;
 
@@ -301,12 +301,12 @@ int trlib_test_solve_qp(struct trlib_test_qp *qp) {
         if(work->nirblk == 0) {
             // detect irreducible structure
             work->nirblk = 1;
-            for(int ii = 0; ii < problem->n -1; ++ii) { if(problem->offdiag[ii] == 0.0) { work->nirblk++; } }
-            work->irblk = malloc((work->nirblk+1)*sizeof(int));
+            for(trlib_int_t ii = 0; ii < problem->n -1; ++ii) { if(problem->offdiag[ii] == 0.0) { work->nirblk++; } }
+            work->irblk = malloc((work->nirblk+1)*sizeof(trlib_int_t));
             work->irblk[0] = 0; work->irblk[work->nirblk] = problem->n;
-            int ircount = 1;
-            for(int ii = 0; ii < problem->n -1; ++ii) { if(problem->offdiag[ii] == 0.0) { work->irblk[ircount] = ii+1; ircount++; } }
-            work->leftmost = calloc(work->nirblk, sizeof(double));
+            trlib_int_t ircount = 1;
+            for(trlib_int_t ii = 0; ii < problem->n -1; ++ii) { if(problem->offdiag[ii] == 0.0) { work->irblk[ircount] = ii+1; ircount++; } }
+            work->leftmost = calloc(work->nirblk, sizeof(trlib_flt_t));
         }
 
         qp->ret = trlib_tri_factor_min(work->nirblk, work->irblk, 
@@ -324,11 +324,11 @@ int trlib_test_solve_qp(struct trlib_test_qp *qp) {
     return 0;
 }
 
-int trlib_test_resolve_new_gradient(struct trlib_test_qp *qp) {
+trlib_int_t trlib_test_resolve_new_gradient(struct trlib_test_qp *qp) {
     if(qp->qpsolver == TRLIB_TEST_SOLVER_KRYLOV) {
         struct trlib_test_work_krylov * work = (struct trlib_test_work_krylov *)qp->work;
-        int n; double *grad; double *sol; double *hess; double *diag; double *offdiag;
-        void (*hv)(void *, int, double *, double *); double *userdata;
+        trlib_int_t n; trlib_flt_t *grad, *sol, *hess, *diag, *offdiag;
+        void (*hv)(void *, trlib_int_t, trlib_flt_t *, trlib_flt_t *); trlib_flt_t *userdata;
         if(qp->qpsolver == TRLIB_TEST_DENSE_QP) { 
             struct trlib_test_problem_dense* problem = (struct trlib_test_problem_dense *)qp->problem;
             n = problem->n; grad = problem->grad; sol = problem->sol; hess = problem->hess;
@@ -341,19 +341,19 @@ int trlib_test_resolve_new_gradient(struct trlib_test_qp *qp) {
             struct trlib_test_problem_op* problem = (struct trlib_test_problem_op *)qp->problem;
             n = problem->n; grad = problem->grad; hv = problem->hv; userdata = problem->userdata; sol = problem->sol;
         }
-        int init = 0; int inc = 1; int itp1 = 0;
-        double minus = -1.0; double one = 1.0; double z = 0.0;
+        trlib_int_t init = 0, inc = 1, itp1 = 0;
+        trlib_flt_t minus = -1.0, one = 1.0, z = 0.0;
         init = TRLIB_CLS_HOTSTART_G;
-        double v_dot_g = 0.0; double p_dot_Hp = 0.0; double flt1; double flt2; double flt3;
-        int action; int ityp;
+        trlib_flt_t v_dot_g = 0.0, p_dot_Hp = 0.0, flt1, flt2, flt3;
+        trlib_int_t action, ityp;
 
-        int gt_pointer;
+        trlib_int_t gt_pointer;
         trlib_krylov_gt(qp->itmax, &gt_pointer);
 
-        int iwork_size, fwork_size, h_pointer;
+        trlib_int_t iwork_size, fwork_size, h_pointer;
         trlib_krylov_memory_size(qp->itmax, &iwork_size, &fwork_size, &h_pointer);
 
-        double nl0 = (work->fwork)[gt_pointer];
+        trlib_flt_t nl0 = (work->fwork)[gt_pointer];
 
         itp1 = qp->iter+1;
         dgemv_("T", &n, &itp1, &minus, work->Q, &n, grad, &inc, &z, work->fwork+gt_pointer, &inc); // neglin = - Q_i * grad
@@ -372,7 +372,7 @@ int trlib_test_resolve_new_gradient(struct trlib_test_qp *qp) {
         itp1 = qp->iter+1;
         dgemv_("N", &n, &itp1, &one, work->Q, &n, work->fwork+h_pointer, &inc, &z, sol, &inc); // s = Q_i * h_i
         work->fwork[gt_pointer] = nl0;
-        memset(work->fwork+gt_pointer+1, 0, qp->iter*sizeof(double));
+        memset(work->fwork+gt_pointer+1, 0, qp->iter*sizeof(trlib_flt_t));
 
         qp->lam = work->fwork[7];
         qp->obj = work->fwork[8];
@@ -383,25 +383,25 @@ int trlib_test_resolve_new_gradient(struct trlib_test_qp *qp) {
     return 0;
 }
 
-int trlib_test_check_optimality(struct trlib_test_qp *qp) { 
-    int n; int nn; int nm1; int jj; double *sol; double *grad; double perturbed;
-    double *hess;  double *hess_lam;
-    double *diag; double *offdiag; double *diag_lam; double *offdiag_lam;
-    int inc = 1; int ifail = 0; double one = 1.0;
+trlib_int_t trlib_test_check_optimality(struct trlib_test_qp *qp) { 
+    trlib_int_t n, nn, nm1, jj; trlib_flt_t *sol, *grad, perturbed;
+    trlib_flt_t *hess, *hess_lam;
+    trlib_flt_t *diag, *offdiag, *diag_lam, *offdiag_lam;
+    trlib_int_t inc = 1, ifail = 0; trlib_flt_t one = 1.0;
     qp->pos_def_res = 0.0; perturbed = qp->lam + qp->pos_def_res;
     if(qp->qptype == TRLIB_TEST_DENSE_QP) {
         struct trlib_test_problem_dense* problem = (struct trlib_test_problem_dense *)qp->problem;
         n = problem->n; nn = problem->n*problem->n; sol = problem->sol; hess = problem->hess; grad = problem->grad;
-        hess_lam = malloc(nn*sizeof(double));
+        hess_lam = malloc(nn*sizeof(trlib_flt_t));
         dcopy_(&nn, hess, &inc, hess_lam, &inc);
-        for(int ii = 0; ii < n; ++ii) { hess_lam[ii*n+ii] += perturbed; }
+        for(trlib_int_t ii = 0; ii < n; ++ii) { hess_lam[ii*n+ii] += perturbed; }
     }
     if(qp->qptype == TRLIB_TEST_TRI_QP) {
         struct trlib_test_problem_tri* problem = (struct trlib_test_problem_tri *)qp->problem;
         n = problem->n; nm1 = problem->n-1; diag = problem->diag; offdiag = problem->offdiag; grad = problem->grad; sol = problem->sol;
-        diag_lam = malloc(n*sizeof(double)); offdiag_lam = malloc((n-1)*sizeof(double));
+        diag_lam = malloc(n*sizeof(trlib_flt_t)); offdiag_lam = malloc((n-1)*sizeof(trlib_flt_t));
         dcopy_(&n, diag, &inc, diag_lam, &inc); dcopy_(&nm1, offdiag, &inc, offdiag_lam, &inc);
-        for(int ii = 0; ii < n; ++ii) { diag_lam[ii] += perturbed; }
+        for(trlib_int_t ii = 0; ii < n; ++ii) { diag_lam[ii] += perturbed; }
     }
     jj = 0;
     while (1) {
@@ -414,16 +414,16 @@ int trlib_test_check_optimality(struct trlib_test_qp *qp) {
         perturbed = qp->lam + qp->pos_def_res;
         if(qp->qptype == TRLIB_TEST_SOLVER_KRYLOV) {
             dcopy_(&nn, hess, &inc, hess_lam, &inc);
-            for(int ii = 0; ii < n; ++ii) { hess_lam[ii*n+ii] += perturbed; }
+            for(trlib_int_t ii = 0; ii < n; ++ii) { hess_lam[ii*n+ii] += perturbed; }
         }
         if(qp->qptype == TRLIB_TEST_TRI_QP) {
             dcopy_(&n, diag, &inc, diag_lam, &inc); dcopy_(&nm1, offdiag, &inc, offdiag_lam, &inc);
-            for(int ii = 0; ii < n; ++ii) { diag_lam[ii] += perturbed; }
+            for(trlib_int_t ii = 0; ii < n; ++ii) { diag_lam[ii] += perturbed; }
         }
     }
 
     qp->tr_res = qp->radius - dnrm2_(&n, sol, &inc);
-    double *resv = malloc(n*sizeof(double));
+    trlib_flt_t *resv = malloc(n*sizeof(trlib_flt_t));
     if(qp->qptype == TRLIB_TEST_DENSE_QP) {
         dcopy_(&n, sol, &inc, resv, &inc);
         dgemv_("N", &n, &n, &one, hess, &n, sol, &inc, &(qp->lam), resv, &inc);
@@ -433,7 +433,7 @@ int trlib_test_check_optimality(struct trlib_test_qp *qp) {
         dcopy_(&n, grad, &inc, resv, &inc);
         qp->kkt_res = dnrm2_(&n, resv, &inc);
         dcopy_(&n, diag, &inc, diag_lam, &inc); dcopy_(&n, offdiag, &inc, offdiag_lam, &inc);
-        for(int ii = 0; ii < n; ++ii) { diag_lam[ii] += qp->lam; }
+        for(trlib_int_t ii = 0; ii < n; ++ii) { diag_lam[ii] += qp->lam; }
         dlagtm_("N", &n, &inc, &one, offdiag, diag_lam, offdiag, sol, &n, &one, resv, &n);
     }
     qp->kkt_res = dnrm2_(&n, resv, &inc);
@@ -451,14 +451,14 @@ int trlib_test_check_optimality(struct trlib_test_qp *qp) {
 
     if(qp->qpsolver == TRLIB_TEST_SOLVER_KRYLOV) {
         struct trlib_test_work_krylov * work = (struct trlib_test_work_krylov *)qp->work;
-        for(int ii = 0; ii < qp->iter+1; ++ii) {
-            for(int jj = 0; jj < ii+1; ++jj) {
+        for(trlib_int_t ii = 0; ii < qp->iter+1; ++ii) {
+            for(trlib_int_t jj = 0; jj < ii+1; ++jj) {
                 work->orth_check[ii*(qp->iter+1)+jj] = ddot_(&n, work->Q+ii*n, &inc, work->Q+jj*n, &inc);
                 work->orth_check[jj*(qp->iter+1)+ii] = work->orth_check[ii*(qp->iter+1)+jj];
             }
             work->orth_check[ii*(qp->iter+1)+ii] = work->orth_check[ii*(qp->iter+1)+ii] - 1.0;
         }
-        int lorth = (qp->iter+1)*(qp->iter+1);
+        trlib_int_t lorth = (qp->iter+1)*(qp->iter+1);
         qp->orth_res = dnrm2_(&lorth, work->orth_check, &inc);
         qp->orth_res = qp->orth_res/(qp->iter+1);
     }
@@ -471,20 +471,20 @@ int trlib_test_check_optimality(struct trlib_test_qp *qp) {
 }
 
 // it seems that for some reason this construction is needed from cython
-int trlib_test_problem_set_hvcb(struct trlib_test_problem_op* problem, void *userdata, void (*hv_cb)(void *, int, double *, double *)) {
+trlib_int_t trlib_test_problem_set_hvcb(struct trlib_test_problem_op* problem, void *userdata, void (*hv_cb)(void *, trlib_int_t, trlib_flt_t *, trlib_flt_t *)) {
     problem->userdata = userdata;
     problem->hv = hv_cb;
     return 0;
 }
 
-void trlib_test_solve_check_qp(struct trlib_test_qp *qp, char *name, double tol, double lanczos_tol) {
+void trlib_test_solve_check_qp(struct trlib_test_qp *qp, char *name, trlib_flt_t tol, trlib_flt_t lanczos_tol) {
     qp->stream = stderr;
     trlib_test_solve_qp(qp);
     trlib_test_check_optimality(qp);
     trlib_test_print_result(qp, name, tol, lanczos_tol);
 }
 
-void trlib_test_print_result(struct trlib_test_qp *qp, char *name, double tol, double lanczos_tol) {
+void trlib_test_print_result(struct trlib_test_qp *qp, char *name, trlib_flt_t tol, trlib_flt_t lanczos_tol) {
     printf("\n*************************************************************\n");
     printf("* Test Case   %-46s*\n", name);
     printf("*   Exit code:          %-2d (%-2d)%29s*\n", qp->ret, qp->sub_fail, "");
@@ -500,10 +500,10 @@ void trlib_test_print_result(struct trlib_test_qp *qp, char *name, double tol, d
 
     // let us do a simple lanczos iteration ourselve and compare directions
     if (qp->qpsolver == TRLIB_TEST_SOLVER_KRYLOV) {
-        int n; int inc = 1;
+        trlib_int_t n, inc = 1;
         struct trlib_test_work_krylov * work = (struct trlib_test_work_krylov *)qp->work;
-        double igamma, gamma, delta, one, z;
-        double *g, *p, *pm, *Hp, *hess, *diag, *offdiag, *grad;
+        trlib_flt_t igamma, gamma, delta, one, z;
+        trlib_flt_t *g, *p, *pm, *Hp, *hess, *diag, *offdiag, *grad;
         one = 1.0; z = 0.0;
         if(qp->qptype == TRLIB_TEST_DENSE_QP) {
             struct trlib_test_problem_dense* problem = (struct trlib_test_problem_dense *)qp->problem;
@@ -518,17 +518,17 @@ void trlib_test_print_result(struct trlib_test_qp *qp, char *name, double tol, d
             offdiag = problem->offdiag;
             grad = problem->grad;
         }
-        g = calloc(n, sizeof(double));
-        p = calloc(n, sizeof(double));
-        Hp = calloc(n, sizeof(double));
-        pm = calloc(n, sizeof(double));
+        g  = calloc(n, sizeof(trlib_flt_t));
+        p  = calloc(n, sizeof(trlib_flt_t));
+        Hp = calloc(n, sizeof(trlib_flt_t));
+        pm = calloc(n, sizeof(trlib_flt_t));
 
-        memcpy(g, grad, n*sizeof(double));
+        memcpy(g, grad, n*sizeof(trlib_flt_t));
 
         if(lanczos_tol >= 0) {
-            for(int ii = 0; ii<qp->iter+1; ++ii) { 
+            for(trlib_int_t ii = 0; ii<qp->iter+1; ++ii) { 
                 gamma = dnrm2_(&n, g, &inc); igamma = 1.0/gamma;
-                memcpy(p, g, n*sizeof(double)); dscal_(&n, &igamma, p, &inc);
+                memcpy(p, g, n*sizeof(trlib_flt_t)); dscal_(&n, &igamma, p, &inc);
                 if(qp->qptype == TRLIB_TEST_DENSE_QP) { 
                     dgemv_("N", &n, &n, &one, hess, &n, p, &inc, &z, Hp, &inc); // Hp = H*p
                 }
@@ -536,11 +536,11 @@ void trlib_test_print_result(struct trlib_test_qp *qp, char *name, double tol, d
                     dlagtm_("N", &n, &inc, &one, offdiag, diag, offdiag, p, &inc, &z, Hp, &inc); // Hp = H*p
                 }
                 delta = ddot_(&n, p, &inc, Hp, &inc);
-                memcpy(g, Hp, n*sizeof(double)); 
+                memcpy(g, Hp, n*sizeof(trlib_flt_t)); 
                 igamma = -delta; daxpy_(&n, &igamma, p, &inc, g, &inc);
                 igamma = -gamma; daxpy_(&n, &igamma, pm, &inc, g, &inc);
-                memcpy(pm, p, n*sizeof(double));
-                for(int jj = 0; jj<n; ++jj){ ck_assert_msg( fabs(p[jj] - work->Q[jj+ii*n] ) <= lanczos_tol, "directions differ from those produced by stupid Lanczos, iterate %d, index %d, residual %e", ii, jj, p[jj] - work->Q[jj+ii*n]); }
+                memcpy(pm, p, n*sizeof(trlib_flt_t));
+                for(trlib_int_t jj = 0; jj<n; ++jj){ ck_assert_msg( fabs(p[jj] - work->Q[jj+ii*n] ) <= lanczos_tol, "directions differ from those produced by stupid Lanczos, iterate %d, index %d, residual %e", ii, jj, p[jj] - work->Q[jj+ii*n]); }
             }
         }
 

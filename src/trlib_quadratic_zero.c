@@ -1,14 +1,14 @@
 #include "trlib_quadratic_zero.h"
 
-int trlib_quadratic_zero(double c_abs, double c_lin, double tol,
-        int verbose, int unicode, char *prefix, FILE *fout,
-        double *t1, double *t2) {
-    int n  = 0;   // number of roots
+trlib_int_t trlib_quadratic_zero(trlib_flt_t c_abs, trlib_flt_t c_lin, trlib_flt_t tol,
+        trlib_int_t verbose, trlib_int_t unicode, char *prefix, FILE *fout,
+        trlib_flt_t *t1, trlib_flt_t *t2) {
+    trlib_int_t n  = 0;   // number of roots
     *t1 = 0.0;    // first root
     *t2 = 0.0;    // second root
-    double q = 0.0;
-    double dq = 0.0;
-    double lin_sq = c_lin*c_lin;
+    trlib_flt_t q = 0.0;
+    trlib_flt_t dq = 0.0;
+    trlib_flt_t lin_sq = c_lin*c_lin;
 
     if (fabs(c_abs) > tol*lin_sq) {
         // well behaved non-degenerate quadratic

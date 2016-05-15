@@ -4,14 +4,14 @@
 
 START_TEST (test_trivial_exit)
 {
-    double diag = 3.0;
-    double ones = 1.0;
-    double diag_fac = 12.0;
-    double eig = 7.0;
-    long *timing = malloc(trlib_eigen_timing_size()*sizeof(long));
-    double lam_pert = 0.0;
-    double pert = 0.0;
-    int iter_inv = 0;
+    trlib_flt_t diag = 3.0;
+    trlib_flt_t ones = 1.0;
+    trlib_flt_t diag_fac = 12.0;
+    trlib_flt_t eig = 7.0;
+    trlib_int_t *timing = malloc(trlib_eigen_timing_size()*sizeof(trlib_int_t));
+    trlib_flt_t lam_pert = 0.0;
+    trlib_flt_t pert = 0.0;
+    trlib_int_t iter_inv = 0;
     trlib_eigen_inverse(1, &diag, NULL, 3.0, 1, TRLIB_EPS, &ones, &diag_fac, NULL, &eig, 
             1, 1, "", stderr, timing,
             &lam_pert, &pert, &iter_inv);
@@ -22,25 +22,25 @@ END_TEST
 
 START_TEST (test_nontrivial)
 {
-    int n = 10; int inc = 1;
-    double *diag = malloc(n*sizeof(double));
-    double *diag_fac = malloc(n*sizeof(double));
-    double *offdiag = malloc((n-1)*sizeof(double));
-    double *offdiag_fac = malloc((n-1)*sizeof(double));
-    double *ones = malloc(n*sizeof(double));
-    double *eig = malloc(n*sizeof(double));
-    double *leig = malloc(n*sizeof(double));
-    double zero = 0.0;
-    long *timing = malloc(trlib_eigen_timing_size()*sizeof(long));
-    double lam_init = 0.0;
-    double lam_pert = 0.0;
-    double pert = 0.0;
-    int iter_inv = 0;
+    trlib_int_t n = 10, inc = 1;
+    trlib_flt_t *diag = malloc(n*sizeof(trlib_flt_t));
+    trlib_flt_t *diag_fac = malloc(n*sizeof(trlib_flt_t));
+    trlib_flt_t *offdiag = malloc((n-1)*sizeof(trlib_flt_t));
+    trlib_flt_t *offdiag_fac = malloc((n-1)*sizeof(trlib_flt_t));
+    trlib_flt_t *ones = malloc(n*sizeof(trlib_flt_t));
+    trlib_flt_t *eig = malloc(n*sizeof(trlib_flt_t));
+    trlib_flt_t *leig = malloc(n*sizeof(trlib_flt_t));
+    trlib_flt_t zero = 0.0;
+    trlib_int_t *timing = malloc(trlib_eigen_timing_size()*sizeof(trlib_int_t));
+    trlib_flt_t lam_init = 0.0;
+    trlib_flt_t lam_pert = 0.0;
+    trlib_flt_t pert = 0.0;
+    trlib_int_t iter_inv = 0;
     srand((unsigned) time(NULL));
-    for(int ii = 0; ii < n; ++ii) {
-        diag[ii] = 2.0+((double)ii)/n;
+    for(trlib_int_t ii = 0; ii < n; ++ii) {
+        diag[ii] = 2.0+((trlib_flt_t)ii)/n;
         ones[ii] = 1.0;
-        eig[ii] = ((double)rand()/(double)RAND_MAX);
+        eig[ii] = ((trlib_flt_t)rand()/(trlib_flt_t)RAND_MAX);
         leig[ii] = 0.0;
         if ( ii < n-1 ) { offdiag[ii] = -1.0 - (2.0*ii)/n; }
     }
@@ -51,7 +51,7 @@ START_TEST (test_nontrivial)
            1, 1, "", stderr, timing,
            &lam_pert, &pert, &iter_inv);
     dlagtm_("N", &n, &inc, ones, offdiag, diag, offdiag, eig, &n, &zero, leig, &n); // leig <-- T*eig
-    for(int ii = 0; ii < n; ++ii){ ck_assert_msg(fabs(lam_init*eig[ii] - leig[ii]) <= 5000.0*TRLIB_EPS, "Residual in eigenvector for component %d: %e", ii, lam_init*eig[ii] - leig[ii]); }
+    for(trlib_int_t ii = 0; ii < n; ++ii){ ck_assert_msg(fabs(lam_init*eig[ii] - leig[ii]) <= 5000.0*TRLIB_EPS, "Residual in eigenvector for component %d: %e", ii, lam_init*eig[ii] - leig[ii]); }
     free(diag); free(diag_fac); free(offdiag); free(offdiag_fac); free(ones); free(eig); free(timing);
 }
 END_TEST

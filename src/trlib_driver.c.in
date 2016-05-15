@@ -6,7 +6,7 @@
 #include "hdf5.h"
 #include "cholmod.h"
 
-void dgemv_(char *trans, int *m, int *n, double *alpha, double *a, int *lda, double *x, int *incx, double *beta, double *y, int *incy);
+void dgemv_(char *trans, trlib_int_t *m, trlib_int_t *n, trlib_flt_t *alpha, trlib_flt_t *a, trlib_int_t *lda, trlib_flt_t *x, trlib_int_t *incx, trlib_flt_t *beta, trlib_flt_t *y, trlib_int_t *incy);
 
 const char *argp_program_version = "${TRLIB_VERSION_MAJOR}.${TRLIB_VERSION_MINOR}";
 const char *argp_program_bug_address = "<felix.lenders@iwr.uni-heidelberg.de>";
@@ -14,10 +14,10 @@ const char doc[] = "Driver Program to execute QP";
 static char args_doc[] = "PROBLEM_PATH";
 
 struct arguments {
-    int verbosity;
-    int check;
-    int itmax;
-    int summary;
+    trlib_int_t verbosity;
+    trlib_int_t check;
+    trlib_int_t itmax;
+    trlib_int_t summary;
     char *logfile;
     FILE *logstream;
     char *qpsolver;
@@ -66,10 +66,10 @@ static error_t parse_opt(int key, char *arg, struct argp_state *state) {
 
 static struct argp argp = { options, parse_opt, args_doc, doc};
 
-void matrix_csr_vec(int m, int n, int nnz, int *idx, int *ptr, double *val, double *vec, double *mv) {
-    for(int ii = 0; ii < m ; ++ii) {
+void matrix_csr_vec(trlib_int_t m, trlib_int_t n, trlib_int_t nnz, trlib_int_t *idx, trlib_int_t *ptr, trlib_flt_t *val, trlib_flt_t *vec, trlib_flt_t *mv) {
+    for(trlib_int_t ii = 0; ii < m ; ++ii) {
         mv[ii] = 0.0;
-        for(int jj = ptr[ii]; jj < ptr[ii+1]; ++jj) {
+        for(trlib_int_t jj = ptr[ii]; jj < ptr[ii+1]; ++jj) {
             mv[ii] += val[jj] * vec[idx[jj]];
         }
     }
@@ -103,19 +103,19 @@ int main( int argc, char** argv ) {
     file_id = H5Fopen(arguments.args[0], H5F_ACC_RDONLY, H5P_DEFAULT);
 
     scal_dim[0] = 1;
-    int n = 0, nnz = 0;
+    trlib_int_t n = 0, nnz = 0;
     dataset_n_id = H5Dopen2(file_id, "/nvar", H5P_DEFAULT);
     status = H5Dread(dataset_n_id, H5T_NATIVE_INT, H5S_ALL, H5S_ALL, H5P_DEFAULT, &n);
     status = H5Dclose(dataset_n_id);
 
-    double *grad = malloc(n*sizeof(double));
+    trlib_flt_t *grad = malloc(n*sizeof(trlib_flt_t));
     if(!grad) { exit(1); }
 
     dataset_grad_id = H5Dopen2(file_id, "/grad", H5P_DEFAULT);
     status = H5Dread(dataset_grad_id, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, grad);
     status = H5Dclose(dataset_grad_id);
 
-    double radius;
+    trlib_flt_t radius;
     dataset_radius_id = H5Dopen2(file_id, "/radius", H5P_DEFAULT);
     status = H5Dread(dataset_radius_id, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, &radius);
     status = H5Dclose(dataset_radius_id);
@@ -125,9 +125,9 @@ int main( int argc, char** argv ) {
     status = H5Sget_simple_extent_dims(dataspace_h_sym_csr_idx_id, nnz_dim, NULL);
     nnz = nnz_dim[0];
 
-    int *h_sym_csr_idx = malloc(nnz*sizeof(int));
-    int *h_sym_csr_ptr = malloc((n+1)*sizeof(int));
-    double *h_sym_csr_val = malloc(nnz*sizeof(double));
+    trlib_int_t *h_sym_csr_idx = malloc(nnz*sizeof(trlib_int_t));
+    trlib_int_t *h_sym_csr_ptr = malloc((n+1)*sizeof(trlib_int_t));
+    trlib_flt_t *h_sym_csr_val = malloc(nnz*sizeof(trlib_flt_t));
     if(!h_sym_csr_idx || !h_sym_csr_ptr || !h_sym_csr_val) { exit(1); }
 
     status = H5Dread(dataset_h_sym_csr_idx_id, H5T_NATIVE_INT, H5S_ALL, H5S_ALL, H5P_DEFAULT, h_sym_csr_idx);
@@ -146,26 +146,26 @@ int main( int argc, char** argv ) {
 
     // expand hessian to full hessian since this makes hessian vector products compuationally less memory expensive
     // first pass: count number of nonzeros
-    int nnz_complete = 0;
-    for(int ii = 0; ii < n; ++ii) {
-        for(int jj = h_sym_csr_ptr[ii]; jj < h_sym_csr_ptr[ii+1]; ++jj) {
+    trlib_int_t nnz_complete = 0;
+    for(trlib_int_t ii = 0; ii < n; ++ii) {
+        for(trlib_int_t jj = h_sym_csr_ptr[ii]; jj < h_sym_csr_ptr[ii+1]; ++jj) {
             ++nnz_complete;
             if( h_sym_csr_idx[jj] != ii ) { ++nnz_complete; } // offdiagonal elements count twice
         }
     }
     // allocate memory
-    int *idx_complete = malloc( nnz_complete * sizeof(int) );
-    int *ptr_complete = malloc( (n+1) * sizeof(int) );
-    double *val_complete = malloc( nnz_complete * sizeof(double) );
+    trlib_int_t *idx_complete = malloc( nnz_complete * sizeof(trlib_int_t) );
+    trlib_int_t *ptr_complete = malloc( (n+1) * sizeof(trlib_int_t) );
+    trlib_flt_t *val_complete = malloc( nnz_complete * sizeof(trlib_flt_t) );
     if( !idx_complete || !ptr_complete || !val_complete ) { exit(1); }
     // second pass: expand upper tridiagonal part to full matrix
-    int count = 0;
-    for(int ii = 0; ii < n; ++ii){
+    trlib_int_t count = 0;
+    for(trlib_int_t ii = 0; ii < n; ++ii){
         ptr_complete[ii] = count;
         // get missing strict lower tridiagonal part of row, have to search in upper part
-        for(int jj = 0; jj < ii; ++jj) {
+        for(trlib_int_t jj = 0; jj < ii; ++jj) {
             // search in jj-th row for occurence of column ii
-            for(int kk = h_sym_csr_ptr[jj]; kk < h_sym_csr_ptr[jj+1]; ++kk) {
+            for(trlib_int_t kk = h_sym_csr_ptr[jj]; kk < h_sym_csr_ptr[jj+1]; ++kk) {
                 if( h_sym_csr_idx[kk] == ii ) {
                     val_complete[count] = h_sym_csr_val[kk];
                     idx_complete[count] = jj;
@@ -175,7 +175,7 @@ int main( int argc, char** argv ) {
             }
         }
         // append upper tridiagonal part of row
-        for(int jj = h_sym_csr_ptr[ii]; jj < h_sym_csr_ptr[ii+1]; ++jj) {
+        for(trlib_int_t jj = h_sym_csr_ptr[ii]; jj < h_sym_csr_ptr[ii+1]; ++jj) {
             val_complete[count] = h_sym_csr_val[jj];
             idx_complete[count] = h_sym_csr_idx[jj];
             ++count;
@@ -184,26 +184,26 @@ int main( int argc, char** argv ) {
     ptr_complete[n] = count;
 
     // solve qp
-    int itmax = 10*n, ret, iter;
+    trlib_int_t itmax = 10*n, ret, iter;
     if(arguments.itmax != 0) { itmax = arguments.itmax; }
-    double *sol = malloc(n*sizeof(double));
-    long *timing = malloc(trlib_krylov_timing_size()*sizeof(long));
-    int iwork_size, fwork_size, h_pointer;
+    trlib_flt_t *sol = malloc(n*sizeof(trlib_flt_t));
+    trlib_int_t *timing = malloc(trlib_krylov_timing_size()*sizeof(trlib_int_t));
+    trlib_int_t iwork_size, fwork_size, h_pointer;
     trlib_krylov_memory_size(itmax, &iwork_size, &fwork_size, &h_pointer);
-    int *iwork = malloc(iwork_size*sizeof(int));
-    double *fwork = malloc(fwork_size*sizeof(double));
-    double *g = malloc(n*sizeof(double));
-    double *gm = malloc(n*sizeof(double));
-    double *p = malloc(n*sizeof(double));
-    double *Hp = malloc(n*sizeof(double));
-    double *Q = malloc((itmax+1)*n*sizeof(double));
+    trlib_int_t *iwork = malloc(iwork_size*sizeof(trlib_int_t));
+    trlib_flt_t *fwork = malloc(fwork_size*sizeof(trlib_flt_t));
+    trlib_flt_t *g = malloc(n*sizeof(trlib_flt_t));
+    trlib_flt_t *gm = malloc(n*sizeof(trlib_flt_t));
+    trlib_flt_t *p = malloc(n*sizeof(trlib_flt_t));
+    trlib_flt_t *Hp = malloc(n*sizeof(trlib_flt_t));
+    trlib_flt_t *Q = malloc((itmax+1)*n*sizeof(trlib_flt_t));
     
-    int init = 0; int inc = 1; int itp1 = 0;
-    double minus = -1.0; double one = 1.0; double z = 0.0;
+    trlib_int_t init = 0, inc = 1, itp1 = 0;
+    trlib_flt_t minus = -1.0, one = 1.0, z = 0.0;
     init = TRLIB_CLS_INIT; trlib_krylov_prepare_memory(itmax, fwork);
 
-    double v_dot_g = 0.0; double p_dot_Hp = 0.0; double flt1; double flt2; double flt3;
-    int action; int ityp;
+    trlib_flt_t v_dot_g = 0.0, p_dot_Hp = 0.0, flt1, flt2, flt3;
+    trlib_int_t action, ityp;
 
     while(1) {
         ret = trlib_krylov_min(init, radius, 0, itmax, 100,
@@ -216,7 +216,7 @@ int main( int argc, char** argv ) {
         //        action, iter, ityp, flt1, flt2, flt3);
         switch(action) {
             case TRLIB_CLA_INIT:
-                memset(sol, 0, n*sizeof(double)); memset(gm, 0, n*sizeof(double));
+                memset(sol, 0, n*sizeof(trlib_flt_t)); memset(gm, 0, n*sizeof(trlib_flt_t));
                 dcopy_(&n, grad, &inc, g, &inc);
                 v_dot_g = ddot_(&n, g, &inc, g, &inc);
                 dcopy_(&n, g, &inc, p, &inc); dscal_(&n, &minus, p, &inc); // p = -g
@@ -253,7 +253,7 @@ int main( int argc, char** argv ) {
                 break;
             case TRLIB_CLA_CONV_HARD:
                 itp1 = iter+1;
-                double *temp = malloc(n*sizeof(double));
+                trlib_flt_t *temp = malloc(n*sizeof(trlib_flt_t));
                 matrix_csr_vec(n, n, nnz_complete, idx_complete, ptr_complete, val_complete, sol, temp); // temp = H*s
                 daxpy_(&n, &one, grad, &inc, temp, &inc); // temp = H*s + g
                 daxpy_(&n, &flt1, sol, &inc, temp, &inc); // temp = H*s + g + flt1*s
@@ -266,10 +266,10 @@ int main( int argc, char** argv ) {
     }
 
     // compute optimality criteria
-    double tr_res, kkt_res, lam, lam_pert, posdef_res;
+    trlib_flt_t tr_res, kkt_res, lam, lam_pert, posdef_res;
     lam = fwork[7];
     tr_res = radius - dnrm2_(&n, sol, &inc);
-    double *resv = malloc(n*sizeof(double));
+    trlib_flt_t *resv = malloc(n*sizeof(trlib_flt_t));
     matrix_csr_vec(n, n, nnz_complete, idx_complete, ptr_complete, val_complete, sol, resv); // resv = H*sol
     daxpy_(&n, &lam, sol, &inc, resv, &inc); // resv = (H+lam*I)*sol
     daxpy_(&n, &one, grad, &inc, resv, &inc); // resv = (H+lam*I)*sol + grad
@@ -278,13 +278,13 @@ int main( int argc, char** argv ) {
     cholmod_start(&c);
     c.print = 0;
     cholmod_sparse *h = cholmod_allocate_sparse(n, n, nnz, 1, 1, 1, CHOLMOD_REAL, &c);
-    memcpy(h->p, h_sym_csr_ptr, (n+1)*sizeof(int));
-    memcpy(h->i, h_sym_csr_idx, nnz*sizeof(int));
-    memcpy(h->x, h_sym_csr_ptr, nnz*sizeof(double));
+    memcpy(h->p, h_sym_csr_ptr, (n+1)*sizeof(trlib_int_t));
+    memcpy(h->i, h_sym_csr_idx, nnz*sizeof(trlib_int_t));
+    memcpy(h->x, h_sym_csr_ptr, nnz*sizeof(trlib_flt_t));
     cholmod_sparse *e = cholmod_speye(n, n, CHOLMOD_REAL, &c);
     cholmod_sparse *sum_pattern = cholmod_add(h, e, &one, &one, 0, 0, &c);
     cholmod_factor *fac = cholmod_analyze(sum_pattern, &c);
-    int jj = 0;
+    trlib_int_t jj = 0;
     while( jj < 500 ) {
         if( jj == 0 ) { posdef_res = 0.0; }
         if( jj == 1 ) { posdef_res = TRLIB_EPS; }

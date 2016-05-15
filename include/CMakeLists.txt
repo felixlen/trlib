@@ -1,4 +1,5 @@
 configure_file("${CMAKE_CURRENT_SOURCE_DIR}/trlib.h.in" "${CMAKE_CURRENT_BINARY_DIR}/trlib.h")
+configure_file("${CMAKE_CURRENT_SOURCE_DIR}/trlib_types.h.in" "${CMAKE_CURRENT_BINARY_DIR}/trlib_types.h")
 configure_file("${CMAKE_CURRENT_SOURCE_DIR}/trlib_krylov.h.in" "${CMAKE_CURRENT_BINARY_DIR}/trlib_krylov.h")
 configure_file("${CMAKE_CURRENT_SOURCE_DIR}/trlib_tri_factor.h.in" "${CMAKE_CURRENT_BINARY_DIR}/trlib_tri_factor.h")
 configure_file("${CMAKE_CURRENT_SOURCE_DIR}/trlib_leftmost.h.in" "${CMAKE_CURRENT_BINARY_DIR}/trlib_leftmost.h")

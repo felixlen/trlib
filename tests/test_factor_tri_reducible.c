@@ -7,7 +7,7 @@ START_TEST (test_simple_reducible)
     qp.verbose = 1;
 
     struct trlib_test_problem_tri* problem = (struct trlib_test_problem_tri*) qp.problem;
-    double *diag = problem->diag; double *offdiag = problem->offdiag; double *grad = problem->grad;
+    trlib_flt_t *diag = problem->diag, *offdiag = problem->offdiag, *grad = problem->grad;
     
     diag[0] = 1.0; diag[1] = 2.0; diag[2] = -1.75; // first 1x1 block has eigenvalue 1.0; second 2x2 block has eigenvalue -2.0
     offdiag[1] = 1.0;

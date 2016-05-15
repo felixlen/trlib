@@ -7,7 +7,7 @@ START_TEST (test_simple)
     qp.verbose = 1;
 
     struct trlib_test_problem_tri* problem = (struct trlib_test_problem_tri*) qp.problem;
-    double *diag = problem->diag; double *offdiag = problem->offdiag; double *grad = problem->grad;
+    trlib_flt_t *diag = problem->diag, *offdiag = problem->offdiag, *grad = problem->grad;
     
     diag[0] = -3.0; diag[1] = 2.0; diag[2] = 1.0;
     offdiag[0] = -0.5; offdiag[1] = -0.75;

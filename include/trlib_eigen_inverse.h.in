@@ -51,15 +51,15 @@
  *  @retval        #TRLIB_EIR_FAIL_LINSOLVE failure on backsolve
  */
 
-int trlib_eigen_inverse(
-        int n, double *diag, double *offdiag, 
-        double lam_init, int itmax, double tol_abs,
-        double *ones, double *diag_fac, double *offdiag_fac,
-        double *eig, int verbose, int unicode, char *prefix, FILE *fout,
-        long *timing, double *lam_pert, double *pert, int *iter_inv);
+trlib_int_t trlib_eigen_inverse(
+        trlib_int_t n, trlib_flt_t *diag, trlib_flt_t *offdiag, 
+        trlib_flt_t lam_init, trlib_int_t itmax, trlib_flt_t tol_abs,
+        trlib_flt_t *ones, trlib_flt_t *diag_fac, trlib_flt_t *offdiag_fac,
+        trlib_flt_t *eig, trlib_int_t verbose, trlib_int_t unicode, char *prefix, FILE *fout,
+        trlib_int_t *timing, trlib_flt_t *lam_pert, trlib_flt_t *pert, trlib_int_t *iter_inv);
 
 /** @brief size that has to be allocated for \p timing in #trlib_eigen_inverse
  */
-int trlib_eigen_timing_size();
+trlib_int_t trlib_eigen_timing_size();
 
 #endif

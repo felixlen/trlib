@@ -1,20 +1,20 @@
 #include "trlib_leftmost.h"
 
-int trlib_leftmost(
-        int nirblk, int *irblk, double *diag, double *offdiag,
-        int warm, double leftmost_minor, int itmax, double tol_abs,
-        int verbose, int unicode, char *prefix, FILE *fout,
-        long *timing, int *ileftmost, double *leftmost) {
-    int ret = 0; int curit;
+trlib_int_t trlib_leftmost(
+        trlib_int_t nirblk, trlib_int_t *irblk, trlib_flt_t *diag, trlib_flt_t *offdiag,
+        trlib_int_t warm, trlib_flt_t leftmost_minor, trlib_int_t itmax, trlib_flt_t tol_abs,
+        trlib_int_t verbose, trlib_int_t unicode, char *prefix, FILE *fout,
+        trlib_int_t *timing, trlib_int_t *ileftmost, trlib_flt_t *leftmost) {
+    trlib_int_t ret = 0, curit = 0;
     if(! warm) {
-        ret = 0; int curret;
-        for(int ii = 0; ii < nirblk; ++ii) {
+        ret = 0; trlib_int_t curret = 0;
+        for(trlib_int_t ii = 0; ii < nirblk; ++ii) {
             curret = trlib_leftmost_irreducible(irblk[ii+1]-irblk[ii], diag+irblk[ii], offdiag+irblk[ii], 0, 0.0, itmax,
                 tol_abs, verbose, unicode, prefix, fout, timing, leftmost+ii, &curit);
             if (curret == 0) { ret = curret; }
         }
         *ileftmost = 0;
-        for(int ii = 1; ii < nirblk; ++ii) {
+        for(trlib_int_t ii = 1; ii < nirblk; ++ii) {
             if (leftmost[ii] < leftmost[*ileftmost]) { *ileftmost = ii; }
         }
     }
@@ -26,32 +26,32 @@ int trlib_leftmost(
     return ret;
 }
 
-int trlib_leftmost_irreducible(
-        int n, double *diag, double *offdiag,
-        int warm, double leftmost_minor, int itmax, double tol_abs,
-        int verbose, int unicode, char *prefix, FILE *fout,
-        long *timing, double *leftmost, int *iter_pr) {
+trlib_int_t trlib_leftmost_irreducible(
+        trlib_int_t n, trlib_flt_t *diag, trlib_flt_t *offdiag,
+        trlib_int_t warm, trlib_flt_t leftmost_minor, trlib_int_t itmax, trlib_flt_t tol_abs,
+        trlib_int_t verbose, trlib_int_t unicode, char *prefix, FILE *fout,
+        trlib_int_t *timing, trlib_flt_t *leftmost, trlib_int_t *iter_pr) {
     // Local variables
     #if TRLIB_MEASURE_TIME
         struct timespec verystart, start, end;
         TRLIB_TIC(verystart)
     #endif
     *iter_pr = 0;                           // iteration counter
-    int jj = 0;                             // local counter variable
-    double low = 0.0;                       // lower bracket variable: low <= leftmost       for desired value
-    double up = 0.0;                        // upper bracket variable:        leftmost <= up for desired value
+    trlib_int_t jj = 0;                             // local counter variable
+    trlib_flt_t low = 0.0;                       // lower bracket variable: low <= leftmost       for desired value
+    trlib_flt_t up = 0.0;                        // upper bracket variable:        leftmost <= up for desired value
     *leftmost = 0.0;                        // estimation of desired leftmost eigenvalue
-    double leftmost_attempt = 0.0;          // trial step for leftmost eigenvalue
-    double dleftmost = 0.0;                 // increment
-    double prlp = 0.0;                      // value of Parlett-Reid-Last-Pivot function
-    double dprlp = 0.0;                     // derivative of Parlett-Reid-Last-Pivot function wrt to leftmost
-    int n_neg_piv = 0;                      // number of negative pivots in factorization
-    double quad_abs = 0.0;                  // absolute coefficient in quadratic model
-    double quad_lin = 0.0;                  // linear   coefficient in quadratic model
-    double zerodum = 0.0;                   // dummy return variables from quadratic equation
-    double oabs0 = 0.0; double oabs1 = 0.0; // temporaries in Gershgorin limit computation
+    trlib_flt_t leftmost_attempt = 0.0;          // trial step for leftmost eigenvalue
+    trlib_flt_t dleftmost = 0.0;                 // increment
+    trlib_flt_t prlp = 0.0;                      // value of Parlett-Reid-Last-Pivot function
+    trlib_flt_t dprlp = 0.0;                     // derivative of Parlett-Reid-Last-Pivot function wrt to leftmost
+    trlib_int_t n_neg_piv = 0;                      // number of negative pivots in factorization
+    trlib_flt_t quad_abs = 0.0;                  // absolute coefficient in quadratic model
+    trlib_flt_t quad_lin = 0.0;                  // linear   coefficient in quadratic model
+    trlib_flt_t zerodum = 0.0;                   // dummy return variables from quadratic equation
+    trlib_flt_t oabs0 = 0.0, oabs1 = 0.0; // temporaries in Gershgorin limit computation
 
-    int continue_outer_loop = 0;            // local spaghetti code control variable
+    trlib_int_t continue_outer_loop = 0;            // local spaghetti code control variable
 
     // trivial case: one-dimensional. return diagonal value
     if (n == 1) { *leftmost = diag[0]; TRLIB_RETURN(TRLIB_LMR_CONV) }
@@ -66,7 +66,7 @@ int trlib_leftmost_irreducible(
     oabs0 = fabs(offdiag[0]); oabs1 = fabs(offdiag[n-2]);
     low = fmin( diag[0] - oabs0, diag[n-1] - oabs1 );
     up  = fmax( diag[0] + oabs0, diag[n-1] - oabs1 );
-    for( int ii = 1; ii < n-1; ++ii ) {
+    for( trlib_int_t ii = 1; ii < n-1; ++ii ) {
         oabs1 = fabs(offdiag[ii]);
         low = fmin( low, diag[ii] - oabs0 - oabs1 );
         up  = fmax( up,  diag[ii] + oabs0 + oabs1 );
@@ -214,7 +214,7 @@ int trlib_leftmost_irreducible(
     }
 }
 
-int trlib_leftmost_timing_size() {
+trlib_int_t trlib_leftmost_timing_size() {
 #if TRLIB_MEASURE_TIME
     return 1;
 #endif

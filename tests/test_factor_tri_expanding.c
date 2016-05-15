@@ -2,61 +2,61 @@
 
 START_TEST (test_simple)
 {
-    int n = 12; int nm1; nm1 = n-1; int nexpand; int nexpandm1;
+    trlib_int_t n = 12, nm1 = n-1, nexpand, nexpandm1;
 
-    double *diag = malloc(n*sizeof(double));
-    double *diag_fac0 = malloc(n*sizeof(double));
-    double *diag_fac = malloc(n*sizeof(double));
-    double *diag_lam = malloc(n*sizeof(double));
-    double *offdiag = malloc((n-1)*sizeof(double));
-    double *offdiag_fac0 = malloc((n-1)*sizeof(double));
-    double *offdiag_fac = malloc((n-1)*sizeof(double));
-    double *offdiag_lam = malloc((n-1)*sizeof(double));
-    double *grad = calloc(n,sizeof(double));
-    double *neglin = calloc(n,sizeof(double));
-    double *sol = malloc(n*sizeof(double));
-    double *sol0 = malloc(n*sizeof(double));
-    double *ones = malloc(n*sizeof(double));
-    for(int ii = 0; ii < n; ++ii) { ones[ii] = 1.0; }
-    double *fwork = malloc(4*n*sizeof(double));
-    int nirblk = 5;
-    int *irblk = malloc((nirblk+1)*sizeof(int));
-    int *irblk2 = malloc((nirblk+1)*sizeof(int));
+    trlib_flt_t *diag = malloc(n*sizeof(trlib_flt_t));
+    trlib_flt_t *diag_fac0 = malloc(n*sizeof(trlib_flt_t));
+    trlib_flt_t *diag_fac = malloc(n*sizeof(trlib_flt_t));
+    trlib_flt_t *diag_lam = malloc(n*sizeof(trlib_flt_t));
+    trlib_flt_t *offdiag = malloc((n-1)*sizeof(trlib_flt_t));
+    trlib_flt_t *offdiag_fac0 = malloc((n-1)*sizeof(trlib_flt_t));
+    trlib_flt_t *offdiag_fac = malloc((n-1)*sizeof(trlib_flt_t));
+    trlib_flt_t *offdiag_lam = malloc((n-1)*sizeof(trlib_flt_t));
+    trlib_flt_t *grad = calloc(n,sizeof(trlib_flt_t));
+    trlib_flt_t *neglin = calloc(n,sizeof(trlib_flt_t));
+    trlib_flt_t *sol = malloc(n*sizeof(trlib_flt_t));
+    trlib_flt_t *sol0 = malloc(n*sizeof(trlib_flt_t));
+    trlib_flt_t *ones = malloc(n*sizeof(trlib_flt_t));
+    for(trlib_int_t ii = 0; ii < n; ++ii) { ones[ii] = 1.0; }
+    trlib_flt_t *fwork = malloc(4*n*sizeof(trlib_flt_t));
+    trlib_int_t nirblk = 5;
+    trlib_int_t *irblk = malloc((nirblk+1)*sizeof(trlib_int_t));
+    trlib_int_t *irblk2 = malloc((nirblk+1)*sizeof(trlib_int_t));
 
-    for(int ii = 0; ii < n; ++ii) { diag[ii] = 1.0 + (20.0*ii)/n; }
-    for(int ii = 0; ii < n-1; ++ii) { offdiag[ii] = 1.0 - 0.5*ii; }
+    for(trlib_int_t ii = 0; ii < n; ++ii) { diag[ii] = 1.0 + (20.0*ii)/n; }
+    for(trlib_int_t ii = 0; ii < n-1; ++ii) { offdiag[ii] = 1.0 - 0.5*ii; }
     irblk[0] = 0; irblk[1] = 3; irblk[2] = 6; irblk[3] = 9; irblk[4] = 10; irblk[5] = n;
     irblk2[0] = 0; irblk2[1] = 0; irblk2[2] = 0; irblk2[3] = 0; irblk2[4] = 0; irblk2[5] = 0;
     offdiag[2] = 0.0; offdiag[5] = 0.0; offdiag[8] = 0.0; offdiag[9] = 0.0;
 
     grad[0] = 1.0; neglin[0] = -1.0;
 
-    int ret = 0;
-    int jj = 0;
-    int blkptr = 1;
-    double radius = 1.0;
-    int pos_def = 0;
-    int equality = 0;
-    int warm0 = 0;
-    double lam0 = 0.0;
-    int warm = 0;
-    double lam = 0.0;
-    int warm_leftmost = 0;
-    int ileftmost = 0;
-    double *leftmost = malloc(nirblk*sizeof(double));
-    int warm_fac0 = 0;
-    int warm_fac = 0;
-    int refine = 1;
-    long *timing = malloc(trlib_tri_timing_size()*sizeof(long));
-    double obj = 0.0;
-    int iter_newton = 0;
-    int sub_fail = 0;
+    trlib_int_t ret = 0;
+    trlib_int_t jj = 0;
+    trlib_int_t blkptr = 1;
+    trlib_flt_t radius = 1.0;
+    trlib_int_t pos_def = 0;
+    trlib_int_t equality = 0;
+    trlib_int_t warm0 = 0;
+    trlib_flt_t lam0 = 0.0;
+    trlib_int_t warm = 0;
+    trlib_flt_t lam = 0.0;
+    trlib_int_t warm_leftmost = 0;
+    trlib_int_t ileftmost = 0;
+    trlib_flt_t *leftmost = malloc(nirblk*sizeof(trlib_int_t));
+    trlib_int_t warm_fac0 = 0;
+    trlib_int_t warm_fac = 0;
+    trlib_int_t refine = 1;
+    trlib_int_t *timing = malloc(trlib_tri_timing_size()*sizeof(trlib_int_t));
+    trlib_flt_t obj = 0.0;
+    trlib_int_t iter_newton = 0;
+    trlib_int_t sub_fail = 0;
 
-    double *resv = malloc(n*sizeof(double));
-    double pos_def_res, perturbed, tr_res, kkt_res, obj_check;
-    double tol = TRLIB_EPS;
+    trlib_flt_t *resv = malloc(n*sizeof(trlib_flt_t));
+    trlib_flt_t pos_def_res, perturbed, tr_res, kkt_res, obj_check;
+    trlib_flt_t tol = TRLIB_EPS;
 
-    for(int kk = 1; kk < n+1; ++kk) {
+    for(trlib_int_t kk = 1; kk < n+1; ++kk) {
         
         if (irblk[blkptr]+1 == kk) {
             blkptr += 1;
@@ -64,7 +64,7 @@ START_TEST (test_simple)
 
         irblk2[blkptr] = kk;
 
-        for(int ll = 0; ll<nirblk+1; ++ll){ fprintf(stderr, "%d ", irblk2[ll]); } fprintf(stderr, "\n");
+        for(trlib_int_t ll = 0; ll<nirblk+1; ++ll){ fprintf(stderr, "%d ", irblk2[ll]); } fprintf(stderr, "\n");
 
         ret = trlib_tri_factor_min(blkptr, irblk2, diag, offdiag, neglin, radius, 100, TRLIB_EPS,
                 pos_def, equality, &warm0, &lam0, &warm, &lam, &warm_leftmost, &ileftmost,
@@ -74,10 +74,10 @@ START_TEST (test_simple)
 
         nexpand = irblk2[blkptr]; nexpandm1 = nexpand - 1;
 
-        int inc = 1; int ifail = 0; double one = 1.0;
+        trlib_int_t inc = 1; trlib_int_t ifail = 0; trlib_flt_t one = 1.0;
         pos_def_res = 0.0; perturbed = lam + pos_def_res;
         dcopy_(&nexpand, diag, &inc, diag_lam, &inc); dcopy_(&nexpandm1, offdiag, &inc, offdiag_lam, &inc);
-        for(int ii = 0; ii < nexpand; ++ii) { diag_lam[ii] += perturbed; }
+        for(trlib_int_t ii = 0; ii < nexpand; ++ii) { diag_lam[ii] += perturbed; }
         jj = 0;
         while (1) {
             dpttrf_(&nexpand, diag_lam, offdiag_lam, &ifail);
@@ -87,14 +87,14 @@ START_TEST (test_simple)
             if ( pos_def_res == 0.0 ) { pos_def_res = TRLIB_EPS; } else { pos_def_res = 2.0*pos_def_res; }
             perturbed = lam + pos_def_res;
             dcopy_(&nexpand, diag, &inc, diag_lam, &inc); dcopy_(&nexpandm1, offdiag, &inc, offdiag_lam, &inc);
-            for(int ii = 0; ii < nexpand; ++ii) { diag_lam[ii] += perturbed; }
+            for(trlib_int_t ii = 0; ii < nexpand; ++ii) { diag_lam[ii] += perturbed; }
         }
 
         tr_res = radius - dnrm2_(&nexpand, sol, &inc);
         dcopy_(&nexpand, grad, &inc, resv, &inc);
         kkt_res = dnrm2_(&nexpand, resv, &inc);
         dcopy_(&nexpand, diag, &inc, diag_lam, &inc); dcopy_(&nexpandm1, offdiag, &inc, offdiag_lam, &inc);
-        for(int ii = 0; ii < nexpand; ++ii) { diag_lam[ii] += lam; }
+        for(trlib_int_t ii = 0; ii < nexpand; ++ii) { diag_lam[ii] += lam; }
         dlagtm_("N", &nexpand, &inc, &one, offdiag, diag_lam, offdiag, sol, &nexpand, &one, resv, &n);
         kkt_res = dnrm2_(&nexpand, resv, &inc);
 

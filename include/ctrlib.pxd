@@ -1,15 +1,15 @@
 cimport libc.stdio
 
 cdef extern from "trlib_krylov.h":
-    int trlib_krylov_prepare_memory(int itmax, double *fwork)
-    int trlib_krylov_memory_size(int itmax, int *iwork_size, int *fwork_size, int *h_pointer)
-    int trlib_krylov_min(
-        int init, double radius, int equality, int itmax, int itmax_lanczos,
+    long trlib_krylov_prepare_memory(long itmax, double *fwork)
+    long trlib_krylov_memory_size(long itmax, long *iwork_size, long *fwork_size, long *h_pointer)
+    long trlib_krylov_min(
+        long init, double radius, long equality, long itmax, long itmax_lanczos,
         double tol_rel_i, double tol_abs_i,
         double tol_rel_b, double tol_abs_b, double zero,
-        int ctl_invariant, double g_dot_g, double v_dot_g, double p_dot_Hp,
-        int *iwork, double *fwork, int refine,
-        int verbose, int unicode, char *prefix, libc.stdio.FILE *fout, long *timing,
-        int *action, int *iter, int *ityp,
+        long ctl_invariant, double g_dot_g, double v_dot_g, double p_dot_Hp,
+        long *iwork, double *fwork, int refine,
+        long verbose, long unicode, char *prefix, libc.stdio.FILE *fout, long *timing,
+        long *action, long *iter, long *ityp,
         double *flt1, double *flt2, double *flt3)
     int trlib_krylov_timing_size()
