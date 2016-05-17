@@ -213,7 +213,7 @@ int main( int argc, char** argv ) {
                 1, arguments.verbosity, 1, "", arguments.logstream, timing,
                 &action, &iter, &ityp, &flt1, &flt2, &flt3);
         init = 0;
-        //fprintf(stderr, "action: %d, iter: %d, ityp: %d, flt1: %e, flt2: %e, flt3: %e\n",
+        //fprintf(stderr, "action: %ld, iter: %ld, ityp: %ld, flt1: %e, flt2: %e, flt3: %e\n",
         //        action, iter, ityp, flt1, flt2, flt3);
         switch(action) {
             case TRLIB_CLA_INIT:
@@ -306,7 +306,7 @@ int main( int argc, char** argv ) {
     if(arguments.summary) {
         fprintf(arguments.logstream, "\n*************************************************************\n");
         fprintf(arguments.logstream, "* Driver      %-46s*\n", arguments.args[0]);
-        fprintf(arguments.logstream, "*   Exit code:          %-2d (%-2d)%29s*\n", ret, iwork[9], "");
+        fprintf(arguments.logstream, "*   Exit code:          %-2ld (%-2ld)%29s*\n", ret, iwork[9], "");
         fprintf(arguments.logstream, "*   TR radius:       %15e%24s*\n", radius, "");
         fprintf(arguments.logstream, "*   multiplier:      %15e%24s*\n", lam, "");
         fprintf(arguments.logstream, "*   TR residual:     %15e (inequality requested)%1s*\n", tr_res, "");

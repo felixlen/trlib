@@ -52,6 +52,6 @@ void dlagtm_(char *trans, trlib_int_t *n, trlib_int_t *nrhs, trlib_flt_t *alpha,
 #define TRLIB_PRINTLN_1(...) if (verbose > 0) { fprintf(fout, "%s", prefix); fprintf(fout, __VA_ARGS__); fprintf(fout, "\n"); }
 #define TRLIB_PRINTLN_2(...) if (verbose > 1) { fprintf(fout, "%s", prefix); fprintf(fout, __VA_ARGS__); fprintf(fout, "\n"); }
 
-#define TRLIB_PRINT_VEC(P, N, X) { for(int vc = 0; vc < N; ++vc) { printf("%s %d: %e\n", P, vc, *(X+vc)); } }
+#define TRLIB_PRINT_VEC(P, N, X) { for(int vc = 0; vc < N; ++vc) { printf("%s %ld: %e\n", P, vc, *(X+vc)); } }
 
 #endif

@@ -132,7 +132,7 @@ trlib_int_t trlib_leftmost_irreducible(
         if (*iter_pr % 10 == 1) {
             TRLIB_PRINTLN_1("%6s%8s%14s%14s%14s%14s%14s%6s%6s", "  it  ", " action ", "     low      ", "   leftmost   ", "      up      ", "   dleftmost  ", "      prlp    ", " nneg ", "  br  ")
         }
-        TRLIB_PRINTLN_1("%6d%8s%14e%14e%14e", *iter_pr, "  entry ", low, *leftmost, up)
+        TRLIB_PRINTLN_1("%6ld%8s%14e%14e%14e", *iter_pr, "  entry ", low, *leftmost, up)
 
         // compute pivot and derivative of LDL^T factorization of T - leftmost I
         continue_outer_loop = 0;
@@ -173,7 +173,7 @@ trlib_int_t trlib_leftmost_irreducible(
         }
 
         if (continue_outer_loop) { 
-            TRLIB_PRINTLN_1("%6s%8s%14e%14e%14e%14s%14e%6d%6d", "", " bisecp ", low, *leftmost, up, "", prlp, n_neg_piv, jj)
+            TRLIB_PRINTLN_1("%6s%8s%14e%14e%14e%14s%14e%6ld%6ld", "", " bisecp ", low, *leftmost, up, "", prlp, n_neg_piv, jj)
             continue; 
         }
 
@@ -185,7 +185,7 @@ trlib_int_t trlib_leftmost_irreducible(
 
         // test if bracket interval is small or last pivot has converged to zero
         if (up-low <= tol_abs * fmax(1.0, fmax(fabs(low), fabs(up))) || fabs(prlp) <= tol_abs) { 
-            TRLIB_PRINTLN_1("%6s%8s%14e%14e%14e%14s%14e%6d%6d", "", "  conv  ", low, *leftmost, up, "", prlp, n_neg_piv, jj)
+            TRLIB_PRINTLN_1("%6s%8s%14e%14e%14e%14s%14e%6ld%6ld", "", "  conv  ", low, *leftmost, up, "", prlp, n_neg_piv, jj)
             TRLIB_RETURN(TRLIB_LMR_CONV)
         }
 
@@ -205,12 +205,12 @@ trlib_int_t trlib_leftmost_irreducible(
         // assess if we can use trial step
         if (low <= leftmost_attempt && leftmost_attempt <= up) { 
             if( fabs(dleftmost) <= tol_abs * fmax(1.0, fmax(fabs(low), fabs(up))) ) { TRLIB_RETURN(TRLIB_LMR_NEWTON_BREAK) }
-            if ( warm ) { TRLIB_PRINTLN_1("%6s%8s%14e%14e%14e%14e%14e%6d%6d", "", " qmodel ", low, *leftmost, up, dleftmost, prlp, n_neg_piv, jj) }
-            else { TRLIB_PRINTLN_1("%6s%8s%14e%14e%14e%14e%14e%6d%6d", "", " newton ", low, *leftmost, up, dleftmost, prlp, n_neg_piv, jj) }
+            if ( warm ) { TRLIB_PRINTLN_1("%6s%8s%14e%14e%14e%14e%14e%6ld%6ld", "", " qmodel ", low, *leftmost, up, dleftmost, prlp, n_neg_piv, jj) }
+            else { TRLIB_PRINTLN_1("%6s%8s%14e%14e%14e%14e%14e%6ld%6ld", "", " newton ", low, *leftmost, up, dleftmost, prlp, n_neg_piv, jj) }
             *leftmost = leftmost_attempt;
         }
         else { 
-            TRLIB_PRINTLN_1("%6s%8s%14e%14e%14e%14e%14e%6d%6d", "", " bisecs ", low, *leftmost, up, .5*(up-low), prlp, n_neg_piv, jj)
+            TRLIB_PRINTLN_1("%6s%8s%14e%14e%14e%14e%14e%6ld%6ld", "", " bisecs ", low, *leftmost, up, .5*(up-low), prlp, n_neg_piv, jj)
             *leftmost = .5*(low+up);
         }
     }

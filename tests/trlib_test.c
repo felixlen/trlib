@@ -189,7 +189,7 @@ trlib_int_t trlib_test_solve_qp(struct trlib_test_qp *qp) {
                     qp->refine, qp->verbose, qp->unicode, qp->prefix, qp->stream, qp->timing,
                     &action, &(qp->iter), &ityp, &flt1, &flt2, &flt3);
             init = 0;
-            //fprintf(stderr, "action: %d, iter: %d, ityp: %d, flt1: %e, flt2: %e, flt3: %e\n",
+            //fprintf(stderr, "action: %ld, iter: %ld, ityp: %ld, flt1: %e, flt2: %e, flt3: %e\n",
             //        action, qp->iter, ityp, flt1, flt2, flt3);
             switch(action) {
                 case TRLIB_CLA_INIT:
@@ -489,7 +489,7 @@ void trlib_test_solve_check_qp(struct trlib_test_qp *qp, char *name, trlib_flt_t
 void trlib_test_print_result(struct trlib_test_qp *qp, char *name, trlib_flt_t tol, trlib_flt_t lanczos_tol) {
     printf("\n*************************************************************\n");
     printf("* Test Case   %-46s*\n", name);
-    printf("*   Exit code:          %-2d (%-2d)%29s*\n", qp->ret, qp->sub_fail, "");
+    printf("*   Exit code:          %-2ld (%-2ld)%29s*\n", qp->ret, qp->sub_fail, "");
     printf("*   Objective:       %15e%15e%9s*\n", qp->obj, qp->obj_check, "");
     printf("*   TR radius:       %15e%24s*\n", qp->radius, "");
     printf("*   multiplier:      %15e%24s*\n", qp->lam, "");

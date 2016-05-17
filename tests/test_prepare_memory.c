@@ -1,4 +1,5 @@
 #include "trlib_test.h"
+#include "trlib_krylov.h"
 
 START_TEST (test_prepare)
 {

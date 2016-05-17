@@ -253,10 +253,10 @@ trlib_int_t trlib_krylov_min(
                     *iter_last_head = *ii;
                 }
                 if (*interior) {
-                    TRLIB_PRINTLN_1("%6d%6d%6s%14e%14e%14e%14e%14e%14e%14e%14e", *ii, *iter_tri, "cg_i", *obj, sqrt(*v_g), *leftmost, *lam, *ii == 0 ? -neglin[0] : gamma[*ii-1], delta[*ii], alpha[*ii], beta[*ii])
+                    TRLIB_PRINTLN_1("%6ld%6ld%6s%14e%14e%14e%14e%14e%14e%14e%14e", *ii, *iter_tri, "cg_i", *obj, sqrt(*v_g), *leftmost, *lam, *ii == 0 ? -neglin[0] : gamma[*ii-1], delta[*ii], alpha[*ii], beta[*ii])
                 }
                 else {
-                    TRLIB_PRINTLN_2("%s","") TRLIB_PRINTLN_1("%6d%6d%6s%14e%14e%14e%14e%14e%14e%14e%14e", *ii, *iter_tri, "cg_b", *obj, gamma[*ii]*fabs(h[*ii]), *leftmost, *lam, *ii == 0 ? -neglin[0] : gamma[*ii-1], delta[*ii], alpha[*ii], beta[*ii]) TRLIB_PRINTLN_2("%s", "")
+                    TRLIB_PRINTLN_2("%s","") TRLIB_PRINTLN_1("%6ld%6ld%6s%14e%14e%14e%14e%14e%14e%14e%14e", *ii, *iter_tri, "cg_b", *obj, gamma[*ii]*fabs(h[*ii]), *leftmost, *lam, *ii == 0 ? -neglin[0] : gamma[*ii-1], delta[*ii], alpha[*ii], beta[*ii]) TRLIB_PRINTLN_2("%s", "")
                 }
 
                 // test for convergence
@@ -282,7 +282,7 @@ trlib_int_t trlib_krylov_min(
                 // print iteration details
                 // first print headline if necessary
                 TRLIB_PRINTLN_2("%s","") TRLIB_PRINTLN_1("%6s%6s%6s%14s%14s%14s%14s", " iter ", "inewton", " type ", "   objective  ", "||g(lam)||_iM", "   leftmost   ", "     lam      ")
-                TRLIB_PRINTLN_2("%s","") TRLIB_PRINTLN_1("%6d%6d%6s%14e%14e%14e%14e", *ii, *iter_tri, "cg_h", *obj, v_dot_g, *leftmost, *lam) TRLIB_PRINTLN_2("%s", "")
+                TRLIB_PRINTLN_2("%s","") TRLIB_PRINTLN_1("%6ld%6ld%6s%14e%14e%14e%14e", *ii, *iter_tri, "cg_h", *obj, v_dot_g, *leftmost, *lam) TRLIB_PRINTLN_2("%s", "")
                 // check for convergence
                 if (ctl_invariant <= TRLIB_CLC_EXP_INV_LOC && v_dot_g <= *stop_b) { *ityp = TRLIB_CLT_CG; *action = TRLIB_CLA_TRIVIAL; returnvalue = TRLIB_CLR_APPROX_HARD; break; }
                 // if no convergence or want to force to investigate all invariant subspaces, continue with next invariant Krylov subspace
@@ -335,7 +335,7 @@ trlib_int_t trlib_krylov_min(
                 *type_last_head = TRLIB_CLT_HOTSTART;
                 *iter_last_head = *ii;
 
-                TRLIB_PRINTLN_1("%6d%6d%6s%14e%14e%14e%14e%14e%14e", *ii, *iter_tri, " hot", *obj, gamma[*ii]*fabs(h[*ii]), *leftmost, *lam, *ii == 0 ? neglin[0] : gamma[*ii-1], delta[*ii]) TRLIB_PRINTLN_2("%s", "")
+                TRLIB_PRINTLN_1("%6ld%6ld%6s%14e%14e%14e%14e%14e%14e", *ii, *iter_tri, " hot", *obj, gamma[*ii]*fabs(h[*ii]), *leftmost, *lam, *ii == 0 ? neglin[0] : gamma[*ii-1], delta[*ii]) TRLIB_PRINTLN_2("%s", "")
 
                 // test for convergence
                 if ( (*exit_tri != TRLIB_TTR_CONV_INTERIOR) && gamma[*ii]*fabs(h[*ii]) <= *stop_b) { *ityp = TRLIB_CLT_CG; *action = TRLIB_CLA_RETRANSF; returnvalue = *exit_tri; break; }
@@ -379,7 +379,7 @@ trlib_int_t trlib_krylov_min(
                 *type_last_head = TRLIB_CLT_HOTSTART;
                 *iter_last_head = *ii;
 
-                TRLIB_PRINTLN_1("%6d%6d%6s%14e%14e%14e%14e%14e%14e", *ii, *iter_tri, " hot_g", *obj, 0.0, *leftmost, *lam, *ii == 0 ? neglin[0] : gamma[*ii-1], delta[*ii]) TRLIB_PRINTLN_2("%s", "")
+                TRLIB_PRINTLN_1("%6ld%6ld%6s%14e%14e%14e%14e%14e%14e", *ii, *iter_tri, " hot_g", *obj, 0.0, *leftmost, *lam, *ii == 0 ? neglin[0] : gamma[*ii-1], delta[*ii]) TRLIB_PRINTLN_2("%s", "")
                 
                 // return without convergence check as indicated in API doc
                 *ityp = TRLIB_CLT_CG; *action = TRLIB_CLA_RETRANSF; returnvalue = *exit_tri; break;
@@ -490,7 +490,7 @@ trlib_int_t trlib_krylov_min(
                     *type_last_head = TRLIB_CLT_LANCZOS;
                     *iter_last_head = *ii;
                 }
-                TRLIB_PRINTLN_2("%s","") TRLIB_PRINTLN_1("%6d%6d%6s%14e%14e%14e%14e%14e%14e", *ii, *iter_tri, " lcz", *obj, sqrt(*v_g), *leftmost, *lam, *ii == 0 ? neglin[0] : gamma[*ii-1], delta[*ii]) TRLIB_PRINTLN_2("%s", "")
+                TRLIB_PRINTLN_2("%s","") TRLIB_PRINTLN_1("%6ld%6ld%6s%14e%14e%14e%14e%14e%14e", *ii, *iter_tri, " lcz", *obj, sqrt(*v_g), *leftmost, *lam, *ii == 0 ? neglin[0] : gamma[*ii-1], delta[*ii]) TRLIB_PRINTLN_2("%s", "")
 
                 // test for convergence
                 if ( ctl_invariant <= TRLIB_CLC_EXP_INV_LOC && (*exit_tri != TRLIB_TTR_CONV_INTERIOR) && *v_g <= sqrt(*stop_b)) { *ityp = TRLIB_CLT_L; *action = TRLIB_CLA_RETRANSF; returnvalue = *exit_tri; break; }

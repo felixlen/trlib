@@ -65,7 +65,7 @@ START_TEST (test_simple)
 
         irblk2[blkptr] = kk;
 
-        for(trlib_int_t ll = 0; ll<nirblk+1; ++ll){ fprintf(stderr, "%d ", irblk2[ll]); } fprintf(stderr, "\n");
+        for(trlib_int_t ll = 0; ll<nirblk+1; ++ll){ fprintf(stderr, "%ld ", irblk2[ll]); } fprintf(stderr, "\n");
 
         ret = trlib_tri_factor_min(blkptr, irblk2, diag, offdiag, neglin, radius, 100, TRLIB_EPS,
                 pos_def, equality, &warm0, &lam0, &warm, &lam, &warm_leftmost, &ileftmost,
@@ -105,7 +105,7 @@ START_TEST (test_simple)
 
         printf("\n*************************************************************\n");
         printf("* Test Case   %-46s*\n", "Expanding Tridiagonal");
-        printf("*   Exit code:          %-2d (%-2d)%29s*\n", ret, sub_fail, "");
+        printf("*   Exit code:          %-2ld (%-2ld)%29s*\n", ret, sub_fail, "");
         printf("*   Objective:       %15e%15e%9s*\n", obj, obj_check, "");
         printf("*   TR radius:       %15e%24s*\n", radius, "");
         printf("*   multiplier:      %15e%24s*\n", lam, "");
