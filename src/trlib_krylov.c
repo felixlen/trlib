@@ -94,6 +94,10 @@ trlib_int_t trlib_krylov_min(
     trlib_int_t warm_fac = 0; // flag that indicates if you we could successfully update the factorization
     trlib_flt_t sp_Msp = 0.0; // (s+, Ms+)
 
+    // local variables needed by HOTSTART_S
+    trlib_int_t nstat, nstatm, ncompl, inc, igtsv;
+    trlib_flt_t z, *dl, *du, *d, *b;
+
     if (init == TRLIB_CLS_INIT) { iwork[0] = TRLIB_CLS_INIT; }
     if (init == TRLIB_CLS_HOTSTART) { iwork[0] = TRLIB_CLS_HOTSTART; }
     if (init == TRLIB_CLS_HOTSTART_G) { iwork[0] = TRLIB_CLS_HOTSTART_G; }
@@ -346,6 +350,42 @@ trlib_int_t trlib_krylov_min(
                     else { *ityp = TRLIB_CLT_L; *action = TRLIB_CLA_TRIVIAL; *status = TRLIB_CLS_L_NEW_ITER; break; }
                 }
                 break;
+            case TRLIB_CLS_HOTSTART_S:
+                /* reentry to get stationary point \f$ H_0 s_0 = -g \f$,
+                 * use Lanczos basis */
+
+                // allocate memory for factors
+                nstat = irblk[1]; nstatm = irblk[1]-1; ncompl = itmax-nstat; inc = 1;
+                z = 0.0;
+                dl = malloc(nstatm*sizeof(trlib_flt_t));
+                du = malloc(nstatm*sizeof(trlib_flt_t));
+                d  = malloc(nstat *sizeof(trlib_flt_t));
+                b  = malloc(nstat *sizeof(trlib_flt_t));
+
+                // set factors and right hand size
+                TRLIB_DCOPY(&nstat,  delta,  &inc, d,  &inc)
+                TRLIB_DCOPY(&nstatm, gamma,  &inc, dl, &inc)
+                TRLIB_DCOPY(&nstatm, gamma,  &inc, du, &inc)
+                TRLIB_DCOPY(&nstat,  neglin, &inc, b,  &inc)
+
+                // solve for stationary point
+                dgtsv_(&nstat, &inc, dl, d, du, b, &nstat, &igtsv);
+
+                // copy stationary point to h
+                TRLIB_DCOPY(&nstat, b, &inc, h, &inc);
+
+                // null all entries of h that do not belong to solution
+                TRLIB_DSCAL(&ncompl, &z, h+nstat, &inc);
+
+                // free memory of factors
+                free(dl); free(du); free(d); free(b);
+
+                // compute objective
+                TRLIB_DDOT(*obj, &nstat, neglin, &inc, h, &inc)
+                *obj = .5*(*obj);
+
+                // say goodbye with request to variable transformation
+                *action = TRLIB_CLA_RETRANSF; returnvalue = igtsv; break;
             case TRLIB_CLS_HOTSTART_G:
                 /* reentry with new gradient trust region radius
                    we implement hotstart by not making use of the CG basis but rather the Lanczos basis
