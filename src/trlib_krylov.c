@@ -73,20 +73,22 @@ trlib_int_t trlib_krylov_min(
     trlib_flt_t *p_Mp = fwork+10;
     trlib_flt_t *s_Ms = fwork+11;
     trlib_flt_t *sigma = fwork+12;
-    trlib_flt_t *alpha = fwork+13;
-    trlib_flt_t *beta = fwork+13+itmax+1;
-    trlib_flt_t *neglin = fwork+13+2*(itmax+1);
-    trlib_flt_t *h0 = fwork+13+3*(itmax+1);
-    trlib_flt_t *h = fwork+13+4*(itmax+1);
-    trlib_flt_t *delta =  fwork+13+5*(itmax+1);
-    trlib_flt_t *delta_fac0 = fwork+13+6*(itmax+1);
-    trlib_flt_t *delta_fac = fwork+13+7*(itmax+1);
-    trlib_flt_t *gamma = fwork+13+8*(itmax+1); // note that this is shifted by 1, so gamma[0] is gamma_1
-    trlib_flt_t *gamma_fac0 = fwork+13+8+9*itmax;
-    trlib_flt_t *gamma_fac = fwork+13+8+10*itmax;
-    trlib_flt_t *ones = fwork+13+8+11*itmax;
-    trlib_flt_t *leftmost = fwork+13+9+12*itmax;
-    trlib_flt_t *fwork_tr = fwork+13+10+13*itmax;
+    trlib_flt_t *raymax = fwork+13;
+    trlib_flt_t *raymin = fwork+14;
+    trlib_flt_t *alpha = fwork+15;
+    trlib_flt_t *beta = fwork+15+itmax+1;
+    trlib_flt_t *neglin = fwork+15+2*(itmax+1);
+    trlib_flt_t *h0 = fwork+15+3*(itmax+1);
+    trlib_flt_t *h = fwork+15+4*(itmax+1);
+    trlib_flt_t *delta =  fwork+15+5*(itmax+1);
+    trlib_flt_t *delta_fac0 = fwork+15+6*(itmax+1);
+    trlib_flt_t *delta_fac = fwork+15+7*(itmax+1);
+    trlib_flt_t *gamma = fwork+15+8*(itmax+1); // note that this is shifted by 1, so gamma[0] is gamma_1
+    trlib_flt_t *gamma_fac0 = fwork+15+8+9*itmax;
+    trlib_flt_t *gamma_fac = fwork+15+8+10*itmax;
+    trlib_flt_t *ones = fwork+15+8+11*itmax;
+    trlib_flt_t *leftmost = fwork+15+9+12*itmax;
+    trlib_flt_t *fwork_tr = fwork+15+10+13*itmax;
 
     // local variables
     trlib_int_t returnvalue = TRLIB_CLR_CONTINUE;
@@ -136,6 +138,7 @@ trlib_int_t trlib_krylov_min(
                 *leftmost = 0.0; *lam = 0.0; // assume interior solution
                 *obj = 0.0; *s_Mp = 0.0; *p_Mp = 0.0; *s_Ms = 0.0; // safe initialization for scalar values
                 *p_Mp = *v_g; // (p0, M p0) = (-v0, -M v0) = (v0, M M^-1 g0); (s, Mp) = (s, Ms) = 0 already properly initialized
+                *raymax = (*p_Hp)/(*p_Mp); *raymin = *raymax;
                 delta[0] = 0.0; // incremental updates in delta, have to initialize it
                 *ityp = TRLIB_CLT_CG; *status = TRLIB_CLS_CG_NEW_ITER; *action = TRLIB_CLA_TRIVIAL; // continue with CG iteration
                 break;
@@ -153,13 +156,12 @@ trlib_int_t trlib_krylov_min(
                 // update quantities needed to computed || s_trial ||_M and ratio between Lanczos vector q and pCG vector v
                 if (*ii > 0) { *sigma = - copysign( 1.0, alpha[*ii-1] ) * (*sigma); }
                 *cglm = *cgl; *cgl = *sigma/sqrt(*v_g);
-                if (*interior) {
-                    if (*ii>0) {
-                        *s_Mp = beta[*ii-1]*(*s_Mp + alpha[*ii-1]*(*p_Mp));
-                        *p_Mp = *v_g + beta[*ii-1]*beta[*ii-1]*(*p_Mp);
-                    }
-                    sp_Msp = *s_Ms + alpha[*ii]*(2.0*(*s_Mp)+alpha[*ii]*(*p_Mp));
+                if (*ii>0) {
+                    *s_Mp = beta[*ii-1]*(*s_Mp + alpha[*ii-1]*(*p_Mp));
+                    *p_Mp = *v_g + beta[*ii-1]*beta[*ii-1]*(*p_Mp);
                 }
+                sp_Msp = *s_Ms + alpha[*ii]*(2.0*(*s_Mp)+alpha[*ii]*(*p_Mp));
+                *raymax = fmax(*raymax, (*p_Hp)/(*p_Mp)); *raymin = fmin(*raymin, (*p_Hp)/(*p_Mp));
                 // update if we can expect interior solution
                 *interior = *interior && *pos_def && (sp_Msp < radius*radius);
 
@@ -451,6 +453,7 @@ trlib_int_t trlib_krylov_min(
                     }
                 }
                 delta[*ii] = p_dot_Hp;
+                *raymax = fmax(*raymax, p_dot_Hp); *raymin = fmin(*raymin, p_dot_Hp);
                 /* solve tridiagonal reduction
                    first try to update factorization if available to start tridiagonal problem warmstarted */
                 if(*nirblk == 1) {
@@ -562,15 +565,15 @@ trlib_int_t trlib_krylov_min(
 }
 
 trlib_int_t trlib_krylov_prepare_memory(trlib_int_t itmax, trlib_flt_t *fwork) {
-    for(trlib_int_t jj = 21+11*itmax; jj<22+12*itmax; ++jj) { *(fwork+jj) = 1.0; } // everything to 1.0 in ones
-    memset(fwork+15+2*itmax, 0, itmax*sizeof(trlib_flt_t)); // neglin = - gamma_0 e1, thus set neglin[1:] = 0
+    for(trlib_int_t jj = 23+11*itmax; jj<24+12*itmax; ++jj) { *(fwork+jj) = 1.0; } // everything to 1.0 in ones
+    memset(fwork+17+2*itmax, 0, itmax*sizeof(trlib_flt_t)); // neglin = - gamma_0 e1, thus set neglin[1:] = 0
     return 0;
 }
 
 trlib_int_t trlib_krylov_memory_size(trlib_int_t itmax, trlib_int_t *iwork_size, trlib_int_t *fwork_size, trlib_int_t *h_pointer) {
     *iwork_size = 16+itmax;
-    *fwork_size = 23+13*itmax+trlib_tri_factor_memory_size(itmax+1);
-    *h_pointer = 17+4*itmax;
+    *fwork_size = 25+13*itmax+trlib_tri_factor_memory_size(itmax+1);
+    *h_pointer = 19+4*itmax;
     return 0;
 }
 
@@ -582,6 +585,6 @@ trlib_int_t trlib_krylov_timing_size() {
 }
 
 trlib_int_t trlib_krylov_gt(trlib_int_t itmax, trlib_int_t *gt_pointer) {
-    *gt_pointer = 15 + 2*itmax;
+    *gt_pointer = 17 + 2*itmax;
     return 0;
 }

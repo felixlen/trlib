@@ -223,20 +223,22 @@
  *                 10                             | 11                             | \f$ \langle p_i, Mp_i \rangle \f$
  *                 11                             | 12                             | \f$ \langle s_i, Ms_i \rangle \f$
  *                 12                             | 13                             | \f$ \sigma_i \f$
- *                 \f$ 13 \f$                     | \f$ 13+\texttt{itmax}+1 \f$    | \f$ \alpha_i, i \ge 0 \f$, step length CG
- *                 \f$ 13+\texttt{itmax}+1 \f$    | \f$ 13+2(\texttt{itmax}+1) \f$ | \f$ \beta_i, i \ge 0 \f$, step update factor CG
- *                 \f$ 13+2(\texttt{itmax}+1) \f$ | \f$ 13+3(\texttt{itmax}+1) \f$ | \p neglin for #trlib_tri_factor_min, just given by \f$ - \gamma_0 e_1 \f$
- *                 \f$ 13+3(\texttt{itmax}+1) \f$ | \f$ 13+4(\texttt{itmax}+1) \f$ | solution \f$ h_0 \f$ of tridiagonal subproblem provided as \p sol by #trlib_tri_factor_min
- *                 \f$ 13+4(\texttt{itmax}+1) \f$ | \f$ 13+5(\texttt{itmax}+1) \f$ | solution \f$ h \f$ of tridiagonal subproblem provided as \p sol by #trlib_tri_factor_min
- *                 \f$ 13+5(\texttt{itmax}+1) \f$ | \f$ 13+6(\texttt{itmax}+1) \f$ | \f$ \delta_i, i \ge 0 \f$, curvature in Lanczos, diagonal of \f$ T \f$ in Lanczos tridiagonalization process
- *                 \f$ 13+6(\texttt{itmax}+1) \f$ | \f$ 13+7(\texttt{itmax}+1) \f$ | diagonal of Cholesky of \f$ T_0 + \lambda_0 I \f$
- *                 \f$ 13+7(\texttt{itmax}+1) \f$ | \f$ 13+8(\texttt{itmax}+1) \f$ | diagonal of Cholesky of \f$ T + \lambda I \f$
- *                 \f$ 13+8(\texttt{itmax}+1) \f$ | \f$ 13+9\texttt{itmax}+8 \f$   | \f$ \gamma_i, i \ge 1 \f$, norm of gradients in Lanczos; provides offdiagonal of \f$ T \f$ in Lanczos tridiagonalization process
- *                 \f$ 13+9\texttt{itmax}+8 \f$   | \f$ 13+10\texttt{itmax}+8 \f$   | offdiagonal of Cholesky factorization of \f$ T_0 + \lambda_0 I \f$
- *                 \f$ 13+10\texttt{itmax}+8 \f$   | \f$ 13+11\texttt{itmax}+8\f$   | offdiagonal of Cholesky factorization of \f$ T + \lambda I \f$
- *                 \f$ 13+11\texttt{itmax}+8 \f$   | \f$ 13+12\texttt{itmax}+9 \f$   | \p ones for #trlib_tri_factor_min and #trlib_eigen_inverse
- *                 \f$ 13+12\texttt{itmax}+9 \f$   | \f$ 13+13\texttt{itmax}+10  \f$ | \p leftmost for #trlib_tri_factor_min
- *                 \f$ 13+13\texttt{itmax}+10 \f$  | \f$ 13+13\texttt{itmax}+10 \f$ + #trlib_tri_factor_memory_size `(itmax+1)` | \p fwork for #trlib_tri_factor_min
+ *                 13                             | 14                             | max Rayleigh quotient, \f$ \max_i \frac{\langle p, Hp \rangle}{\langle p, M p \rangle} \f$
+ *                 14                             | 15                             | min Rayleigh quotient, \f$ \min_i \frac{\langle p, Hp \rangle}{\langle p, M p \rangle} \f$
+ *                 \f$ 15 \f$                     | \f$ 15+\texttt{itmax}+1 \f$    | \f$ \alpha_i, i \ge 0 \f$, step length CG
+ *                 \f$ 15+\texttt{itmax}+1 \f$    | \f$ 15+2(\texttt{itmax}+1) \f$ | \f$ \beta_i, i \ge 0 \f$, step update factor CG
+ *                 \f$ 15+2(\texttt{itmax}+1) \f$ | \f$ 15+3(\texttt{itmax}+1) \f$ | \p neglin for #trlib_tri_factor_min, just given by \f$ - \gamma_0 e_1 \f$
+ *                 \f$ 15+3(\texttt{itmax}+1) \f$ | \f$ 15+4(\texttt{itmax}+1) \f$ | solution \f$ h_0 \f$ of tridiagonal subproblem provided as \p sol by #trlib_tri_factor_min
+ *                 \f$ 15+4(\texttt{itmax}+1) \f$ | \f$ 15+5(\texttt{itmax}+1) \f$ | solution \f$ h \f$ of tridiagonal subproblem provided as \p sol by #trlib_tri_factor_min
+ *                 \f$ 15+5(\texttt{itmax}+1) \f$ | \f$ 15+6(\texttt{itmax}+1) \f$ | \f$ \delta_i, i \ge 0 \f$, curvature in Lanczos, diagonal of \f$ T \f$ in Lanczos tridiagonalization process
+ *                 \f$ 15+6(\texttt{itmax}+1) \f$ | \f$ 15+7(\texttt{itmax}+1) \f$ | diagonal of Cholesky of \f$ T_0 + \lambda_0 I \f$
+ *                 \f$ 15+7(\texttt{itmax}+1) \f$ | \f$ 15+8(\texttt{itmax}+1) \f$ | diagonal of Cholesky of \f$ T + \lambda I \f$
+ *                 \f$ 15+8(\texttt{itmax}+1) \f$ | \f$ 15+9\texttt{itmax}+8 \f$   | \f$ \gamma_i, i \ge 1 \f$, norm of gradients in Lanczos; provides offdiagonal of \f$ T \f$ in Lanczos tridiagonalization process
+ *                 \f$ 15+9\texttt{itmax}+8 \f$   | \f$ 15+10\texttt{itmax}+8 \f$   | offdiagonal of Cholesky factorization of \f$ T_0 + \lambda_0 I \f$
+ *                 \f$ 15+10\texttt{itmax}+8 \f$  | \f$ 15+11\texttt{itmax}+8\f$   | offdiagonal of Cholesky factorization of \f$ T + \lambda I \f$
+ *                 \f$ 15+11\texttt{itmax}+8 \f$  | \f$ 15+12\texttt{itmax}+9 \f$   | \p ones for #trlib_tri_factor_min and #trlib_eigen_inverse
+ *                 \f$ 15+12\texttt{itmax}+9 \f$  | \f$ 15+13\texttt{itmax}+10  \f$ | \p leftmost for #trlib_tri_factor_min
+ *                 \f$ 15+13\texttt{itmax}+10 \f$ | \f$ 15+13\texttt{itmax}+10 \f$ + #trlib_tri_factor_memory_size `(itmax+1)` | \p fwork for #trlib_tri_factor_min
  *  @param[in]     refine set to \c 1 if iterative refinement should be used on solving linear systems, otherwise to \c 0
  *  @param[in]     verbose determines the verbosity level of output that is written to \p fout
  *  @param[in]     unicode set to \c 1 if \p fout can handle unicode, otherwise to \c 0
