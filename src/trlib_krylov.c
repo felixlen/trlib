@@ -97,7 +97,7 @@ trlib_int_t trlib_krylov_min(
     trlib_flt_t sp_Msp = 0.0; // (s+, Ms+)
 
     // local variables needed by HOTSTART_S
-    trlib_int_t nstat, nstatm, ncompl, inc, igtsv;
+    trlib_int_t nstat, nstatm, ncompl, inc, igtsv = 0;
     trlib_flt_t z, *dl, *du, *d, *b;
 
     if (init == TRLIB_CLS_INIT)       { *status = TRLIB_CLS_INIT; }
