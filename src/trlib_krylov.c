@@ -98,9 +98,10 @@ trlib_int_t trlib_krylov_min(
     trlib_int_t nstat, nstatm, ncompl, inc, igtsv;
     trlib_flt_t z, *dl, *du, *d, *b;
 
-    if (init == TRLIB_CLS_INIT) { iwork[0] = TRLIB_CLS_INIT; }
-    if (init == TRLIB_CLS_HOTSTART) { iwork[0] = TRLIB_CLS_HOTSTART; }
-    if (init == TRLIB_CLS_HOTSTART_G) { iwork[0] = TRLIB_CLS_HOTSTART_G; }
+    if (init == TRLIB_CLS_INIT)       { *status = TRLIB_CLS_INIT; }
+    if (init == TRLIB_CLS_HOTSTART)   { *status = TRLIB_CLS_HOTSTART; }
+    if (init == TRLIB_CLS_HOTSTART_G) { *status = TRLIB_CLS_HOTSTART_G; }
+    if (init == TRLIB_CLS_HOTSTART_S) { *status = TRLIB_CLS_HOTSTART_S; }
 
     while(1) {
         switch( *status ) {
@@ -355,7 +356,7 @@ trlib_int_t trlib_krylov_min(
                  * use Lanczos basis */
 
                 // allocate memory for factors
-                nstat = irblk[1]; nstatm = irblk[1]-1; ncompl = itmax-nstat; inc = 1;
+                nstat = irblk[1]; nstatm = nstat-1; ncompl = itmax-nstat; inc = 1;
                 z = 0.0;
                 dl = malloc(nstatm*sizeof(trlib_flt_t));
                 du = malloc(nstatm*sizeof(trlib_flt_t));
@@ -370,19 +371,25 @@ trlib_int_t trlib_krylov_min(
 
                 // solve for stationary point
                 dgtsv_(&nstat, &inc, dl, d, du, b, &nstat, &igtsv);
-
                 // copy stationary point to h
                 TRLIB_DCOPY(&nstat, b, &inc, h, &inc);
 
                 // null all entries of h that do not belong to solution
                 TRLIB_DSCAL(&ncompl, &z, h+nstat, &inc);
 
+                // compute objective (make use of the fact that T*h = -gamma[0] e_1
+                *obj = -.5*h[0]*neglin[0];
+
                 // free memory of factors
                 free(dl); free(du); free(d); free(b);
 
-                // compute objective
-                TRLIB_DDOT(*obj, &nstat, neglin, &inc, h, &inc)
-                *obj = .5*(*obj);
+                // print some information
+                if (unicode) { TRLIB_PRINTLN_2("%s","") TRLIB_PRINTLN_1("%6s%6s%6s%14s%14s%14s%14s%14s%14s", " iter ", "inewton", " type ", "   objective  ", "   \u03b3\u1d62\u208a\u2081|h\u1d62|   ", "   leftmost   ", "      \u03bb       ", "      \u03b3       ", "      \u03b4       ") }
+                else { TRLIB_PRINTLN_2("%s","") TRLIB_PRINTLN_1("%6s%6s%6s%14s%14s%14s%14s%14s%14s", " iter ", "inewton", " type ", "   objective  ", "gam(i+1)|h(i)|", "   leftmost   ", "     lam      ", "    gamma     ", "    delta     ") }
+                *type_last_head = TRLIB_CLT_HOTSTART;
+                *iter_last_head = *ii;
+
+                TRLIB_PRINTLN_1("%6ld%6ld%6s%14e%14e%14e%14e%14e%14e", *ii, *iter_tri, " hot_s", *obj, gamma[*ii]*fabs(h[*ii]), *leftmost, 0.0, *ii == 0 ? neglin[0] : gamma[*ii-1], delta[*ii]) TRLIB_PRINTLN_2("%s", "")
 
                 // say goodbye with request to variable transformation
                 *action = TRLIB_CLA_RETRANSF; returnvalue = igtsv; break;
