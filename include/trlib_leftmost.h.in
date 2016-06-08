@@ -24,7 +24,7 @@
  *                 - `irblk[nirred]` the dimension of \f$ T \f$
  *  @param[in]     diag pointer to array holding diagonal of \f$ T \f$, length `irblk[nirblk]`
  *  @param[in]     offdiag pointer to array holding offdiagonal of \f$ T \f$, length `irblk[nirblk]`
- *  @param[in]     warm set \c 1 if you want to update information about block \f$ \ell \f$, provide a values in @p leftmost_minor, @p ileftmost, @p leftmost; else \c 0
+ *  @param[in]     warm set \f$ \ge 1 \f$ if you want to update information about block \f$ \ell \f$, provide a values in @p leftmost_minor, @p ileftmost, @p leftmost; else \c 0
  *  @param[in]     leftmost_minor smallest eigenvalue of principal \f$ (n_\ell-1)\times (n_\ell-1)\f$ submatrix of \f$ T_\ell \f$
  *  @param[in]     itmax maximum number of iterations
  *  @param[in]     tol_abs absolute stopping tolerance in Reid-Parlett zero finding, good default may be \f$ \texttt{macheps}^{3/4} \f$
@@ -70,7 +70,14 @@ trlib_int_t trlib_leftmost(
  *  @param[in]     n dimension, ensure \f$ n > 0 \f$
  *  @param[in]     diag pointer to array holding diagonal of \f$ T \f$, length \p n
  *  @param[in]     offdiag pointer to array holding offdiagonal of \f$ T \f$, length \p n-1
- *  @param[in]     warm set \c 1 if you provide a valid value in @p leftmost_minor, else \c 0
+ *  @param[in]     warm set \f$ \ge 1 \f$ if you provide a valid value in @p leftmost_minor, else \c 0. Exact value determines which model will be used for zero-finding
+                   warm | model
+                   -----|------
+                   0    | linear model for rational function
+                   1    | sensible heuristic model choice for lifted rational function
+                   2    | asymptotic quadratic model \f$ \theta^2 + b \theta + c \f$ for lifted rational function
+                   3    | taylor quadratic model \f$ a \theta^2 + b \theta + c \f$ for lifted rational function
+                   4    | linear model \f$ b \theta + c \f$ for lifted rational function
  *  @param[in]     leftmost_minor smallest eigenvalue of principal \f$ (n-1)\times (n-1)\f$ submatrix of \f$ T \f$
  *  @param[in]     itmax maximum number of iterations
  *  @param[in]     tol_abs absolute stopping tolerance in Reid-Parlett zero finding, good default may be \f$ \texttt{macheps}^{3/4} \f$

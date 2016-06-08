@@ -25,7 +25,7 @@ def krylov_memory_size(long itmax):
 
 def krylov_min(long init, double radius, double g_dot_g, double v_dot_g, double p_dot_Hp,
         long[::1] iwork not None, double [::1] fwork not None,
-        equality = False, int itmax = 500, int itmax_lanczos = 100,
+        equality = False, long itmax = 500, long itmax_lanczos = 100,
         long ctl_invariant=0,
         double tol_rel_i = np.finfo(np.float).eps**.5, double tol_abs_i = 0.0,
         double tol_rel_b = np.finfo(np.float).eps**.3, double tol_abs_b = 0.0,
@@ -49,6 +49,22 @@ def krylov_min(long init, double radius, double g_dot_g, double v_dot_g, double 
         return ret, action, iter, ityp, flt1, flt2, flt3, ttiming
     else:
         return ret, action, iter, ityp, flt1, flt2, flt3
+
+def leftmost_irreducible(double[::1] diag, double [::1] offdiag,
+        long warm, double leftmost_minor, long itmax = 500, double tol_abs = np.finfo(np.float).eps**.75,
+        long verbose=0, long [::1] timing = None, prefix=""):
+    cdef long [:] timing_b
+    if timing is None:
+        ttiming = np.zeros([20], dtype=np.int)
+        timing_b = ttiming
+    else:
+        timing_b = timing
+    eprefix = prefix.encode('UTF-8')
+    cdef double leftmost
+    cdef long iter_pr, ret
+    ret = ctrlib.trlib_leftmost_irreducible(diag.shape[0], &diag[0] if diag.shape[0] > 0 else NULL, &offdiag[0] if offdiag.shape[0] > 0 else NULL, warm, leftmost_minor, itmax, tol_abs, verbose, 1, eprefix, <libc.stdio.FILE*> libc.stdio.stdout, &timing_b[0], &leftmost, &iter_pr)
+    return ret, leftmost, iter_pr
+
 
 def krylov_timing_size():
     return ctrlib.trlib_krylov_timing_size()

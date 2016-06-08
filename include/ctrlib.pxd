@@ -13,3 +13,11 @@ cdef extern from "trlib_krylov.h":
         long *action, long *iter, long *ityp,
         double *flt1, double *flt2, double *flt3)
     int trlib_krylov_timing_size()
+
+cdef extern from "trlib_leftmost.h":
+    long trlib_leftmost_irreducible(
+        long n, double *diag, double *offdiag,
+        long warm, double leftmost_minor, long itmax, double tol_abs,
+        long verbose, long unicode, char *prefix, libc.stdio.FILE *fout,
+        long *timing, double *leftmost, long *iter_pr)
+
