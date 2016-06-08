@@ -4,10 +4,10 @@
 START_TEST (test_prepare)
 {
     trlib_int_t itmax = 314;
-    trlib_flt_t *fwork = malloc((27+17*itmax)*sizeof(trlib_flt_t));
+    trlib_flt_t *fwork = malloc((29+17*itmax)*sizeof(trlib_flt_t));
     trlib_krylov_prepare_memory(itmax, fwork);
-    for(trlib_int_t jj = 21+11*itmax; jj<22+12*itmax; ++jj) { ck_assert_msg(fwork[jj] == 1.0, "Ones improperly initialized, %d --> %e", jj, fwork[jj]); }
-    for(trlib_int_t jj = 15+2*itmax; jj<15+3*itmax; ++jj) { ck_assert_msg(fwork[jj] == 0.0, "Neglin improperly initialized, %d --> %e", jj, fwork[jj]); }
+    for(trlib_int_t jj = 23+11*itmax; jj<24+12*itmax; ++jj) { ck_assert_msg(fwork[jj] == 1.0, "Ones improperly initialized, %d --> %e", jj, fwork[jj]); }
+    for(trlib_int_t jj = 17+2*itmax; jj<17+3*itmax; ++jj) { ck_assert_msg(fwork[jj] == 0.0, "Neglin improperly initialized, %d --> %e", jj, fwork[jj]); }
     free(fwork);
 }
 END_TEST
