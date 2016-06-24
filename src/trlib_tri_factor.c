@@ -181,7 +181,7 @@ trlib_int_t trlib_tri_factor_min(
     if (norm_sol0 >= radius) { // perform newton iteration if possible
         /* now a suitable pair lam0, h0 has been found.
          * perform a newton iteration on 0 = 1/||h0(lam0)|| - 1/radius */
-        TRLIB_PRINTLN_1("Starting Newton iteration for \u03bb\u2080")
+        TRLIB_PRINTLN_1("Starting Newton iteration for \u03bb\u2080 with initial choice %e", *lam0)
         while (1) {
             /* compute newton correction to lam, by
                 (1) Factoring T0 + lam0 I = LDL^T
@@ -222,7 +222,7 @@ trlib_int_t trlib_tri_factor_min(
             TRLIB_DCOPY(&n0, diag_lam, &inc, diag_fac0, &inc) // diag_fac <-- diag_lam
             TRLIB_DCOPY(&nm0, offdiag, &inc, offdiag_fac0, &inc) // offdiag_fac <-- offdiag
             TRLIB_DPTTRF(&n0, diag_fac0, offdiag_fac0, &info_fac) // compute factorization
-            if (info_fac != 0) { TRLIB_RETURN(TRLIB_TTR_FAIL_FACTOR) }
+            if (info_fac != 0) { TRLIB_PRINTLN_2("Fail on factorization, \u03bb = %e, d\u03bb = %e! Exiting Newton Iteration", *lam0, dlam) TRLIB_RETURN(TRLIB_TTR_FAIL_FACTOR) }
     
             // step (2) Solving (T+lam I)*h = -lin
             TRLIB_DCOPY(&n0, neglin, &inc, sol0, &inc) // sol <-- neglin
