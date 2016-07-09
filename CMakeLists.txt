@@ -1,6 +1,10 @@
 cmake_minimum_required (VERSION 2.8.11)
 project (TRLIB)
 
+if(APPLE)
+	set (CMAKE_MACOSX_RPATH ON)
+endif(APPLE)
+
 set (TRLIB_VERSION_MAJOR 0)
 set (TRLIB_VERSION_MINOR 1)
 
