@@ -32,20 +32,21 @@
 #define TRLIB_CLS_HOTSTART      (2)
 #define TRLIB_CLS_HOTSTART_G    (3)
 #define TRLIB_CLS_HOTSTART_S    (4)
-#define TRLIB_CLS_VEC_INIT      (5)
-#define TRLIB_CLS_CG_NEW_ITER   (6)
-#define TRLIB_CLS_CG_UPDATE_S   (7)
-#define TRLIB_CLS_CG_UPDATE_GV  (8)
-#define TRLIB_CLS_CG_UPDATE_P   (9)
-#define TRLIB_CLS_LANCZOS_SWT   (10)
-#define TRLIB_CLS_L_UPDATE_P    (11)
-#define TRLIB_CLS_L_CMP_CONV    (12)
-#define TRLIB_CLS_L_CMP_CONV_RT (13)
-#define TRLIB_CLS_L_CHK_CONV    (14)
-#define TRLIB_CLS_L_NEW_ITER    (15)
-#define TRLIB_CLS_CG_IF_IRBLK_P (16)
-#define TRLIB_CLS_CG_IF_IRBLK_C (17)
-#define TRLIB_CLS_CG_IF_IRBLK_N (18)
+#define TRLIB_CLS_HOTSTART_R    (5)
+#define TRLIB_CLS_VEC_INIT      (6)
+#define TRLIB_CLS_CG_NEW_ITER   (7)
+#define TRLIB_CLS_CG_UPDATE_S   (8)
+#define TRLIB_CLS_CG_UPDATE_GV  (9)
+#define TRLIB_CLS_CG_UPDATE_P   (10)
+#define TRLIB_CLS_LANCZOS_SWT   (11)
+#define TRLIB_CLS_L_UPDATE_P    (12)
+#define TRLIB_CLS_L_CMP_CONV    (13)
+#define TRLIB_CLS_L_CMP_CONV_RT (14)
+#define TRLIB_CLS_L_CHK_CONV    (15)
+#define TRLIB_CLS_L_NEW_ITER    (16)
+#define TRLIB_CLS_CG_IF_IRBLK_P (17)
+#define TRLIB_CLS_CG_IF_IRBLK_C (18)
+#define TRLIB_CLS_CG_IF_IRBLK_N (19)
 
 #define TRLIB_CLC_NO_EXP_INV    (0)
 #define TRLIB_CLC_EXP_INV_LOC   (1)
@@ -145,6 +146,23 @@
  *  In this case you might better take the stationary point.
  *
  *  You can get the stationary point after a successful solve by setting `status` to #TRLIB_CLS_HOTSTART_S.
+ *
+ *  ### Reentry to get unconstrained minimizer of regularized problem
+ *
+ *  After a successful solve you can compute the norm of the unconstrained minimizer to the problem with regularized
+ *  hessian \f$ H + \beta M \f$ (\f$ \beta \f$ large enough such that \f$ H + \beta M \f$ is positive definite)
+ *  in the previously expanded Krylov subspace. You will certainly be interested in this if you want to implement
+ *  the TRACE algorithm described in 
+ *  >   Curtis, Robinson, Samadi: Mathematical Programming A, 2016, pp. 1-32,
+ *  >   [doi:10.1007/s10107-016-1026-2](http://dx.doi.org/10.1007/s10107-016-1026-2):
+ *  >   _A trust region algorithm with a worst-case iteration complexity of \f$ \mathcal O(\epsilon^{-3/2}) \f$ for nonconvex optimization_
+ *
+ *  In this case, call the function with `status` set to #TRLIB_CLS_HOTSTART_R and `radius` set to \f$ \beta \f$.
+ *
+ *  On exit, the \c obj field of \c fwork yields the norm of the solution vector.
+ *
+ *  If you not only want the norm but also the unconstrained minimizer, you can get it by one step of #TRLIB_CLA_RETRANSF.
+ *  However since this is usually not the case, you are not asked to do this in the reverse communication scheme.
  *
  *  ### Reentry with new gradient
  *  

@@ -369,6 +369,50 @@ trlib_int_t trlib_tri_factor_min(
     }
 }
 
+trlib_int_t trlib_tri_factor_regularized_umin(
+    trlib_int_t n, trlib_flt_t *diag, trlib_flt_t *offdiag,
+    trlib_flt_t *neglin, trlib_flt_t lam,
+    trlib_flt_t *sol,
+    trlib_flt_t *ones, trlib_flt_t *fwork,
+    trlib_int_t refine,
+    trlib_int_t verbose, trlib_int_t unicode, char *prefix, FILE *fout,
+    trlib_int_t *timing, trlib_flt_t *norm_sol, trlib_int_t *sub_fail) {
+
+    // local variables
+    #if TRLIB_MEASURE_TIME
+        struct timespec verystart, start, end;
+        TRLIB_TIC(verystart)
+    #endif
+
+    trlib_flt_t *diag_lam = fwork;        // vector that holds diag + lam, could be saved if we would implement iterative refinement ourselve
+    trlib_flt_t *diag_fac = fwork+n;      // vector that holds diagonal of factor of diag + lam
+    trlib_flt_t *offdiag_fac = fwork+2*n; // vector that holds offdiagonal of factor of diag + lam
+    trlib_flt_t *work = fwork+3*n;        // workspace for iterative refinement
+    trlib_flt_t ferr = 0.0;               // forward  error bound from iterative refinement
+    trlib_flt_t berr = 0.0;               // backward error bound from iterative refinement
+    trlib_int_t inc = 1;                  // vector increment
+    trlib_int_t info_fac;                 // LAPACK return code
+    trlib_int_t nm = n-1;
+
+    // factorize T + lam0 I
+    TRLIB_DCOPY(&n, diag, &inc, diag_lam, &inc) // diag_lam <-- diag
+    TRLIB_DAXPY(&n, &lam, ones, &inc, diag_lam, &inc) // diag_lam <-- lam0 + diag_lam
+    TRLIB_DCOPY(&n, diag_lam, &inc, diag_fac, &inc) // diag_fac <-- diag_lam
+    TRLIB_DCOPY(&nm, offdiag, &inc, offdiag_fac, &inc) // offdiag_fac <-- offdiag
+    TRLIB_DPTTRF(&n, diag_fac, offdiag_fac, &info_fac) // compute factorization
+    if (info_fac != 0) { TRLIB_RETURN(TRLIB_TTR_FAIL_FACTOR); } // factorization failed, switch to coldastart
+
+    TRLIB_DCOPY(&n, neglin, &inc, sol, &inc) // sol <-- neglin
+    TRLIB_DPTTRS(&n, &inc, diag_fac, offdiag_fac, sol, &n, &info_fac) // sol <-- (T+lam I)^-1 sol
+    if (info_fac != 0) { TRLIB_PRINTLN_2("Failure on backsolve for h") TRLIB_RETURN(TRLIB_TTR_FAIL_LINSOLVE) }
+    if (refine) { TRLIB_DPTRFS(&n, &inc, diag_lam, offdiag, diag_fac, offdiag_fac, neglin, &n, sol, &n, &ferr, &berr, work, &info_fac) }
+    if (info_fac != 0) { TRLIB_PRINTLN_2("Failure on iterative refinement for h") TRLIB_RETURN(TRLIB_TTR_FAIL_LINSOLVE) }
+
+    TRLIB_DNRM2(*norm_sol, &n, sol, &inc)
+    TRLIB_RETURN(TRLIB_TTR_CONV_INTERIOR); 
+}
+
+
 trlib_int_t trlib_tri_timing_size() {
 #if TRLIB_MEASURE_TIME
     return 1+TRLIB_SIZE_TIMING_LINALG+trlib_leftmost_timing_size()+trlib_eigen_timing_size();
@@ -377,6 +421,6 @@ trlib_int_t trlib_tri_timing_size() {
 }
 
 trlib_int_t trlib_tri_factor_memory_size(trlib_int_t n) {
-    return 4*n;
+    return 5*n;
 }
 

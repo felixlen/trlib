@@ -396,6 +396,11 @@ trlib_int_t trlib_krylov_min(
                 // say goodbye with request to variable transformation
                 if(igtsv != 0) { returnvalue = TRLIB_CLR_FAIL_LINSOLVE; } else { returnvalue = TRLIB_CLR_CONV_INTERIOR; }
                 *action = TRLIB_CLA_RETRANSF; break;
+            case TRLIB_CLS_HOTSTART_R:
+                /* reentry to compute unconstrained minimizer of problem with regularized hessian */
+                trlib_tri_factor_regularized_umin(irblk[1], delta, gamma, neglin, radius, h, ones, fwork_tr, refine,
+                        verbose-1, unicode, " TR ", fout, leftmost_timing, obj, sub_fail_tri);
+                *action = TRLIB_CLA_TRIVIAL; *status = TRLIB_CLR_CONV_INTERIOR; break;
             case TRLIB_CLS_HOTSTART_G:
                 /* reentry with new gradient trust region radius
                    we implement hotstart by not making use of the CG basis but rather the Lanczos basis
