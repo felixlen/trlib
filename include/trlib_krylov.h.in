@@ -169,7 +169,7 @@
  *
  *  For the aforementioned TRACE algorithm, there is also the need to compute \f$ \beta \f$ such that \f$ \sigma_{\text l} \le \frac{\beta}{\Vert s(\beta) \Vert} \le \sigma_{\text u} \f$, where \f$ \Vert s(\beta) \Vert \f$ denotes the norm of the regularized unconstrained minimizer.
  *
- *  To get this, set `status` to #TRLIB_CLS_HOTSTART_T and `radius` to an initial guess for \f$ \beta \f$, `tol_rel_i` to \f$ \sigma_{\text l} \f$ and `tol_rel_b` to \f$ \sigma_{\text u} \f$. The field `obj` of `fwork` contains the desired solution norm on exit and \f$ \lambda \f$ of `fwork` contains the desired regularization parameter \f$ \beta \f$.
+ *  To get this, set `status` to #TRLIB_CLS_HOTSTART_T and `radius` to an initial guess for \f$ \beta \f$, `tol_rel_i` to \f$ \sigma_{\text l} \f$ and `tol_rel_b` to \f$ \sigma_{\text u} \f$. The field `obj` of `fwork` contains the desired solution norm on exit and `flt1` is the desired regularization parameter \f$ \beta \f$.
  *
  *  If you not only want the norm but also the unconstrained minimizer, you can get it by one step of #TRLIB_CLA_RETRANSF.
  *  However since this is usually not the case, you are not asked to do this in the reverse communication scheme.

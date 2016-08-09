@@ -193,7 +193,7 @@ trlib_int_t trlib_tri_factor_regularized_umin(
  *  @param[in]     offdiag pointer to array holding offdiagonal of \f$ T \f$, length \p n-1
  *  @param[in]     neglin pointer to array holding \f$ -g \f$, length \p n
  *  @param[in,out] lam regularization parameter \f$ \lambda \f$, on input initial guess, on exit desired parameter
- *  @param[in]     sigma value that is used in root finding, e.g. \f$ \tfrac 12 (\sigma_{\text l} + \sigma_{\text u})
+ *  @param[in]     sigma value that is used in root finding, e.g. \f$ \frac 12 (\sigma_{\text l} + \sigma_{\text u})\f$
  *  @param[in]     sigma_l lower bound
  *  @param[in]     sigma_u upper bound
  *  @param[in,out] sol pointer to array holding solution, length \p n

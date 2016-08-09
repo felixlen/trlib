@@ -401,6 +401,13 @@ trlib_int_t trlib_krylov_min(
                 trlib_tri_factor_regularized_umin(irblk[1], delta, gamma, neglin, radius, h, ones, fwork_tr, refine,
                         verbose-1, unicode, " TR ", fout, leftmost_timing, obj, sub_fail_tri);
                 *action = TRLIB_CLA_TRIVIAL; *status = TRLIB_CLR_CONV_INTERIOR; break;
+            case TRLIB_CLS_HOTSTART_T:
+                /* reentry to compute regularization parameter for TRACE */
+                *flt1 = radius;
+                trlib_tri_factor_get_regularization(irblk[1], delta, gamma, neglin, flt1,
+                        .5*(tol_rel_i + tol_rel_b), tol_rel_i, tol_rel_b, h, ones, fwork_tr, refine,
+                        verbose-1, unicode, " TR ", fout, leftmost_timing, obj, sub_fail_tri);
+                *action = TRLIB_CLA_TRIVIAL; *status = TRLIB_CLR_CONV_INTERIOR; break;
             case TRLIB_CLS_HOTSTART_G:
                 /* reentry with new gradient trust region radius
                    we implement hotstart by not making use of the CG basis but rather the Lanczos basis
