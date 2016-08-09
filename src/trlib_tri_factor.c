@@ -412,6 +412,135 @@ trlib_int_t trlib_tri_factor_regularized_umin(
     TRLIB_RETURN(TRLIB_TTR_CONV_INTERIOR); 
 }
 
+trlib_int_t trlib_tri_factor_get_regularization(
+    trlib_int_t n, trlib_flt_t *diag, trlib_flt_t *offdiag,
+    trlib_flt_t *neglin, trlib_flt_t *lam,
+    trlib_flt_t sigma, trlib_flt_t sigma_l, trlib_flt_t sigma_u,
+    trlib_flt_t *sol,
+    trlib_flt_t *ones, trlib_flt_t *fwork,
+    trlib_int_t refine,
+    trlib_int_t verbose, trlib_int_t unicode, char *prefix, FILE *fout,
+    trlib_int_t *timing, trlib_flt_t *norm_sol, trlib_int_t *sub_fail) {
+
+    // local variables
+    #if TRLIB_MEASURE_TIME
+        struct timespec verystart, start, end;
+        TRLIB_TIC(verystart)
+    #endif
+
+    trlib_flt_t *diag_lam = fwork;        // vector that holds diag + lam, could be saved if we would implement iterative refinement ourselve
+    trlib_flt_t *diag_fac = fwork+n;      // vector that holds diagonal of factor of diag + lam
+    trlib_flt_t *offdiag_fac = fwork+2*n; // vector that holds offdiagonal of factor of diag + lam
+    trlib_flt_t *work = fwork+3*n;        // workspace for iterative refinement
+    trlib_flt_t *aux  = fwork+5*n;        // auxiliary vector ds/n
+    trlib_flt_t ferr = 0.0;               // forward  error bound from iterative refinement
+    trlib_flt_t berr = 0.0;               // backward error bound from iterative refinement
+    trlib_int_t inc = 1;                  // vector increment
+    trlib_int_t info_fac;                 // LAPACK return code
+    trlib_int_t nm = n-1;
+    trlib_flt_t lambda_l = 0.0;           // lower bound on lambda
+    trlib_flt_t lambda_u = 1e20;          // upper bound on lambda
+    trlib_int_t jj = 0;                   // local loop variable
+    trlib_flt_t dlam = 0.0;               // step in lambda
+    trlib_flt_t dn = 0.0;                 // derivative of norm
+
+    // get suitable lambda for which factorization exists
+    info_fac = 1;
+    while(info_fac != 0 && jj < 500) {
+        // factorize T + lam0 I
+        TRLIB_DCOPY(&n, diag, &inc, diag_lam, &inc) // diag_lam <-- diag
+        TRLIB_DAXPY(&n, lam, ones, &inc, diag_lam, &inc) // diag_lam <-- lam0 + diag_lam
+        TRLIB_DCOPY(&n, diag_lam, &inc, diag_fac, &inc) // diag_fac <-- diag_lam
+        TRLIB_DCOPY(&nm, offdiag, &inc, offdiag_fac, &inc) // offdiag_fac <-- offdiag
+        TRLIB_DPTTRF(&n, diag_fac, offdiag_fac, &info_fac) // compute factorization
+        if(info_fac == 0) { break; }
+        if(*lam > lambda_u) { break; }
+        lambda_l = *lam;
+        //if (*lam == 0.0) { *lam = 1.0; }
+        *lam = 2.0 * (*lam); jj++;
+    }
+    if (info_fac != 0) { TRLIB_RETURN(TRLIB_TTR_FAIL_FACTOR); } // factorization failed
+    TRLIB_PRINTLN_1("Initial Regularization Factor that allows Cholesky: %e", *lam);
+
+    TRLIB_DCOPY(&n, neglin, &inc, sol, &inc) // sol <-- neglin
+    TRLIB_DPTTRS(&n, &inc, diag_fac, offdiag_fac, sol, &n, &info_fac) // sol <-- (T+lam I)^-1 sol
+    if (info_fac != 0) { TRLIB_PRINTLN_2("Failure on backsolve for h") TRLIB_RETURN(TRLIB_TTR_FAIL_LINSOLVE) }
+    if (refine) { TRLIB_DPTRFS(&n, &inc, diag_lam, offdiag, diag_fac, offdiag_fac, neglin, &n, sol, &n, &ferr, &berr, work, &info_fac) }
+    if (info_fac != 0) { TRLIB_PRINTLN_2("Failure on iterative refinement for h") TRLIB_RETURN(TRLIB_TTR_FAIL_LINSOLVE) }
+
+    TRLIB_DNRM2(*norm_sol, &n, sol, &inc)
+
+    jj = 0;
+    TRLIB_PRINTLN_2("%ld\t Reg %e\t Reg/Norm %e\t lb %e ub %e", jj, *lam, *lam/(*norm_sol), sigma_l, sigma_u);
+
+    // check if accetable
+    if( *norm_sol * sigma_l <= *lam && *lam <= *norm_sol * sigma_u ) {
+        TRLIB_PRINTLN_1("Exit with Regularization Factor %e and Reg/Norm %e", *lam, *lam/(*norm_sol))
+        TRLIB_RETURN(TRLIB_TTR_CONV_INTERIOR); 
+    }
+    else {
+        /* do safeguarded newton iteration on f(lam) = lam/n(lam) with n(lam) = ||s(lam)||
+         * then dn = 1/n <s, ds> with - (H+lam I) ds = s
+         * thus get - f/df = (n*lam - n*n*sigma) / ( lam dn - n) with dn = <s, ds/n> and (H + lam I) ds/n = - s/n
+         * note that f is increasing for lam such that (H+lam I) is spd
+         */
+
+        jj = 0;
+
+        while(jj < 500) {
+
+            // first get the vector ds/n
+            TRLIB_DCOPY(&n, sol, &inc, aux, &inc) // aux <-- sol
+            dn = -1.0/(*norm_sol); // scaling for right hand side
+            TRLIB_DSCAL(&n, &dn, aux, &inc) // aux <-- -sol/||norm_sol||
+            TRLIB_DDOT(dn, &n, sol, &inc, aux, &inc) // dn = <s, ds/n>
+
+            // compute step correction
+            dlam = (*lam*(*norm_sol)-*norm_sol*(*norm_sol)*sigma) / (*lam*dn - *norm_sol);
+
+            // check feasibility of step
+            if (*lam + dlam <= lambda_u && lambda_l <= *lam + dlam) {
+                *lam = *lam + dlam;
+            }
+            else { *lam = .5*( lambda_l + lambda_u); }
+
+            // compute next function value
+            
+            // factorize T + lam0 I
+            TRLIB_DCOPY(&n, diag, &inc, diag_lam, &inc) // diag_lam <-- diag
+            TRLIB_DAXPY(&n, lam, ones, &inc, diag_lam, &inc) // diag_lam <-- lam0 + diag_lam
+            TRLIB_DCOPY(&n, diag_lam, &inc, diag_fac, &inc) // diag_fac <-- diag_lam
+            TRLIB_DCOPY(&nm, offdiag, &inc, offdiag_fac, &inc) // offdiag_fac <-- offdiag
+            TRLIB_DPTTRF(&n, diag_fac, offdiag_fac, &info_fac) // compute factorization
+            if (info_fac != 0) { TRLIB_RETURN(TRLIB_TTR_FAIL_FACTOR); } // factorization failed
+
+            TRLIB_DCOPY(&n, neglin, &inc, sol, &inc) // sol <-- neglin
+            TRLIB_DPTTRS(&n, &inc, diag_fac, offdiag_fac, sol, &n, &info_fac) // sol <-- (T+lam I)^-1 sol
+            if (info_fac != 0) { TRLIB_PRINTLN_2("Failure on backsolve for h") TRLIB_RETURN(TRLIB_TTR_FAIL_LINSOLVE) }
+            if (refine) { TRLIB_DPTRFS(&n, &inc, diag_lam, offdiag, diag_fac, offdiag_fac, neglin, &n, sol, &n, &ferr, &berr, work, &info_fac) }
+            if (info_fac != 0) { TRLIB_PRINTLN_2("Failure on iterative refinement for h") TRLIB_RETURN(TRLIB_TTR_FAIL_LINSOLVE) }
+
+            TRLIB_DNRM2(*norm_sol, &n, sol, &inc)
+
+            jj++;
+            TRLIB_PRINTLN_2("%ld\t Reg %e\t Reg/Norm %e\t lb %e ub %e", jj, *lam, *lam/(*norm_sol), sigma_l, sigma_u);
+
+            // check if accetable
+            if( *norm_sol * sigma_l <= *lam && *lam <= *norm_sol * sigma_u ) {
+                TRLIB_PRINTLN_1("Exit with Regularization Factor %e and Reg/Norm %e", *lam, *lam/(*norm_sol))
+                TRLIB_RETURN(TRLIB_TTR_CONV_INTERIOR); 
+            }
+            else { // contract bounds
+                if(*lam > *norm_sol * sigma_u) { lambda_u = *lam; }
+                if(*lam < *norm_sol * sigma_l) { lambda_l = *lam; }
+            }
+
+        }
+        
+    }
+
+}
+
 
 trlib_int_t trlib_tri_timing_size() {
 #if TRLIB_MEASURE_TIME
@@ -421,6 +550,6 @@ trlib_int_t trlib_tri_timing_size() {
 }
 
 trlib_int_t trlib_tri_factor_memory_size(trlib_int_t n) {
-    return 5*n;
+    return 6*n;
 }
 
