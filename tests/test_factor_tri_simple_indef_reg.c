@@ -23,8 +23,8 @@ START_TEST (test_simple)
     ret = trlib_tri_factor_get_regularization(3, diag, offdiag, grad, &lam, 3.0, 2.9, 3.1, problem->sol, 
             ones, fwork, 1, qp.verbose, qp.unicode, qp.prefix, stdout, qp.timing, &ns, &sf);
 
-    ck_assert_msg(lam/ns <= 3.1, "Expected 2.9 <= lam/ns = %s <= 3.1", lam/ns);
-    ck_assert_msg(2.9 <= lam/ns, "Expected 2.9 <= lam/ns = %s <= 3.1", lam/ns);
+    ck_assert_msg(lam/ns <= 3.1, "Expected 2.9 <= lam/ns = %e <= 3.1", lam/ns);
+    ck_assert_msg(2.9 <= lam/ns, "Expected 2.9 <= lam/ns = %e <= 3.1", lam/ns);
 
     trlib_test_free_qp(&qp); free(ones); free(fwork);
 }
