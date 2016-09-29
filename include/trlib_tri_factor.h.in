@@ -18,7 +18,7 @@
  *
  *  Computes minimizer to
  * 
- *  \f$ \frac 12 \min \langle h, T h \rangle + \langle g, h \rangle \f$
+ *  \f$ \min \frac 12 \langle h, T h \rangle + \langle g, h \rangle \f$
  *  subject to the trust region constraint \f$ \Vert h \Vert \le r \f$,
  *  where \f$ T \in \mathbb R^{n \times n} \f$ is symmetric tridiagonal.
  *
@@ -133,6 +133,106 @@ trlib_int_t trlib_tri_factor_min(
     trlib_int_t refine,
     trlib_int_t verbose, trlib_int_t unicode, char *prefix, FILE *fout,
     trlib_int_t *timing, trlib_flt_t *obj, trlib_int_t *iter_newton, trlib_int_t *sub_fail);
+
+/** @brief Computes minimizer of regularized unconstrained problem
+ *
+ *  Computes minimizer of
+ * 
+ *  \f$ \min \frac 12 \langle h, (T + \lambda I) h \rangle + \langle g, h \rangle \f$,
+ *  where \f$ T \in \mathbb R^{n \times n} \f$ is symmetric tridiagonal and \f$ \lambda \f$ such that \f$ T + \lambda I \f$ is spd.
+ *
+ *  @param[in]     n dimension
+ *  @param[in]     diag pointer to array holding diagonal of \f$ T \f$, length \p n
+ *  @param[in]     offdiag pointer to array holding offdiagonal of \f$ T \f$, length \p n-1
+ *  @param[in]     neglin pointer to array holding \f$ -g \f$, length \p n
+ *  @param[in]     lam regularization parameter \f$ \lambda \f$
+ *  @param[in,out] sol pointer to array holding solution, length \p n
+ *  @param[in]     ones array with every value \c 1.0, length \p n
+ *  @param[in,out] fwork floating point workspace, must be allocated memory on input of size #trlib_tri_factor_memory_size `(n)` and can be discarded on output, memory layout:
+ *                 start                                     | end (excl)                                | description
+ *                 ------------------------------------------|-------------------------------------------|------------
+ *                 \c 0                                      | `n`                                       | holds diagonal of \f$ T + \lambda I \f$
+ *                 `n`                                       | \f$                   2 \, \texttt{n} \f$ | holds diagonal of factorization \f$ T + \lambda I \f$
+ *                 \f$                   2 \, \texttt{n} \f$ | \f$                   3 \, \texttt{n} \f$ | holds offdiagonal of factorization \f$ T + \lambda I \f$
+ *                 \f$                   3 \, \texttt{n} \f$ | \f$                   5 \, \texttt{n} \f$ | workspace for iterative refinement
+ *  @param[in]     refine set to \c 1 if iterative refinement should be used on solving linear systems, otherwise to \c 0
+ *  @param[in]     verbose determines the verbosity level of output that is written to \p fout
+ *  @param[in]     unicode set to \c 1 if \p fout can handle unicode, otherwise to \c 0
+ *  @param[in]     prefix string that is printed before iteration output
+ *  @param[in]     fout output stream
+ *  @param[in,out] timing gives timing details, all values are multiples of nanoseconds, provide zero allocated memory of length #trlib_tri_timing_size()
+ *                 block | description
+ *                 ------|------------
+ *                 0     | total duration
+ *                 1     | timing of linear algebra calls
+ *  @param[out]    norm_sol norm of solution fector
+ *  @param[out]    sub_fail status code of subroutine if failure occured in subroutines called
+ *  @retval        #TRLIB_TTR_CONV_INTERIOR success with interior solution
+ *  @retval        #TRLIB_TTR_FAIL_FACTOR   failure on matrix factorization
+ *  @retval        #TRLIB_TTR_FAIL_LINSOLVE failure on backsolve
+ */
+
+trlib_int_t trlib_tri_factor_regularized_umin(
+    trlib_int_t n, trlib_flt_t *diag, trlib_flt_t *offdiag,
+    trlib_flt_t *neglin, trlib_flt_t lam,
+    trlib_flt_t *sol,
+    trlib_flt_t *ones, trlib_flt_t *fwork,
+    trlib_int_t refine,
+    trlib_int_t verbose, trlib_int_t unicode, char *prefix, FILE *fout,
+    trlib_int_t *timing, trlib_flt_t *norm_sol, trlib_int_t *sub_fail);
+
+/** @brief Computes regularization parameter needed in trace
+ *
+ *  Let \f$ s(\lambda) \f$ be solution of \f$ (T + \lambda I) s(\lambda) + g  = 0 \f$,
+ *  where \f$ T \in \mathbb R^{n \times n} \f$ is symmetric tridiagonal and \f$ \lambda \f$ such that \f$ T + \lambda I \f$ is spd.
+ *
+ *  Then find \f$ \lambda \f$ with \f$ \sigma_{\text l} \le \frac{\lambda}{s(\lambda)} \le \sigma_{\text u} \f$
+ *
+ *  @param[in]     n dimension
+ *  @param[in]     diag pointer to array holding diagonal of \f$ T \f$, length \p n
+ *  @param[in]     offdiag pointer to array holding offdiagonal of \f$ T \f$, length \p n-1
+ *  @param[in]     neglin pointer to array holding \f$ -g \f$, length \p n
+ *  @param[in,out] lam regularization parameter \f$ \lambda \f$, on input initial guess, on exit desired parameter
+ *  @param[in]     sigma value that is used in root finding, e.g. \f$ \frac 12 (\sigma_{\text l} + \sigma_{\text u})\f$
+ *  @param[in]     sigma_l lower bound
+ *  @param[in]     sigma_u upper bound
+ *  @param[in,out] sol pointer to array holding solution, length \p n
+ *  @param[in]     ones array with every value \c 1.0, length \p n
+ *  @param[in,out] fwork floating point workspace, must be allocated memory on input of size #trlib_tri_factor_memory_size `(n)` and can be discarded on output, memory layout:
+ *                 start                                     | end (excl)                                | description
+ *                 ------------------------------------------|-------------------------------------------|------------
+ *                 \c 0                                      | `n`                                       | holds diagonal of \f$ T + \lambda I \f$
+ *                 `n`                                       | \f$                   2 \, \texttt{n} \f$ | holds diagonal of factorization \f$ T + \lambda I \f$
+ *                 \f$                   2 \, \texttt{n} \f$ | \f$                   3 \, \texttt{n} \f$ | holds offdiagonal of factorization \f$ T + \lambda I \f$
+ *                 \f$                   3 \, \texttt{n} \f$ | \f$                   5 \, \texttt{n} \f$ | workspace for iterative refinement
+ *                 \f$                   5 \, \texttt{n} \f$ | \f$                   6 \, \texttt{n} \f$ | auxiliary vector
+ *  @param[in]     refine set to \c 1 if iterative refinement should be used on solving linear systems, otherwise to \c 0
+ *  @param[in]     verbose determines the verbosity level of output that is written to \p fout
+ *  @param[in]     unicode set to \c 1 if \p fout can handle unicode, otherwise to \c 0
+ *  @param[in]     prefix string that is printed before iteration output
+ *  @param[in]     fout output stream
+ *  @param[in,out] timing gives timing details, all values are multiples of nanoseconds, provide zero allocated memory of length #trlib_tri_timing_size()
+ *                 block | description
+ *                 ------|------------
+ *                 0     | total duration
+ *                 1     | timing of linear algebra calls
+ *  @param[out]    norm_sol norm of solution fector
+ *  @param[out]    sub_fail status code of subroutine if failure occured in subroutines called
+ *  @retval        #TRLIB_TTR_CONV_INTERIOR success with interior solution
+ *  @retval        #TRLIB_TTR_FAIL_FACTOR   failure on matrix factorization
+ *  @retval        #TRLIB_TTR_FAIL_LINSOLVE failure on backsolve
+ */
+
+trlib_int_t trlib_tri_factor_get_regularization(
+    trlib_int_t n, trlib_flt_t *diag, trlib_flt_t *offdiag,
+    trlib_flt_t *neglin, trlib_flt_t *lam,
+    trlib_flt_t sigma, trlib_flt_t sigma_l, trlib_flt_t sigma_u,
+    trlib_flt_t *sol,
+    trlib_flt_t *ones, trlib_flt_t *fwork,
+    trlib_int_t refine,
+    trlib_int_t verbose, trlib_int_t unicode, char *prefix, FILE *fout,
+    trlib_int_t *timing, trlib_flt_t *norm_sol, trlib_int_t *sub_fail);
+
 
 /** @brief Gives information on memory that has to be allocated for #trlib_tri_factor_min
  *  

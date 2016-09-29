@@ -25,6 +25,7 @@ if(CHECK_FOUND)
         leftmost_irreducible
         factor_tri_simple_posdef
         factor_tri_simple_indef
+        factor_tri_simple_indef_reg
         factor_tri_reducible
         factor_tri_expanding
         factor_tri_narrow_lam
