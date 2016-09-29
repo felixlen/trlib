@@ -31,7 +31,8 @@ endif(HDF5_FOUND AND SuiteSparse_FOUND)
 
 configure_file("${CMAKE_CURRENT_SOURCE_DIR}/trlib.pyx" ${CMAKE_CURRENT_BINARY_DIR})
 
-foreach(PY_VER "2" "3")
+#foreach(PY_VER "2" "3")
+foreach(PY_VER "2")
     unset(PYTHON_EXECUTABLE CACHE)
     unset(PYTHON_INCLUDE_DIR CACHE)
     unset(PYTHON_LIBRARY CACHE)
