@@ -72,5 +72,3 @@ Option                  | default | Description
 - Python Library that shows how to use the low level reverse communication interface
   and how to make use of it in a standard trust region algorithm: `examples/umin.py`
 - IPython Notebbok with standard trust region algorithm to minimize the Rosenbrock function: `examples/rosenbrock.ipynb`: `cd examples && ipython notebook rosenbrock`
-
-![Nonlinear Equation](http://www.felixl.de/tr_nonlinear.png)
