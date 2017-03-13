@@ -16,6 +16,7 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/CMakeModules/")
 
 add_subdirectory(include)
 add_subdirectory(src)
+add_subdirectory(examples)
 enable_testing()
 add_subdirectory(tests)
 
