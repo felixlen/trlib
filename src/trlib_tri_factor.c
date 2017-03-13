@@ -536,6 +536,7 @@ trlib_int_t trlib_tri_factor_get_regularization(
             }
 
         }
+        TRLIB_PRINTLN_1("Failure: no convergence to determine regularaization factor, last iterate %e", *lam) TRLIB_RETURN(TRLIB_TTR_NEWTON_BREAK)
         
     }
 
