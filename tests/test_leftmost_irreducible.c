@@ -2,21 +2,21 @@
 #include "trlib_leftmost.h"
 
 trlib_flt_t factorization_zero(trlib_int_t n, trlib_flt_t lam, trlib_flt_t *diag, trlib_flt_t *offdiag) {
-    trlib_int_t inc = 1, ifail = 0, jj;
+    trlib_int_t inc = 1, ifail = 0, jj, nm = n-1;
     trlib_flt_t perturb = 0.0, perturbed;
     trlib_flt_t *diag_lam = malloc(n*sizeof(trlib_flt_t));
     trlib_flt_t *ones = malloc(n*sizeof(trlib_flt_t));
     trlib_flt_t *offdiag_lam = malloc((n-1)*sizeof(trlib_flt_t));
     for(trlib_int_t ii = 0; ii < n; ++ii) { ones[ii] = 1.0; }
     perturbed = -lam;
-    dcopy_(&n, diag, &inc, diag_lam, &inc); dcopy_(&n, offdiag, &inc, offdiag_lam, &inc);
+    dcopy_(&n, diag, &inc, diag_lam, &inc); dcopy_(&nm, offdiag, &inc, offdiag_lam, &inc);
     daxpy_(&n, &perturbed, ones, &inc, diag_lam, &inc); dpttrf_(&n, diag_lam, offdiag_lam, &ifail);
     if (ifail != 0) { 
         perturb = -TRLIB_EPS; 
         jj = 0;
         while(ifail != 0 && jj < 500) {
             perturb = 2.0*perturb; perturbed = -lam - perturb; ++jj;
-            dcopy_(&n, diag, &inc, diag_lam, &inc); dcopy_(&n, offdiag, &inc, offdiag_lam, &inc);
+            dcopy_(&n, diag, &inc, diag_lam, &inc); dcopy_(&nm, offdiag, &inc, offdiag_lam, &inc);
             daxpy_(&n, &perturbed, ones, &inc, diag_lam, &inc); dpttrf_(&n, diag_lam, offdiag_lam, &ifail);
         }
     } 
@@ -25,7 +25,7 @@ trlib_flt_t factorization_zero(trlib_int_t n, trlib_flt_t lam, trlib_flt_t *diag
         jj = 0;
         while(ifail != 0 && jj < 500) {
             perturb = 2.0*perturb; perturbed = -lam - perturb; ++jj;
-            dcopy_(&n, diag, &inc, diag_lam, &inc); dcopy_(&n, offdiag, &inc, offdiag_lam, &inc);
+            dcopy_(&n, diag, &inc, diag_lam, &inc); dcopy_(&nm, offdiag, &inc, offdiag_lam, &inc);
             daxpy_(&n, &perturbed, ones, &inc, diag_lam, &inc); dpttrf_(&n, diag_lam, offdiag_lam, &ifail);
         }
     }

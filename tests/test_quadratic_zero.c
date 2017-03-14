@@ -52,12 +52,13 @@ Suite *quadratic_zero_suite(void)
     tc_core = tcase_create("Core");
     tcase_add_test(tc_core, test_well_behaved_seperated);
     tcase_add_test(tc_core, test_well_behaved_tiny_seperation);
+    tcase_add_test(tc_core, test_ill_behaved);
     suite_add_tcase(s, tc_core);
     return s;
 }
 
 int main(void) {
-    int number_failed;
+    int number_failed = 0;
     Suite *s;
     SRunner *sr;
     s = quadratic_zero_suite();

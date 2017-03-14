@@ -53,7 +53,7 @@ START_TEST (test_nontrivial)
            &lam_pert, &pert, &iter_inv);
     dlagtm_("N", &n, &inc, ones, offdiag, diag, offdiag, eig, &n, &zero, leig, &n); // leig <-- T*eig
     for(trlib_int_t ii = 0; ii < n; ++ii){ ck_assert_msg(fabs(lam_init*eig[ii] - leig[ii]) <= 5000.0*TRLIB_EPS, "Residual in eigenvector for component %d: %e", ii, lam_init*eig[ii] - leig[ii]); }
-    free(diag); free(diag_fac); free(offdiag); free(offdiag_fac); free(ones); free(eig); free(timing);
+    free(diag); free(diag_fac); free(offdiag); free(offdiag_fac); free(ones); free(eig); free(leig); free(timing);
 }
 END_TEST
 

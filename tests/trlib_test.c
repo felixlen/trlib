@@ -433,8 +433,7 @@ trlib_int_t trlib_test_check_optimality(struct trlib_test_qp *qp) {
     }
     if(qp->qptype == TRLIB_TEST_TRI_QP) {
         dcopy_(&n, grad, &inc, resv, &inc);
-        qp->kkt_res = dnrm2_(&n, resv, &inc);
-        dcopy_(&n, diag, &inc, diag_lam, &inc); dcopy_(&n, offdiag, &inc, offdiag_lam, &inc);
+        dcopy_(&n, diag, &inc, diag_lam, &inc); dcopy_(&nm1, offdiag, &inc, offdiag_lam, &inc);
         for(trlib_int_t ii = 0; ii < n; ++ii) { diag_lam[ii] += qp->lam; }
         dlagtm_("N", &n, &inc, &one, offdiag, diag_lam, offdiag, sol, &n, &one, resv, &n);
     }

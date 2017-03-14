@@ -12,7 +12,7 @@ START_TEST (test_2d)
     hess[0] = 1.107272566595126e3; hess[1] = 4.701123595505616e2;
     hess[2] = 4.701123595505616e2; hess[3] = -1.222067920715109e-1;
 
-    grad[0] = -4.637816414622023; grad[1] = 0.0; grad[2] = 4.0;  // easy case
+    grad[0] = -4.637816414622023; grad[1] = 0.0;  // easy case
     qp.radius = 1.0;
 
     trlib_test_solve_check_qp(&qp, "2D Simple Coldstart", 1e4*TRLIB_EPS, TRLIB_EPS);
