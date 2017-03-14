@@ -1,6 +1,4 @@
 #include "trlib_test.h"
-#include "trlib_tri_factor.h"
-#include "trlib_krylov.h"
 
 trlib_int_t trlib_test_malloc_qp(trlib_int_t qptype, trlib_int_t qpsolver, trlib_int_t n, trlib_int_t itmax, struct trlib_test_qp *qp) {
     qp->qptype = qptype;

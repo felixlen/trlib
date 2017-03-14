@@ -1,6 +1,5 @@
+#include "trlib.h"
 #include "trlib_private.h"
-#include "trlib_tri_factor.h"
-#include "trlib_krylov.h"
 
 trlib_int_t trlib_krylov_min(
     trlib_int_t init, trlib_flt_t radius, trlib_int_t equality, trlib_int_t itmax, trlib_int_t itmax_lanczos,

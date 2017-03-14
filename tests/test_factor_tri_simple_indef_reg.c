@@ -1,5 +1,5 @@
 #include "trlib_test.h"
-#include "trlib_tri_factor.h"
+#include "trlib/trlib_tri_factor.h"
 
 START_TEST (test_indef_reg)
 {

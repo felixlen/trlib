@@ -1,5 +1,5 @@
 #include "trlib_test.h"
-#include "trlib_leftmost.h"
+#include "trlib/trlib_leftmost.h"
 
 START_TEST (test_diagonal)
 {

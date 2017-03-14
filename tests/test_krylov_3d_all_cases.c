@@ -1,5 +1,5 @@
 #include "trlib_test.h"
-#include "trlib_krylov.h"
+#include "trlib/trlib_krylov.h"
 
 START_TEST (test_3d_easy)
 {

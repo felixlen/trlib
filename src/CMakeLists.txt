@@ -1,16 +1,20 @@
 find_package(BLAS REQUIRED)
 find_package(LAPACK REQUIRED)
 
+configure_file("${CMAKE_CURRENT_SOURCE_DIR}/trlib_private.h.in" trlib_private.h)
+
 add_library(trlib SHARED 
     ${CMAKE_SOURCE_DIR}/src/trlib_krylov.c 
     ${CMAKE_SOURCE_DIR}/src/trlib_tri_factor.c 
     ${CMAKE_SOURCE_DIR}/src/trlib_leftmost.c 
     ${CMAKE_SOURCE_DIR}/src/trlib_eigen_inverse.c 
-    ${CMAKE_SOURCE_DIR}/src/trlib_quadratic_zero.c)
+    ${CMAKE_SOURCE_DIR}/src/trlib_quadratic_zero.c
+    trlib_private.h)
+target_include_directories(trlib PUBLIC ${CMAKE_CURRENT_BINARY_DIR})
 target_include_directories(trlib PUBLIC "${CMAKE_BINARY_DIR}/include")
 target_link_libraries(trlib ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES})
 set_property(TARGET trlib PROPERTY C_STANDARD 11)
-install(TARGETS trlib DESTINATION ${CMAKE_BINARY_DIR}/lib)
+install(TARGETS trlib DESTINATION lib)
 
 find_package(HDF5)
 find_package(SuiteSparse OPTIONAL_COMPONENTS CHOLMOD)

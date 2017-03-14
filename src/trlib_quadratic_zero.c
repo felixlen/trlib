@@ -1,5 +1,5 @@
+#include "trlib.h"
 #include "trlib_private.h"
-#include "trlib_quadratic_zero.h"
 
 trlib_int_t trlib_quadratic_zero(trlib_flt_t c_abs, trlib_flt_t c_lin, trlib_flt_t tol,
         trlib_int_t verbose, trlib_int_t unicode, char *prefix, FILE *fout,

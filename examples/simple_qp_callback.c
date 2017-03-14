@@ -2,7 +2,6 @@
 #include "math.h"
 #include "string.h"
 #include "trlib.h"
-#include "trlib_krylov.h"
 
 // blas
 void daxpy_(trlib_int_t *n, trlib_flt_t *alpha, trlib_flt_t *x, trlib_int_t *incx, trlib_flt_t *y, trlib_int_t *incy);

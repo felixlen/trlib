@@ -1,6 +1,6 @@
 cimport libc.stdio
 
-cdef extern from "trlib_krylov.h":
+cdef extern from "trlib/trlib_krylov.h":
     cdef long _TRLIB_CLR_CONV_BOUND    "TRLIB_CLR_CONV_BOUND"    
     cdef long _TRLIB_CLR_CONV_INTERIOR "TRLIB_CLR_CONV_INTERIOR" 
     cdef long _TRLIB_CLR_APPROX_HARD   "TRLIB_CLR_APPROX_HARD"   
@@ -65,7 +65,7 @@ cdef extern from "trlib_krylov.h":
         double *flt1, double *flt2, double *flt3)
     long trlib_krylov_timing_size()
 
-cdef extern from "trlib_tri_factor.h":
+cdef extern from "trlib/trlib_tri_factor.h":
     long trlib_tri_factor_min(
         long nirblk, long *irblk, double *diag, double *offdiag,
         double *neglin, double radius, 
@@ -79,7 +79,7 @@ cdef extern from "trlib_tri_factor.h":
         long verbose, long unicode, char *prefix, libc.stdio.FILE *fout,
         long *timing, double *obj, long *iter_newton, long *sub_fail)
 
-cdef extern from "trlib_leftmost.h":
+cdef extern from "trlib/trlib_leftmost.h":
     long trlib_leftmost_irreducible(
         long n, double *diag, double *offdiag,
         long warm, double leftmost_minor, long itmax, double tol_abs,

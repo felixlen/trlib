@@ -1,7 +1,12 @@
 #ifndef TRLIB_H
 #define TRLIB_H
 
-#include "trlib_types.h"
 #include <stdio.h>
+#include "trlib/trlib_types.h"
+#include "trlib/trlib_eigen_inverse.h"
+#include "trlib/trlib_krylov.h"
+#include "trlib/trlib_leftmost.h"
+#include "trlib/trlib_quadratic_zero.h"
+#include "trlib/trlib_tri_factor.h"
 
 #endif

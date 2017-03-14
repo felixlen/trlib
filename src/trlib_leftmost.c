@@ -1,6 +1,5 @@
+#include "trlib.h"
 #include "trlib_private.h"
-#include "trlib_quadratic_zero.h"
-#include "trlib_leftmost.h"
 
 trlib_int_t trlib_leftmost(
         trlib_int_t nirblk, trlib_int_t *irblk, trlib_flt_t *diag, trlib_flt_t *offdiag,
