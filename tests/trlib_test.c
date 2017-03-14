@@ -527,7 +527,7 @@ void trlib_test_print_result(struct trlib_test_qp *qp, char *name, trlib_flt_t t
         memcpy(g, grad, n*sizeof(trlib_flt_t));
 
         if(lanczos_tol >= 0) {
-            for(trlib_int_t ii = 0; ii<qp->iter+1; ++ii) { 
+            for(trlib_int_t ii = 0; ii<qp->iter; ++ii) { 
                 gamma = dnrm2_(&n, g, &inc); igamma = 1.0/gamma;
                 memcpy(p, g, n*sizeof(trlib_flt_t)); dscal_(&n, &igamma, p, &inc);
                 if(qp->qptype == TRLIB_TEST_DENSE_QP) { 
