@@ -67,6 +67,18 @@ START_TEST (test_simple)
 
         for(trlib_int_t ll = 0; ll<nirblk+1; ++ll){ fprintf(stderr, "%ld ", irblk2[ll]); } fprintf(stderr, "\n");
 
+        // try to update factorization for warmstart
+        warm_fac0 = 0;
+        if (warm0) {
+            warm_fac0 = diag_fac0[irblk2[blkptr]-2] != 0.0;
+            if (warm_fac0) {
+                offdiag_fac0[irblk2[blkptr]-2] = offdiag[irblk2[blkptr]-2]/diag_fac0[irblk2[blkptr]-2];
+                diag_fac0[irblk2[blkptr]-1] = diag[irblk2[blkptr]-1] + lam0 - offdiag[irblk2[blkptr]-2]*offdiag[irblk2[blkptr]-2]/diag_fac0[irblk2[blkptr]-2];
+                // check if regularized tridiagonal is still positive definite for warmstart
+                warm_fac0 = diag_fac0[irblk2[blkptr]-1] > 0.0;
+            }
+        }
+
         ret = trlib_tri_factor_min(blkptr, irblk2, diag, offdiag, neglin, radius, 100, TRLIB_EPS,
                 pos_def, equality, &warm0, &lam0, &warm, &lam, &warm_leftmost, &ileftmost,
                 leftmost, &warm_fac0, diag_fac0, offdiag_fac0, &warm_fac, diag_fac, offdiag_fac,

@@ -16,9 +16,8 @@ target_link_libraries(trlib ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES})
 set_property(TARGET trlib PROPERTY C_STANDARD 11)
 install(TARGETS trlib DESTINATION lib)
 
-find_package(HDF5)
-find_package(SuiteSparse OPTIONAL_COMPONENTS CHOLMOD)
-
+#find_package(HDF5)
+#find_package(SuiteSparse OPTIONAL_COMPONENTS CHOLMOD)
 #if(HDF5_FOUND AND SuiteSparse_FOUND)
 #    configure_file("${CMAKE_CURRENT_SOURCE_DIR}/trlib_driver.c.in" "${CMAKE_CURRENT_BINARY_DIR}/trlib_driver.c")
 #    if(APPLE)
@@ -35,8 +34,7 @@ find_package(SuiteSparse OPTIONAL_COMPONENTS CHOLMOD)
 
 configure_file("${CMAKE_CURRENT_SOURCE_DIR}/trlib.pyx" ${CMAKE_CURRENT_BINARY_DIR})
 
-#foreach(PY_VER "2" "3")
-foreach(PY_VER "2")
+foreach(PY_VER "2" "3")
     unset(PYTHON_EXECUTABLE CACHE)
     unset(PYTHON_INCLUDE_DIR CACHE)
     unset(PYTHON_LIBRARY CACHE)
