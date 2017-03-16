@@ -226,7 +226,7 @@ trlib_int_t trlib_krylov_min(
                 if (g_dot_g <= zero) { // Krylov iteration breaks down
                     if ( ctl_invariant <= TRLIB_CLC_NO_EXP_INV ) {
                         if ( *interior ) { *action = TRLIB_CLA_TRIVIAL; } else { *action = TRLIB_CLA_RETRANSF; }
-                        *ityp = TRLIB_CLT_CG; returnvalue = TRLIB_CLR_FAIL_HARD; break;
+                        *ityp = TRLIB_CLT_CG; returnvalue = TRLIB_CLR_FAIL_HARD; gamma[*ii] = 0.0; break;
                     }
                     else { 
                         /* decide if a new invariant Krylov subspace should be investigated
