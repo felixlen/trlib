@@ -5,7 +5,6 @@ configure_file("${CMAKE_CURRENT_SOURCE_DIR}/trlib_tri_factor.h.in"     "${CMAKE_
 configure_file("${CMAKE_CURRENT_SOURCE_DIR}/trlib_leftmost.h.in"       "${CMAKE_CURRENT_BINARY_DIR}/trlib/trlib_leftmost.h")
 configure_file("${CMAKE_CURRENT_SOURCE_DIR}/trlib_quadratic_zero.h.in" "${CMAKE_CURRENT_BINARY_DIR}/trlib/trlib_quadratic_zero.h")
 configure_file("${CMAKE_CURRENT_SOURCE_DIR}/trlib_eigen_inverse.h.in"  "${CMAKE_CURRENT_BINARY_DIR}/trlib/trlib_eigen_inverse.h")
-configure_file("${CMAKE_CURRENT_SOURCE_DIR}/ctrlib.pxd"                "${CMAKE_BINARY_DIR}/src/ctrlib.pxd")
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 install ( FILES "${CMAKE_CURRENT_BINARY_DIR}/trlib.h" DESTINATION include )
 install ( FILES "${CMAKE_CURRENT_BINARY_DIR}/trlib/trlib_types.h"
