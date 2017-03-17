@@ -3,7 +3,7 @@ import numpy as np
 import trlib
 import ctypes
 
-def standard_tr_unconstrained(obj, grad, hessvec, x, qpsolver,
+def standard_tr_unconstrained(obj, grad, hessvec, x, qpsolver=trlib.trlib_solve,
         tol=1e-5, eta1=1e-2, eta2=.95, gamma1=.5, gamma2=2., itmax=-1):
     """
     Standard Trust Region Algorithm for Unconstrained Optimization
@@ -53,7 +53,7 @@ def standard_tr_unconstrained(obj, grad, hessvec, x, qpsolver,
         def hp(vec):
             niter[0] += 1
             return hessvec(x, vec)
-        sol, data = qpsolver(g, hp, radius, data=data, reentry=reentry)
+        sol, data = qpsolver(hp, g, radius, data=data, reentry=reentry)
         totalit += niter[0]
         accept = False
         rho = (obj(x+sol)-obj(x))/np.dot(sol, .5*hessvec(x, sol)+g)
@@ -69,86 +69,3 @@ def standard_tr_unconstrained(obj, grad, hessvec, x, qpsolver,
         reentry = not accept
         ii += 1
     return x, totalit
-
-def qpsolver_low_level(lin, hmv, radius, invM = lambda x: x, data=None, reentry=False, verbose=0):
-    itmax = 10*lin.shape[0]
-    iwork_size, fwork_size, h_pointer = trlib.krylov_memory_size(itmax)
-    if data is None:
-        data = {}
-    if not reentry:
-        init = 1
-        if not 'fwork' in data:
-            data['fwork'] = np.empty([fwork_size])
-        trlib.krylov_prepare_memory(itmax, data['fwork'])
-        if not 'iwork' in data:
-            data['iwork'] = np.empty([iwork_size], dtype=np.int)
-        if not 's' in data:
-            data['s'] = np.empty(lin.shape)
-        if not 'g' in data:
-            data['g'] = np.empty(lin.shape)
-        if not 'v' in data:
-            data['v'] = np.empty(lin.shape)
-        if not 'gm' in data:
-            data['gm'] = np.empty(lin.shape)
-        if not 'p' in data:
-            data['p'] = np.empty(lin.shape)
-        if not 'Hp' in data:
-            data['Hp'] = np.empty(lin.shape)
-        if not 'Q' in data:
-            data['Q'] = np.empty([itmax+1, lin.shape[0]])
-    else:
-        init = 2
-
-    v_dot_g = 0.0; g_dot_g = 0.0; p_dot_Hp = 0.0
-    
-    while True:
-        ret, action, iter, ityp, flt1, flt2, flt3 = trlib.krylov_min(
-            init, radius, g_dot_g, v_dot_g, p_dot_Hp, data['iwork'], data['fwork'],
-            itmax=itmax, verbose=verbose)
-        init = 0
-        if action == 1: # CLA_INIT
-            data['s'][:] = 0.0
-            data['gm'][:] = 0.0
-            data['g'][:] = lin
-            data['v'][:] = invM(data['g'])
-            g_dot_g = np.dot(data['g'], data['g'])
-            v_dot_g = np.dot(data['v'], data['g'])
-            data['p'][:] = -data['v']
-            data['Hp'][:] = hmv(data['p'])
-            p_dot_Hp = np.dot(data['p'], data['Hp'])
-            data['Q'][0,:] = data['v']/np.sqrt(v_dot_g)
-        if action == 2: # CLA_RETRANSF
-            data['s'][:] = np.dot(data['fwork'][h_pointer:h_pointer+iter+1], data['Q'][:iter+1,:])
-        if action == 3: # CLA_UPDATE_STATIO
-            if ityp == 1: # CLT_CG
-                data['s'] += flt1 * data['p']
-        if action == 4: # CLA_UPDATE_GRAD
-            if ityp == 1: # CLT_CG
-                data['Q'][iter,:] = flt2*data['v']
-                data['gm'][:] = data['g']
-                data['g'] += flt1*data['Hp']
-            if ityp == 2: # CLT_L
-                data['s'][:] = data['Hp'] + flt1*data['g'] + flt2*data['gm']
-                data['gm'][:] = flt3*data['g']
-                data['g'][:] = data['s']
-            data['v'][:] = invM(data['g'])
-            g_dot_g = np.dot(data['g'], data['g'])
-            v_dot_g = np.dot(data['v'], data['g'])
-        if action == 5: # CLA_UPDATE_DIR
-            data['p'][:] = flt1 * data['v'] + flt2 * data['p']
-            data['Hp'][:] = hmv(data['p'])
-            p_dot_Hp = np.dot(data['p'], data['Hp'])
-            if ityp == 2: # CLT_L
-                data['Q'][iter,:] = data['p']
-        if action == 6: # CLA_NEW_KRYLOV
-            print("Warning! CLA_NEW_KRYLOV requested. This has not yet been implemented!")
-            break # FIXME: actually implement this
-        if action == 7: # CLA_CONV_HARD
-            print("Warning! CLA_CONV_HARD requested. This has not yet been implemented!")
-            break # FIXME: actually implement this
-        if ret < 10:
-            break
-    #if ret < 0:
-    #    print("Warning, status: %d" % ret, data['iwork'][7], data['iwork'][8])
-    #    pass
-    return data['s'], data

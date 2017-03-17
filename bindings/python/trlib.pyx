@@ -201,3 +201,90 @@ def tri_min(long [::1] irblk, double [::1] diag, double [::1] offdiag,
 
     return ret, obj, sol, True if iwarm0==1 else False, lam0, True if iwarm==1 else False, lam, \
         True if iwarm_leftmost==1 else False, ileftmost, leftmost
+
+def trlib_solve(hess, grad, radius, invM = lambda x: x, data=None, reentry=False, verbose=0):
+    if hasattr(hess, 'dot'):
+        hmv = lambda x: hess.dot(x)
+    else:
+        hmv = hess
+    itmax = 2*grad.shape[0]
+    iwork_size, fwork_size, h_pointer = krylov_memory_size(itmax)
+    if data is None:
+        data = {}
+    if not reentry:
+        init = 1
+        if not 'fwork' in data:
+            data['fwork'] = np.empty([fwork_size])
+        krylov_prepare_memory(itmax, data['fwork'])
+        if not 'iwork' in data:
+            data['iwork'] = np.empty([iwork_size], dtype=np.int)
+        if not 's' in data:
+            data['s'] = np.empty(grad.shape)
+        if not 'g' in data:
+            data['g'] = np.empty(grad.shape)
+        if not 'v' in data:
+            data['v'] = np.empty(grad.shape)
+        if not 'gm' in data:
+            data['gm'] = np.empty(grad.shape)
+        if not 'p' in data:
+            data['p'] = np.empty(grad.shape)
+        if not 'Hp' in data:
+            data['Hp'] = np.empty(grad.shape)
+        if not 'Q' in data:
+            data['Q'] = np.empty([itmax+1, grad.shape[0]])
+    else:
+        init = 2
+
+    v_dot_g = 0.0; g_dot_g = 0.0; p_dot_Hp = 0.0
+    
+    while True:
+        ret, action, iter, ityp, flt1, flt2, flt3 = krylov_min(
+            init, radius, g_dot_g, v_dot_g, p_dot_Hp, data['iwork'], data['fwork'],
+            itmax=itmax, verbose=verbose)
+        init = 0
+        if action == 1: # CLA_INIT
+            data['s'][:] = 0.0
+            data['gm'][:] = 0.0
+            data['g'][:] = grad
+            data['v'][:] = invM(data['g'])
+            g_dot_g = np.dot(data['g'], data['g'])
+            v_dot_g = np.dot(data['v'], data['g'])
+            data['p'][:] = -data['v']
+            data['Hp'][:] = hmv(data['p'])
+            p_dot_Hp = np.dot(data['p'], data['Hp'])
+            data['Q'][0,:] = data['v']/np.sqrt(v_dot_g)
+        if action == 2: # CLA_RETRANSF
+            data['s'][:] = np.dot(data['fwork'][h_pointer:h_pointer+iter+1], data['Q'][:iter+1,:])
+        if action == 3: # CLA_UPDATE_STATIO
+            if ityp == 1: # CLT_CG
+                data['s'] += flt1 * data['p']
+        if action == 4: # CLA_UPDATE_GRAD
+            if ityp == 1: # CLT_CG
+                data['Q'][iter,:] = flt2*data['v']
+                data['gm'][:] = data['g']
+                data['g'] += flt1*data['Hp']
+            if ityp == 2: # CLT_L
+                data['s'][:] = data['Hp'] + flt1*data['g'] + flt2*data['gm']
+                data['gm'][:] = flt3*data['g']
+                data['g'][:] = data['s']
+            data['v'][:] = invM(data['g'])
+            g_dot_g = np.dot(data['g'], data['g'])
+            v_dot_g = np.dot(data['v'], data['g'])
+        if action == 5: # CLA_UPDATE_DIR
+            data['p'][:] = flt1 * data['v'] + flt2 * data['p']
+            data['Hp'][:] = hmv(data['p'])
+            p_dot_Hp = np.dot(data['p'], data['Hp'])
+            if ityp == 2: # CLT_L
+                data['Q'][iter,:] = data['p']
+        if action == 6: # CLA_NEW_KRYLOV
+            print("Warning! CLA_NEW_KRYLOV requested. This has not yet been implemented!")
+            break # FIXME: actually implement this
+        if action == 7: # CLA_CONV_HARD
+            print("Warning! CLA_CONV_HARD requested. This has not yet been implemented!")
+            break # FIXME: actually implement this
+        if ret < 10:
+            break
+    if ret < 0:
+        print("Warning, status: %d" % ret, data['iwork'][7], data['iwork'][8])
+        pass
+    return data['s'], data
