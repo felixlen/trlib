@@ -7,7 +7,7 @@ const char *trlib_fields [] = {
     "tol_rel_i", "tol_abs_i",
     "tol_rel_b", "tol_abs_b", "zero",
     "ctl_invariant", "g_dot_g", "v_dot_g", "p_dot_Hp",
-    "iwork", "fwork", "refine",
+    "iwork", "fwork", "h_pointer", "refine",
     "verbose", "action", "iter", "ityp", "flt", "krylov_min_retval"
 };
 
@@ -33,7 +33,7 @@ void call_krylov_min (mxArray *TR)
     trlib_flt_t *zero = mxGetData (mxGetField (TR, 0, "zero"));
     trlib_int_t *ctl_invariant = mxGetData (mxGetField (TR, 0, "ctl_invariant"));
     trlib_flt_t *g_dot_g = mxGetData (mxGetField (TR, 0, "g_dot_g"));
-    trlib_flt_t *g_dot_v = mxGetData (mxGetField (TR, 0, "g_dot_v"));
+    trlib_flt_t *v_dot_g = mxGetData (mxGetField (TR, 0, "v_dot_g"));
     trlib_flt_t *p_dot_Hp = mxGetData (mxGetField (TR, 0, "p_dot_Hp"));
     trlib_int_t *iwork = mxGetData (mxGetField (TR, 0, "iwork"));
     trlib_flt_t *fwork = mxGetData (mxGetField (TR, 0, "fwork"));
@@ -47,9 +47,10 @@ void call_krylov_min (mxArray *TR)
 
     *krylov_min_retval = trlib_krylov_min (*init, *radius, *equality, *itmax,
             *itmax_lanczos, *tol_rel_i, *tol_rel_b, *tol_abs_i, *tol_abs_b,
-            *zero, *ctl_invariant, *g_dot_g, *g_dot_v, *p_dot_Hp, iwork, fwork,
-            *refine, *verbose, 0, "mex_trlib", stdout, NULL, action, iter, ityp,
+            *zero, *ctl_invariant, *g_dot_g, *v_dot_g, *p_dot_Hp, iwork, fwork,
+            *refine, *verbose, 0, "mex_trlib: ", stdout, NULL, action, iter, ityp,
             flt, flt+1, flt+2);
+    *init = 0;
 }
 
 /* The gateway function */
@@ -59,20 +60,25 @@ void mexFunction (int nlhs, mxArray *plhs [], int nrhs, const mxArray *prhs [])
     char command [2];
     mwSize dims [2];
 
+    if (nlhs != 1)
+        mexErrMsgTxt ("mex_trlib requires exactly one output");
     if (nrhs < 1)
         mexErrMsgTxt ("mex_trlib requires a command string as its first argument");
 
     mxGetString (prhs [0], command, 2);
     command [1] = 0;
     if (strcmp (command, "s") == 0) {
-        // solve
+        /* solve */
+        if (nrhs != 2)
+            mexErrMsgTxt ("mex_trlib (""s"", TR) needs exactly two arguments");
+
+        plhs [0] = (mxArray *) prhs [1];
+        call_krylov_min (plhs [0]);
     }
     else if (strcmp (command, "i") == 0) {
-        // initialize
+        /* initialize */
         if (nrhs != 2)
             mexErrMsgTxt ("mex_trlib (""i"", itmax) needs exactly two arguments");
-        if (nlhs != 1)
-            mexErrMsgTxt ("mex_trlib (""i"", itmax) needs exactly two outputs");
         if (!mxIsClass (prhs [1], "int64"))
             mexErrMsgTxt ("second argument must be int64");
 
@@ -102,18 +108,21 @@ void mexFunction (int nlhs, mxArray *plhs [], int nrhs, const mxArray *prhs [])
         mxSetField (plhs [0], 0, "tol_rel_b", mxCreateDoubleScalar (1e-5));
         mxSetField (plhs [0], 0, "tol_abs_i", mxCreateDoubleScalar (0.0));
         mxSetField (plhs [0], 0, "tol_abs_b", mxCreateDoubleScalar (0.0));
-        mxSetField (plhs [0], 0, "zero", mxCreateDoubleScalar (0.0));
+        mxSetField (plhs [0], 0, "zero", mxCreateDoubleScalar (1e-30));
         mxSetField (plhs [0], 0, "ctl_invariant", mxCreateInt64Scalar (0));
+        mxSetField (plhs [0], 0, "g_dot_g", mxCreateDoubleScalar (0.0));
+        mxSetField (plhs [0], 0, "v_dot_g", mxCreateDoubleScalar (0.0));
+        mxSetField (plhs [0], 0, "p_dot_Hp", mxCreateDoubleScalar (0.0));
         mxSetField (plhs [0], 0, "iwork", iwork);
         mxSetField (plhs [0], 0, "fwork", fwork);
+        mxSetField (plhs [0], 0, "h_pointer", mxCreateInt64Scalar (h_pointer+1));
         mxSetField (plhs [0], 0, "refine", mxCreateInt64Scalar (1));
+        mxSetField (plhs [0], 0, "verbose", mxCreateInt64Scalar (0));
         mxSetField (plhs [0], 0, "action", mxCreateInt64Scalar (0));
         mxSetField (plhs [0], 0, "iter", mxCreateInt64Scalar (0));
         mxSetField (plhs [0], 0, "ityp", mxCreateInt64Scalar (0));
         mxSetField (plhs [0], 0, "flt", mxCreateDoubleMatrix (3, 1, mxREAL));
         mxSetField (plhs [0], 0, "krylov_min_retval", mxCreateInt64Scalar (0));
-
-        //call_krylov_min (plhs [0]);
     }
     else
         mexErrMsgTxt ("Unknown trlib command");

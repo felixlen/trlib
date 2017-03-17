@@ -1,2 +1,2 @@
-mex('mex_trlib.c', '-g', '-I/opt/local/include', '-L/opt/local/lib', '-ltrlib')
+mex('mex_trlib.c', '-g', '-I/usr/local/include', '-L/usr/local/lib', '-ltrlib')
 
