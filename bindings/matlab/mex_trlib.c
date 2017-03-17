@@ -1,6 +1,7 @@
 #include "mex.h"
 #include "trlib.h"
 #include <assert.h>
+#include <string.h>
 
 const char *trlib_fields [] = {
     "init", "radius", "equality", "itmax", "itmax_lanczos",

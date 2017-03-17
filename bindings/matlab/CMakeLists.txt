@@ -1,0 +1,5 @@
+find_package(Matlab)
+if(Matlab_FOUND)
+    include_directories("${CMAKE_BINARY_DIR}/include")
+    matlab_add_mex(NAME mex_trlib SRC mex_trlib.c LINK_TO trlib)
+endif(Matlab_FOUND)
