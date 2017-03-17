@@ -18,13 +18,13 @@ n = size(grad, 1);
 
 if nargin < 3 || isempty(M)
     prob.solve_M = @(v) v;
-elseif ishandle(M)
+elseif isa(M, 'function_handle')
     prob.solve_M = M;
 else
     prob.solve_M = @(v) M \ v;
 end
 
-if ishandle(Hess)
+if isa(Hess, 'function_handle')
     prob.apply_H = Hess;
 else
     prob.apply_H = @(v) Hess * v;
