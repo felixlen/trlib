@@ -1,4 +1,5 @@
 import numpy as np
+import scipy.sparse.linalg
 cimport ctrlib
 cimport libc.stdio
 cimport numpy as np
@@ -202,7 +203,7 @@ def tri_min(long [::1] irblk, double [::1] diag, double [::1] offdiag,
     return ret, obj, sol, True if iwarm0==1 else False, lam0, True if iwarm==1 else False, lam, \
         True if iwarm_leftmost==1 else False, ileftmost, leftmost
 
-def trlib_solve(hess, grad, radius, invM = lambda x: x, data=None, reentry=False, verbose=0):
+def trlib_solve(hess, grad, radius, invM = lambda x: x, data=None, reentry=False, verbose=0, ctl_invariant=0):
     if hasattr(hess, 'dot'):
         hmv = lambda x: hess.dot(x)
     else:
@@ -240,7 +241,7 @@ def trlib_solve(hess, grad, radius, invM = lambda x: x, data=None, reentry=False
     while True:
         ret, action, iter, ityp, flt1, flt2, flt3 = krylov_min(
             init, radius, g_dot_g, v_dot_g, p_dot_Hp, data['iwork'], data['fwork'],
-            itmax=itmax, verbose=verbose)
+            ctl_invariant=ctl_invariant, itmax=itmax, verbose=verbose)
         init = 0
         if action == 1: # CLA_INIT
             data['s'][:] = 0.0
@@ -277,14 +278,28 @@ def trlib_solve(hess, grad, radius, invM = lambda x: x, data=None, reentry=False
             if ityp == 2: # CLT_L
                 data['Q'][iter,:] = data['p']
         if action == 6: # CLA_NEW_KRYLOV
-            print("Warning! CLA_NEW_KRYLOV requested. This has not yet been implemented!")
-            break # FIXME: actually implement this
+            # FIXME: adapt for M != I
+            QQ, RR = np.linalg.qr(data['Q'][:iter,:].transpose(), 'complete')
+            data['g'][:] = QQ[:,iter]
+            data['gm'][:] = 0.0
+            data['v'][:] = invM(data['g'])
+            g_dot_g = np.dot(data['g'], data['g'])
+            v_dot_g = np.dot(data['v'], data['g'])
+            data['p'][:] = data['v']/np.sqrt(v_dot_g)
+            data['Hp'][:] = hmv(data['p'])
+            p_dot_Hp = np.dot(data['p'], data['Hp'])
+            data['Q'][iter,:] = data['p']
         if action == 7: # CLA_CONV_HARD
-            print("Warning! CLA_CONV_HARD requested. This has not yet been implemented!")
-            break # FIXME: actually implement this
+            # FIXME: adapt for M != I
+            Ms = data['s']
+            Hs = hmv(data['s'])
+            g_dot_g = np.dot(data['g'], data['g'])
+            v_dot_g = np.dot(Hs+grad+flt1*Ms, invM(Hs+grad)+flt1*data['s'])
         if ret < 10:
             break
     if ret < 0:
         print("Warning, status: %d" % ret, data['iwork'][7], data['iwork'][8])
         pass
+    data['ret'] = ret
+    data['iter'] = iter
     return data['s'], data

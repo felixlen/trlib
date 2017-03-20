@@ -124,6 +124,8 @@ trlib_int_t trlib_krylov_min(
                 *iter_tri = 0;  // set newton iter from #trlib_tri_factor_min to 0 just to be on the safe side
                 *iter_last_head = 0;  // indicate that iteration headline should be printed in first iteration
                 *type_last_head = 0;  // just a safety initialization for last iteration headline type
+                memset(gamma, 0, itmax*sizeof(trlib_flt_t)); // initialize gamma to zero for safety reasons upon hotstart
+
                 // ask the user to initialize the vectors he manages, set internal state to resume with vector initialization
                 *ityp = TRLIB_CLT_CG; *status = TRLIB_CLS_VEC_INIT; *action = TRLIB_CLA_INIT;
                 break;
