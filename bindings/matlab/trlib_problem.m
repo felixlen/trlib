@@ -18,10 +18,13 @@ n = size(grad, 1);
 
 if nargin < 3 || isempty(M)
     prob.solve_M = @(v) v;
+    prob.apply_M = @(v) v;
 elseif isa(M, 'function_handle')
     prob.solve_M = M;
+    prob.apply_M = @(v) cgs(M,v);
 else
     prob.solve_M = @(v) M \ v;
+    prob.apply_M = @(v) v;
 end
 
 if isa(Hess, 'function_handle')
@@ -32,6 +35,7 @@ end
 
 prob.s = zeros(n, 1);
 prob.g = grad;
+prob.grad = grad;
 prob.gm = zeros(n, 1);
 prob.v = zeros(n, 1);
 prob.p = zeros(n, 1);

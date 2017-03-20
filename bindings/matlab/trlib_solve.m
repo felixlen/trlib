@@ -60,6 +60,7 @@ while true
             prob.gm = TR.flt(3) * prob.g;
             prob.g = prob.s;
             prob.v = prob.solve_M(prob.g);
+            TR.g_dot_g = prob.g' * prob.g;
             TR.v_dot_g = prob.v' * prob.g;
         end
     case 5 % TRLIB_CLA_UPDATE_DIR
@@ -81,7 +82,8 @@ while true
     case 6 % TRLIB_CLA_NEW_KRYLOV
         error('Invariant Krylov space detected. Not implemented yet.')
     case 7 % TRLIB_CLA_CONV_HARD
-        error('Invariant Krylov space detected (hard case). Not implemented yet.')
+        Hsg = prob.apply_H(prob.s) + prob.grad;
+        TR.v_dot_g = (Hsg+TR.flt(1)*prob.apply_M(prob.s))' * (prob.solve_M(Hsg) + TR.flt(1)*prob.s);
     otherwise
         error('Internal error')
     end

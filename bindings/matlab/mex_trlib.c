@@ -47,7 +47,7 @@ void call_krylov_min (mxArray *TR)
     trlib_int_t *krylov_min_retval = mxGetData (mxGetField (TR, 0, "krylov_min_retval"));
 
     *krylov_min_retval = trlib_krylov_min (*init, *radius, *equality, *itmax,
-            *itmax_lanczos, *tol_rel_i, *tol_rel_b, *tol_abs_i, *tol_abs_b,
+            *itmax_lanczos, *tol_rel_i, *tol_abs_i, *tol_rel_b, *tol_abs_b,
             *zero, *ctl_invariant, *g_dot_g, *v_dot_g, *p_dot_Hp, iwork, fwork,
             *refine, *verbose, 0, "mex_trlib: ", stdout, NULL, action, iter, ityp,
             flt, flt+1, flt+2);
@@ -105,11 +105,11 @@ void mexFunction (int nlhs, mxArray *plhs [], int nrhs, const mxArray *prhs [])
         mxSetField (plhs [0], 0, "equality", mxCreateInt64Scalar (0));
         mxSetField (plhs [0], 0, "itmax", mxCreateInt64Scalar (*itmax));
         mxSetField (plhs [0], 0, "itmax_lanczos", mxCreateInt64Scalar (100));
-        mxSetField (plhs [0], 0, "tol_rel_i", mxCreateDoubleScalar (1e-8));
-        mxSetField (plhs [0], 0, "tol_rel_b", mxCreateDoubleScalar (1e-5));
+        mxSetField (plhs [0], 0, "tol_rel_i", mxCreateDoubleScalar (1.4901e-8));
+        mxSetField (plhs [0], 0, "tol_rel_b", mxCreateDoubleScalar (2.0134e-5));
         mxSetField (plhs [0], 0, "tol_abs_i", mxCreateDoubleScalar (0.0));
         mxSetField (plhs [0], 0, "tol_abs_b", mxCreateDoubleScalar (0.0));
-        mxSetField (plhs [0], 0, "zero", mxCreateDoubleScalar (1e-30));
+        mxSetField (plhs [0], 0, "zero", mxCreateDoubleScalar (2.22e-16));
         mxSetField (plhs [0], 0, "ctl_invariant", mxCreateInt64Scalar (0));
         mxSetField (plhs [0], 0, "g_dot_g", mxCreateDoubleScalar (0.0));
         mxSetField (plhs [0], 0, "v_dot_g", mxCreateDoubleScalar (0.0));
