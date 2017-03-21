@@ -63,8 +63,13 @@ trlib_int_t trlib_tri_factor_min(
     // if only blocks changed that differ from the first then there is nothing to do
     if (nirblk > 1 && *warm0) {
         TRLIB_DNRM2(norm_sol0, &n0, sol0, &inc)
-        TRLIB_PRINTLN_1("Solution provided via warmstart, \u03bb\u2080 = %e, \u2016h\u2080\u2016 = %e", *lam0, norm_sol0)
-        if (norm_sol0-radius < 0.0) { TRLIB_PRINTLN_1("  violates \u2016h\u2080\u2016 - radius \u2265 0, but is %e, switch to coldstart", norm_sol0-radius) *warm0 = 0; }
+        if (unicode) { TRLIB_PRINTLN_1("Solution provided via warmstart, \u03bb\u2080 = %e, \u2016h\u2080\u2016 = %e", *lam0, norm_sol0) }
+        else { TRLIB_PRINTLN_1("Solution provided via warmstart, lam0 = %e, ||h0|| = %e", *lam0, norm_sol0) }
+        if (norm_sol0-radius < 0.0) { 
+            if (unicode) { TRLIB_PRINTLN_1("  violates \u2016h\u2080\u2016 - radius \u2265 0, but is %e, switch to coldstart", norm_sol0-radius) }
+            else { TRLIB_PRINTLN_1("  violates ||h0|| - radius >= 0, but is %e, switch to coldstart", norm_sol0-radius) }
+            *warm0 = 0; 
+        }
         else { newton = 1; }
     }
     if (nirblk == 1 || !*warm0) {
@@ -87,14 +92,19 @@ trlib_int_t trlib_tri_factor_min(
                 // solve for h0(lam0) and compute norm
                 TRLIB_DCOPY(&n0, neglin, &inc, sol0, &inc) // sol0 <-- neglin
                 TRLIB_DPTTRS(&n0, &inc, diag_fac0, offdiag_fac0, sol0, &n0, &info_fac) // sol <-- (T+lam0 I)^-1 sol
-                if(info_fac!=0) { TRLIB_PRINTLN_2("Failure on computing h\u2080 upon initialization") TRLIB_RETURN(TRLIB_TTR_FAIL_LINSOLVE) }
+                if(info_fac!=0) { 
+                    if (unicode) { TRLIB_PRINTLN_2("Failure on computing h\u2080 upon initialization") }
+                    else { TRLIB_PRINTLN_2("Failure on computing h0 upon initialization") }
+                    TRLIB_RETURN(TRLIB_TTR_FAIL_LINSOLVE)
+                }
                 TRLIB_DNRM2(norm_sol0, &n0, sol0, &inc)
                 if (norm_sol0 >= radius) { *warm0 = 1; newton = 1; } else { *warm0 = 0; }
             }
         }
         if(!*warm0) {
             *lam0 = 0.0;
-            TRLIB_PRINTLN_1("Coldstart. Seeking suitable initial \u03bb\u2080, starting with 0")
+            if (unicode) { TRLIB_PRINTLN_1("Coldstart. Seeking suitable initial \u03bb\u2080, starting with 0") }
+            else { TRLIB_PRINTLN_1("Coldstart. Seeking suitable initial lam0, starting with 0") }
             TRLIB_DCOPY(&n0, diag, &inc, diag_fac0, &inc) // diag_fac0 <-- diag0
             TRLIB_DCOPY(&nm0, offdiag, &inc, offdiag_fac0, &inc) // offdiag_fac0 <-- offdiag0
             TRLIB_DCOPY(&n0, neglin, &inc, sol0, &inc) // sol0 <-- neglin0
@@ -108,7 +118,8 @@ trlib_int_t trlib_tri_factor_min(
                 if (norm_sol0<radius && equality) { info_fac = 1; } // in equality case we have to find suitable lam
             }
             if (info_fac != 0) { 
-                TRLIB_PRINTLN_1(" \u03bb\u2080 = 0 unsuitable \u2265 get leftmost ev of first block!")
+                if (unicode) { TRLIB_PRINTLN_1(" \u03bb\u2080 = 0 unsuitable \u2265 get leftmost ev of first block!") }
+                else { TRLIB_PRINTLN_1(" lam0 = 0 unsuitable ==> get leftmost ev of first block!") }
                 *sub_fail = trlib_leftmost_irreducible(irblk[1], diag, offdiag, *warm_leftmost, *leftmost, 1000, TRLIB_EPS_POW_75, verbose-2, unicode, " LM ", fout, leftmost_timing, leftmost, &jj); // ferr can safely be overwritten by computed leftmost for the moment as can jj with the number of rp iterations
                 // if (*sub_fail != 0) { TRLIB_RETURN(TRLIB_TTR_FAIL_LM) } failure of leftmost: may lead to inefficiency, since what we are doing may be slow...
                 // T - leftmost*I is singular, so do bisection to catch factorization and find suitable initial lambda
@@ -117,10 +128,12 @@ trlib_int_t trlib_tri_factor_min(
                 jj = 0; // counter on number of tries
                 lam_pert = 0.0;
                 TRLIB_PRINTLN_1(" ")
-                TRLIB_PRINTLN_1(" perturb \u03bb\u2080 by safeguarded bisection to find suitable initial value")
+                if (unicode) { TRLIB_PRINTLN_1(" perturb \u03bb\u2080 by safeguarded bisection to find suitable initial value") }
+                else { TRLIB_PRINTLN_1(" perturb lam0 by safeguarded bisection to find suitable initial value") }
                 while( jj < 50 ) {
                     if( jj % 20 == 0 ) {
-                        TRLIB_PRINTLN_2(" %2s%14s%14s%14s%3s%14s", "it", "low     ", "pert    ", "up      ", "pd", "  \u2016h\u2080\u2016 - radius")
+                        if (unicode) { TRLIB_PRINTLN_2(" %2s%14s%14s%14s%3s%14s", "it", "low     ", "pert    ", "up      ", "pd", "  \u2016h\u2080\u2016 - radius") }
+                        else { TRLIB_PRINTLN_2(" %2s%14s%14s%14s%3s%14s", "it", "low     ", "pert    ", "up      ", "pd", "  ||h0|| - radius") }
                     }
                     *lam0 = -(*leftmost) + lam_pert;
                     // factorize T + lam I
@@ -169,7 +182,11 @@ trlib_int_t trlib_tri_factor_min(
                     TRLIB_DPTTRF(&n0, diag_fac0, offdiag_fac0, &info_fac) // compute factorization
                     if(info_fac != 0) { TRLIB_RETURN(TRLIB_TTR_FAIL_FACTOR) }
                     TRLIB_DPTTRS(&n0, &inc, diag_fac0, offdiag_fac0, sol0, &n0, &info_fac) // sol0 <-- T0^-1 sol0
-                    if (info_fac != 0) { TRLIB_PRINTLN_2("Failure on computing h\u2080 upon after factorization was ensured") TRLIB_RETURN(TRLIB_TTR_FAIL_LINSOLVE) }
+                    if (info_fac != 0) { 
+                        if (unicode) { TRLIB_PRINTLN_2("Failure on computing h\u2080 upon after factorization was ensured") }
+                        else { TRLIB_PRINTLN_2("Failure on computing h\u2080 upon after factorization was ensured") } 
+                        TRLIB_RETURN(TRLIB_TTR_FAIL_LINSOLVE)
+                    }
                     TRLIB_DNRM2(norm_sol0, &n0, sol0, &inc)
                 }
             }
@@ -178,7 +195,8 @@ trlib_int_t trlib_tri_factor_min(
     if (norm_sol0 >= radius) { // perform newton iteration if possible
         /* now a suitable pair lam0, h0 has been found.
          * perform a newton iteration on 0 = 1/||h0(lam0)|| - 1/radius */
-        TRLIB_PRINTLN_1("Starting Newton iteration for \u03bb\u2080 with initial choice %e", *lam0)
+        if (unicode) { TRLIB_PRINTLN_1("Starting Newton iteration for \u03bb\u2080 with initial choice %e", *lam0) }
+        else { TRLIB_PRINTLN_1("Starting Newton iteration for lam0 with initial choice %e", *lam0) }
         while (1) {
             /* compute newton correction to lam, by
                 (1) Factoring T0 + lam0 I = LDL^T
@@ -203,7 +221,7 @@ trlib_int_t trlib_tri_factor_min(
             // test if dlam is not tiny or newton limit exceeded, return eventually
             if (fabs(dlam) <= TRLIB_EPS * fabs(*lam0) || *iter_newton > itmax) {
                 if (unicode) { TRLIB_PRINTLN_1("%s%e%s%e", "Newton breakdown, d\u03bb = ", dlam, " \u03bb = ", *lam0) }
-                else { TRLIB_PRINTLN_1("%s%e%s%e", "Newton breakdown, d\u03bb = ", dlam, " \u03bb = ", *lam0) }
+                else { TRLIB_PRINTLN_1("%s%e%s%e", "Newton breakdown, dlam = ", dlam, " \u03bb = ", *lam0) }
                 if(*iter_newton > itmax) { ret = TRLIB_TTR_ITMAX; break; }
                 ret = TRLIB_TTR_NEWTON_BREAK; break;
             }
@@ -219,14 +237,26 @@ trlib_int_t trlib_tri_factor_min(
             TRLIB_DCOPY(&n0, diag_lam, &inc, diag_fac0, &inc) // diag_fac <-- diag_lam
             TRLIB_DCOPY(&nm0, offdiag, &inc, offdiag_fac0, &inc) // offdiag_fac <-- offdiag
             TRLIB_DPTTRF(&n0, diag_fac0, offdiag_fac0, &info_fac) // compute factorization
-            if (info_fac != 0) { TRLIB_PRINTLN_2("Fail on factorization, \u03bb = %e, d\u03bb = %e! Exiting Newton Iteration", *lam0, dlam) TRLIB_RETURN(TRLIB_TTR_FAIL_FACTOR) }
+            if (info_fac != 0) { 
+                if (unicode) { TRLIB_PRINTLN_2("Fail on factorization, \u03bb = %e, d\u03bb = %e! Exiting Newton Iteration", *lam0, dlam) }
+                else {TRLIB_PRINTLN_2("Fail on factorization, lam = %e, dlam = %e! Exiting Newton Iteration", *lam0, dlam) }
+                TRLIB_RETURN(TRLIB_TTR_FAIL_FACTOR) 
+            }
     
             // step (2) Solving (T+lam I)*h = -lin
             TRLIB_DCOPY(&n0, neglin, &inc, sol0, &inc) // sol <-- neglin
             TRLIB_DPTTRS(&n0, &inc, diag_fac0, offdiag_fac0, sol0, &n0, &info_fac) // sol <-- (T+lam I)^-1 sol
-            if (info_fac != 0) { TRLIB_PRINTLN_2("Failure on computing h\u2080 in newton iteration") TRLIB_RETURN(TRLIB_TTR_FAIL_LINSOLVE) }
+            if (info_fac != 0) {
+                if (unicode) { TRLIB_PRINTLN_2("Failure on computing h\u2080 in newton iteration") }
+                else { TRLIB_PRINTLN_2("Failure on computing h0 in newton iteration") }
+                TRLIB_RETURN(TRLIB_TTR_FAIL_LINSOLVE)
+            }
             if (refine) { TRLIB_DPTRFS(&n0, &inc, diag_lam, offdiag, diag_fac0, offdiag_fac0, neglin, &n0, sol0, &n0, &ferr, &berr, work, &info_fac) }
-            if (info_fac != 0) { TRLIB_PRINTLN_2("Failure on computing h\u2080 in refinement in newton iteration") TRLIB_RETURN(TRLIB_TTR_FAIL_LINSOLVE) }
+            if (info_fac != 0) {
+                if (unicode) { TRLIB_PRINTLN_2("Failure on computing h\u2080 in refinement in newton iteration") }
+                else { TRLIB_PRINTLN_2("Failure on computing h\u2080 in refinement in newton iteration") }
+                TRLIB_RETURN(TRLIB_TTR_FAIL_LINSOLVE)
+            }
             TRLIB_DNRM2(norm_sol0, &n0, sol0, &inc)
     
             if (*iter_newton % 20 == 1) {
@@ -251,7 +281,8 @@ trlib_int_t trlib_tri_factor_min(
     if ( fabs(radius - norm_sol0) >= TRLIB_EPS_POW_5*radius ) { 
         if(*lam0 == 0.0 && !equality) { ret = TRLIB_TTR_CONV_INTERIOR; }
         else { 
-            TRLIB_PRINTLN_1(" Found \u03bb\u2080 with tr residual %e! Bail out with h\u2080 + \u03b1 eig", radius - norm_sol0)
+            if (unicode) { TRLIB_PRINTLN_1(" Found \u03bb\u2080 with tr residual %e! Bail out with h\u2080 + \u03b1 eig", radius - norm_sol0) }
+            else { TRLIB_PRINTLN_1(" Found lam0 with tr residual %e! Bail out with h0 + alpha eig", radius - norm_sol0) }
             srand((unsigned) time(NULL));
             for( trlib_int_t kk = irblk[0]; kk < irblk[1]; ++kk ) { sol[kk] = ((trlib_flt_t)rand()/(trlib_flt_t)RAND_MAX); }
             *sub_fail = trlib_eigen_inverse(n0, diag, offdiag, 
@@ -297,7 +328,8 @@ trlib_int_t trlib_tri_factor_min(
 
     // now that we have accurate lam, h_0 invoke Theorem 5.8
     // check if lam <= leftmost --> in that case the first block information describes everything
-    TRLIB_PRINTLN_1("\nCheck if \u03bb\u2080 provides global solution, get leftmost ev for irred blocks")
+    if (unicode) { TRLIB_PRINTLN_1("\nCheck if \u03bb\u2080 provides global solution, get leftmost ev for irred blocks") }
+    else { TRLIB_PRINTLN_1("\nCheck if lam0 provides global solution, get leftmost ev for irred blocks") }
     if(!*warm_leftmost) {
         *sub_fail = trlib_leftmost(nirblk, irblk, diag, offdiag, 0, leftmost[nirblk-1], 1000, TRLIB_EPS_POW_75, verbose-2, unicode, " LM ", fout, leftmost_timing, ileftmost, leftmost);
         *warm_leftmost = 1;
