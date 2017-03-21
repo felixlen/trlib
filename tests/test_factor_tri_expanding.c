@@ -79,7 +79,7 @@ START_TEST (test_simple)
             }
         }
 
-        ret = trlib_tri_factor_min(blkptr, irblk2, diag, offdiag, neglin, radius, 100, TRLIB_EPS,
+        ret = trlib_tri_factor_min(blkptr, irblk2, diag, offdiag, neglin, radius, 100, TRLIB_EPS, TRLIB_EPS,
                 pos_def, equality, &warm0, &lam0, &warm, &lam, &warm_leftmost, &ileftmost,
                 leftmost, &warm_fac0, diag_fac0, offdiag_fac0, &warm_fac, diag_fac, offdiag_fac,
                 sol0, sol, ones, fwork, refine, 1, 1, "", stderr, timing,

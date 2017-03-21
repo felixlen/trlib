@@ -50,7 +50,8 @@
  *  @param[in]     neglin pointer to array holding \f$ -g \f$, length \p n
  *  @param[in]     radius trust region constraint radius \f$ r \f$
  *  @param[in]     itmax maximum number of Newton iterations
- *  @param[in]     tol_rel relative stopping tolerance in Newton iteration for @p lam, good default may be \f$ \texttt{macheps} \f$
+ *  @param[in]     tol_rel relative stopping tolerance for residual in Newton iteration for @p lam, good default may be \f$ \texttt{macheps} \f$
+ *  @param[in]     tol_newton_tiny stopping tolerance for step in Newton iteration for @p lam, good default may be \f$ 10 \texttt{macheps}^{.75} \f$
  *  @param[in]     pos_def set \c 1 if you know \f$ T \f$ to be positive definite, otherwise \c 0
  *  @param[in]     equality set \c 1 if you want to enfore trust region constraint as equality, otherwise \c 0
  *  @param[in,out] warm0 set \c 1 if you provide a valid value in @p lam0, otherwise \c 0
@@ -124,7 +125,8 @@
 trlib_int_t trlib_tri_factor_min(
     trlib_int_t nirblk, trlib_int_t *irblk, trlib_flt_t *diag, trlib_flt_t *offdiag,
     trlib_flt_t *neglin, trlib_flt_t radius, 
-    trlib_int_t itmax, trlib_flt_t tol_rel, trlib_int_t pos_def, trlib_int_t equality,
+    trlib_int_t itmax, trlib_flt_t tol_rel, trlib_flt_t tol_newton_tiny,
+    trlib_int_t pos_def, trlib_int_t equality,
     trlib_int_t *warm0, trlib_flt_t *lam0, trlib_int_t *warm, trlib_flt_t *lam,
     trlib_int_t *warm_leftmost, trlib_int_t *ileftmost, trlib_flt_t *leftmost,
     trlib_int_t *warm_fac0, trlib_flt_t *diag_fac0, trlib_flt_t *offdiag_fac0,

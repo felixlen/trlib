@@ -69,7 +69,8 @@ cdef extern from "trlib/trlib_tri_factor.h":
     long trlib_tri_factor_min(
         long nirblk, long *irblk, double *diag, double *offdiag,
         double *neglin, double radius, 
-        long itmax, double tol_rel, long pos_def, long equality,
+        long itmax, double tol_rel, double tol_newton_tiny,
+        long pos_def, long equality,
         long *warm0, double *lam0, long *warm, double *lam,
         long *warm_leftmost, long *ileftmost, double *leftmost,
         long *warm_fac0, double *diag_fac0, double *offdiag_fac0,

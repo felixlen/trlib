@@ -311,7 +311,7 @@ trlib_int_t trlib_test_solve_qp(struct trlib_test_qp *qp) {
 
         qp->ret = trlib_tri_factor_min(work->nirblk, work->irblk, 
             problem->diag, problem->offdiag, problem->neggrad,
-            qp->radius, qp->itmax, TRLIB_EPS, problem->pos_def, qp->equality,
+            qp->radius, qp->itmax, TRLIB_EPS, TRLIB_EPS, problem->pos_def, qp->equality,
             &(work->warm_lam0), &(work->lam0), &(work->warm_lam), &(qp->lam),
             &(work->warm_leftmost), &(work->ileftmost), work->leftmost,
             &(problem->warm_fac0), problem->diag_fac0, problem->offdiag_fac0,

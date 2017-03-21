@@ -15,11 +15,11 @@ START_TEST (test_simple)
     grad[0] = 3.0; grad[1] = 4.0; grad[2] = 0.0;
 
     qp.radius = 1.0;
-    trlib_test_solve_check_qp(&qp, "Coldstart simple 3D", 10*TRLIB_EPS, 1e1*TRLIB_EPS);
+    trlib_test_solve_check_qp(&qp, "Coldstart simple 3D", 1e3*TRLIB_EPS, 1e1*TRLIB_EPS);
    
     qp.reentry = 1; 
     qp.radius = 0.5;
-    trlib_test_solve_check_qp(&qp, "Warmstart simple 3D", 10*TRLIB_EPS, 1e1*TRLIB_EPS);
+    trlib_test_solve_check_qp(&qp, "Warmstart simple 3D", 1e3*TRLIB_EPS, 1e1*TRLIB_EPS);
 
     trlib_test_free_qp(&qp);
 }

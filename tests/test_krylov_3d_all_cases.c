@@ -42,11 +42,11 @@ START_TEST (test_3d_near_hard)
     grad[0] = 0.0; grad[1] = 2.0; grad[2] = 1e-6;  // near hard case
     qp.radius = 1.0;
 
-    trlib_test_solve_check_qp(&qp, "Near Hard Case 3D Coldstart", 1e7*TRLIB_EPS, 1e1*TRLIB_EPS);
+    trlib_test_solve_check_qp(&qp, "Near Hard Case 3D Coldstart", 1e8*TRLIB_EPS, 1e1*TRLIB_EPS);
 
     qp.radius = 0.5;
     qp.reentry = 1;
-    trlib_test_solve_check_qp(&qp, "Near Hard Case 3D Warmstart", 1e7*TRLIB_EPS, 1e1*TRLIB_EPS);
+    trlib_test_solve_check_qp(&qp, "Near Hard Case 3D Warmstart", 1e8*TRLIB_EPS, 1e1*TRLIB_EPS);
     trlib_test_free_qp(&qp);
 }
 END_TEST
@@ -94,7 +94,7 @@ START_TEST (test_3d_hard_as_resolve)
     grad[0] = 1.0; grad[1] = 2.0; grad[2] = 3.0;  // something
     qp.radius = 1.0;
 
-    trlib_test_solve_check_qp(&qp, "Easy Case 3D Coldstart build up for hard case", 1e2*TRLIB_EPS, 1e1*TRLIB_EPS);
+    trlib_test_solve_check_qp(&qp, "Easy Case 3D Coldstart build up for hard case", 1e5*TRLIB_EPS, 1e1*TRLIB_EPS);
     
     grad[0] = 0.0; grad[1] = 2.0; grad[2] = 0.0; // hard case
 

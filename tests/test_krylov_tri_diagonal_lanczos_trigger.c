@@ -15,11 +15,11 @@ START_TEST (test_1)
     for(trlib_int_t ii = 0; ii < problem->n; ++ii) { grad[ii] = 1.0; }
 
     qp.radius = 3.2e3;
-    trlib_test_solve_check_qp(&qp, "Coldstart diagonal with zeros", 1e9*TRLIB_EPS, 1e1*TRLIB_EPS);
+    trlib_test_solve_check_qp(&qp, "Coldstart diagonal -1 2 2 2 with zeros", 1e9*TRLIB_EPS, 1e1*TRLIB_EPS);
     
     qp.reentry = 1;
     qp.radius = 1e3;
-    trlib_test_solve_check_qp(&qp, "Warmstart diagonal with zeros", 1e9*TRLIB_EPS, 1e1*TRLIB_EPS);
+    trlib_test_solve_check_qp(&qp, "Warmstart diagonal -1 2 2 2 with zeros", 1e9*TRLIB_EPS, 1e1*TRLIB_EPS);
 
     trlib_test_free_qp(&qp);
 }
@@ -40,11 +40,11 @@ START_TEST (test_2)
     for(trlib_int_t ii = 0; ii < problem->n; ++ii) { grad[ii] = 1.0; }
 
     qp.radius = 3.2e3;
-    trlib_test_solve_check_qp(&qp, "Coldstart diagonal with zeros", 1e9*TRLIB_EPS, 1e3*TRLIB_EPS);
+    trlib_test_solve_check_qp(&qp, "Coldstart diagonal -1 3 2 2 with zeros", 1e9*TRLIB_EPS, 1e3*TRLIB_EPS);
     
     qp.reentry = 1;
     qp.radius = 1e3;
-    trlib_test_solve_check_qp(&qp, "Warmstart diagonal with zeros", 1e9*TRLIB_EPS, 1e3*TRLIB_EPS);
+    trlib_test_solve_check_qp(&qp, "Warmstart diagonal -1 3 2 2 with zeros", 1e9*TRLIB_EPS, 1e3*TRLIB_EPS);
 
     trlib_test_free_qp(&qp);
 }
@@ -65,11 +65,11 @@ START_TEST (test_3)
     for(trlib_int_t ii = 0; ii < problem->n; ++ii) { grad[ii] = 1.0; }
 
     qp.radius = 3.2e3;
-    trlib_test_solve_check_qp(&qp, "Coldstart diagonal with zeros", 1e9*TRLIB_EPS, 1e2*TRLIB_EPS);
+    trlib_test_solve_check_qp(&qp, "Coldstart diagonal 3 1 2 2 with zeros", 1e10*TRLIB_EPS, 1e2*TRLIB_EPS);
     
     qp.reentry = 1;
     qp.radius = 1e3;
-    trlib_test_solve_check_qp(&qp, "Warmstart diagonal with zeros", 1e9*TRLIB_EPS, 1e2*TRLIB_EPS);
+    trlib_test_solve_check_qp(&qp, "Warmstart diagonal 3 1 2 2 with zeros", 1e10*TRLIB_EPS, 1e2*TRLIB_EPS);
 
     trlib_test_free_qp(&qp);
 }
@@ -90,11 +90,11 @@ START_TEST (test_4)
     for(trlib_int_t ii = 0; ii < problem->n; ++ii) { grad[ii] = 1.0; }
 
     qp.radius = 3.2e3;
-    trlib_test_solve_check_qp(&qp, "Coldstart diagonal with zeros", 1e9*TRLIB_EPS, 1e2*TRLIB_EPS);
+    trlib_test_solve_check_qp(&qp, "Coldstart diagonal -1 -1 2 2 with zeros", 1e9*TRLIB_EPS, 1e2*TRLIB_EPS);
     
     qp.reentry = 1;
     qp.radius = 1e3;
-    trlib_test_solve_check_qp(&qp, "Warmstart diagonal with zeros", 1e9*TRLIB_EPS, 1e2*TRLIB_EPS);
+    trlib_test_solve_check_qp(&qp, "Warmstart diagonal -1 -1 2 2 with zeros", 1e9*TRLIB_EPS, 1e2*TRLIB_EPS);
 
     trlib_test_free_qp(&qp);
 }

@@ -4,7 +4,8 @@
 trlib_int_t trlib_tri_factor_min(
     trlib_int_t nirblk, trlib_int_t *irblk, trlib_flt_t *diag, trlib_flt_t *offdiag,
     trlib_flt_t *neglin, trlib_flt_t radius, 
-    trlib_int_t itmax, trlib_flt_t tol_rel, trlib_int_t pos_def, trlib_int_t equality,
+    trlib_int_t itmax, trlib_flt_t tol_rel, trlib_flt_t tol_newton_tiny,
+    trlib_int_t pos_def, trlib_int_t equality,
     trlib_int_t *warm0, trlib_flt_t *lam0, trlib_int_t *warm, trlib_flt_t *lam,
     trlib_int_t *warm_leftmost, trlib_int_t *ileftmost, trlib_flt_t *leftmost,
     trlib_int_t *warm_fac0, trlib_flt_t *diag_fac0, trlib_flt_t *offdiag_fac0,
@@ -219,7 +220,7 @@ trlib_int_t trlib_tri_factor_min(
             *iter_newton += 1;
     
             // test if dlam is not tiny or newton limit exceeded, return eventually
-            if (fabs(dlam) <= TRLIB_EPS * fabs(*lam0) || *iter_newton > itmax) {
+            if (fabs(dlam) <= tol_newton_tiny * fmax(1.0, fabs(*lam0)) || *iter_newton > itmax) {
                 if (unicode) { TRLIB_PRINTLN_1("%s%e%s%e", "Newton breakdown, d\u03bb = ", dlam, " \u03bb = ", *lam0) }
                 else { TRLIB_PRINTLN_1("%s%e%s%e", "Newton breakdown, dlam = ", dlam, " \u03bb = ", *lam0) }
                 if(*iter_newton > itmax) { ret = TRLIB_TTR_ITMAX; break; }

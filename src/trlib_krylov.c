@@ -197,7 +197,8 @@ trlib_int_t trlib_krylov_min(
                        the criterion to specify the maximum number of iterations is weird. it should not be dependent on problem size rather than condition of the hessian... */
                     irblk[*nirblk] = *ii+1;
                     *exit_tri = trlib_tri_factor_min(
-                        *nirblk, irblk, delta, gamma, neglin, radius, 100+3*(*ii), TRLIB_EPS, *pos_def, equality,
+                        *nirblk, irblk, delta, gamma, neglin, radius, 100+3*(*ii),
+                        TRLIB_EPS, fmin(tol_rel_b, 1e1*TRLIB_EPS_POW_75), *pos_def, equality,
                         warm_lam0, lam0, warm_lam, lam, warm_leftmost, ileftmost, leftmost,
                         &warm_fac0, delta_fac0, gamma_fac0, &warm_fac, delta_fac, gamma_fac,
                         h0, h, ones, fwork_tr, refine, verbose-1, unicode, " TR ", fout,
@@ -320,7 +321,8 @@ trlib_int_t trlib_krylov_min(
                 // solve the corresponding tridiagonal problem, check for convergence and otherwise continue to iterate
                 irblk[*nirblk] = *ii+1;
                 *exit_tri = trlib_tri_factor_min(
-                    *nirblk, irblk, delta, gamma, neglin, radius, 100+3*(*ii), TRLIB_EPS, *pos_def, equality,
+                    *nirblk, irblk, delta, gamma, neglin, radius, 100+3*(*ii),
+                    TRLIB_EPS, fmin(tol_rel_b, 1e1*TRLIB_EPS_POW_75), *pos_def, equality,
                     warm_lam0, lam0, warm_lam, lam, warm_leftmost, ileftmost, leftmost,
                     &warm_fac0, delta_fac0, gamma_fac0, &warm_fac, delta_fac, gamma_fac,
                     h0, h, ones, fwork_tr, refine, verbose-1, unicode, " TR ", fout,
@@ -419,7 +421,8 @@ trlib_int_t trlib_krylov_min(
                 // solve the corresponding tridiagonal problem, check for convergence and otherwise continue to iterate
                 irblk[*nirblk] = *ii+1;
                 *exit_tri = trlib_tri_factor_min(
-                    *nirblk, irblk, delta, gamma, neglin, radius, 100+3*(*ii), TRLIB_EPS, *pos_def, equality,
+                    *nirblk, irblk, delta, gamma, neglin, radius, 100+3*(*ii),
+                    TRLIB_EPS, fmin(tol_rel_b, 1e1*TRLIB_EPS_POW_75), *pos_def, equality,
                     warm_lam0, lam0, warm_lam, lam, warm_leftmost, ileftmost, leftmost,
                     &warm_fac0, delta_fac0, gamma_fac0, &warm_fac, delta_fac, gamma_fac,
                     h0, h, ones, fwork_tr, refine, verbose-1, unicode, " TR ", fout,
@@ -493,7 +496,8 @@ trlib_int_t trlib_krylov_min(
                    the criterion to specify the maximum number of iterations is weird. it should not be dependent on problem size rather than condition of the hessian... */
                 irblk[*nirblk] = *ii+1;
                 *exit_tri = trlib_tri_factor_min(
-                    *nirblk, irblk, delta, gamma, neglin, radius, 100+3*(*ii), TRLIB_EPS, *pos_def, equality,
+                    *nirblk, irblk, delta, gamma, neglin, radius, 100+3*(*ii),
+                    TRLIB_EPS, fmin(tol_rel_b, 1e1*TRLIB_EPS_POW_75), *pos_def, equality,
                     warm_lam0, lam0, warm_lam, lam, warm_leftmost, ileftmost, leftmost,
                     &warm_fac0, delta_fac0, gamma_fac0, &warm_fac, delta_fac, gamma_fac,
                     h0, h, ones, fwork_tr, refine, verbose-1, unicode, " TR ", fout,
