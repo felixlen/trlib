@@ -30,6 +30,7 @@
 #define TRLIB_CLS_INIT          (1)
 #define TRLIB_CLS_HOTSTART      (2)
 #define TRLIB_CLS_HOTSTART_G    (3)
+#define TRLIB_CLS_HOTSTART_P    (4)
 #define TRLIB_CLS_HOTSTART_R    (5)
 #define TRLIB_CLS_HOTSTART_T    (6)
 #define TRLIB_CLS_VEC_INIT      (7)
@@ -137,7 +138,15 @@
  *  the computation from the previous stage. However as this is an untypical
  *  scenario, it has not been tested at all.
  *
- *  ### Reentry to get unconstrained minimizer of regularized problem
+ *  ### Reentry to get minimizer of regularized problem
+ *
+ *  You can reenter to compute the solution of a convexified trust region problem.
+ *  You may be interested to this once you see the effect of bad conditioning or also as a cheap retry in a trust region algorithm
+ *  before continuing to the next point after a discarded step.
+ *
+ *  In this case, call the function with `status` set to #TRLIB_CLS_HOTSTART_P.
+ *
+ *  ### Reentry to get unconstrained minimizer of constant regularized problem
  *
  *  After a successful solve you can compute the norm of the unconstrained minimizer to the problem with regularized
  *  hessian \f$ H + \beta M \f$ (\f$ \beta \f$ large enough such that \f$ H + \beta M \f$ is positive definite)
@@ -255,7 +264,8 @@
  *                 \f$ 15+10\texttt{itmax}+8 \f$  | \f$ 15+11\texttt{itmax}+8\f$   | offdiagonal of Cholesky factorization of \f$ T + \lambda I \f$
  *                 \f$ 15+11\texttt{itmax}+8 \f$  | \f$ 15+12\texttt{itmax}+9 \f$   | \p ones for #trlib_tri_factor_min and #trlib_eigen_inverse
  *                 \f$ 15+12\texttt{itmax}+9 \f$  | \f$ 15+13\texttt{itmax}+10  \f$ | \p leftmost for #trlib_tri_factor_min
- *                 \f$ 15+13\texttt{itmax}+10 \f$ | \f$ 15+13\texttt{itmax}+10 \f$ + #trlib_tri_factor_memory_size `(itmax+1)` | \p fwork for #trlib_tri_factor_min
+ *                 \f$ 15+13\texttt{itmax}+10 \f$ | \f$ 15+14\texttt{itmax}+11 \f$  | \p regdiag for #trlib_tri_factor_regularize_posdef
+ *                 \f$ 15+14\texttt{itmax}+11 \f$ | \f$ 15+14\texttt{itmax}+11 \f$ + #trlib_tri_factor_memory_size `(itmax+1)` | \p fwork for #trlib_tri_factor_min
  *  @param[in]     refine set to \c 1 if iterative refinement should be used on solving linear systems, otherwise to \c 0
  *  @param[in]     verbose determines the verbosity level of output that is written to \p fout
  *  @param[in]     unicode set to \c 1 if \p fout can handle unicode, otherwise to \c 0

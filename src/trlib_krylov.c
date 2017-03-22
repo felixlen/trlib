@@ -87,16 +87,21 @@ trlib_int_t trlib_krylov_min(
     trlib_flt_t *gamma_fac = fwork+15+8+10*itmax;
     trlib_flt_t *ones = fwork+15+8+11*itmax;
     trlib_flt_t *leftmost = fwork+15+9+12*itmax;
-    trlib_flt_t *fwork_tr = fwork+15+10+13*itmax;
+    trlib_flt_t *regdiag = fwork+15+10+13*itmax;
+    trlib_flt_t *fwork_tr = fwork+15+11+14*itmax;
 
     // local variables
     trlib_int_t returnvalue = TRLIB_CLR_CONTINUE;
     trlib_int_t warm_fac0 = 0; // flag that indicates if you we could successfully update the factorization
     trlib_int_t warm_fac = 0; // flag that indicates if you we could successfully update the factorization
+    trlib_int_t inc = 1;
+    trlib_flt_t one = 1.0;
+    trlib_flt_t minus = -1.0;
     trlib_flt_t sp_Msp = 0.0; // (s+, Ms+)
 
     if (init == TRLIB_CLS_INIT)       { *status = TRLIB_CLS_INIT; }
     if (init == TRLIB_CLS_HOTSTART)   { *status = TRLIB_CLS_HOTSTART; }
+    if (init == TRLIB_CLS_HOTSTART_P) { *status = TRLIB_CLS_HOTSTART_P; }
     if (init == TRLIB_CLS_HOTSTART_G) { *status = TRLIB_CLS_HOTSTART_G; }
     if (init == TRLIB_CLS_HOTSTART_T) { *status = TRLIB_CLS_HOTSTART_T; }
     if (init == TRLIB_CLS_HOTSTART_R) { *status = TRLIB_CLS_HOTSTART_R; }
@@ -353,6 +358,31 @@ trlib_int_t trlib_krylov_min(
                     else { *ityp = TRLIB_CLT_L; *action = TRLIB_CLA_TRIVIAL; *status = TRLIB_CLS_L_NEW_ITER; break; }
                 }
                 break;
+            case TRLIB_CLS_HOTSTART_P:
+                /* reentry to compute minimizer of problem with convexified hessian */
+
+                // get regularization for diagonal in diag_fac (use this as a temporary)
+                trlib_tri_factor_regularize_posdef(irblk[1], delta, gamma, 1e-12, 10.0, regdiag);
+
+                // add regularization to diagonal
+                TRLIB_DAXPY(irblk+1, &one, regdiag, &inc, delta, &inc) // delta <- delta + regdiag
+
+                // as we may just consider a submatrix of T, ensure that h is set to 0
+                memset(h, 0.0, (*ii+1)*sizeof(trlib_flt_t));
+
+                *warm_lam0 = 0; *warm_lam = 0; *warm_leftmost = 0; warm_fac0 = 0; warm_fac = 0;
+                *exit_tri = trlib_tri_factor_min(
+                    1, irblk, delta, gamma, neglin, radius, 100+3*(*ii),
+                    TRLIB_EPS, fmin(tol_rel_b, 1e1*TRLIB_EPS_POW_75), *pos_def, equality,
+                    warm_lam0, lam0, warm_lam, lam, warm_leftmost, ileftmost, leftmost,
+                    &warm_fac0, delta_fac0, gamma_fac0, &warm_fac, delta_fac, gamma_fac,
+                    h0, h, ones, fwork_tr, refine, verbose-1, unicode, " TR ", fout,
+                    leftmost_timing, obj, iter_tri, sub_fail_tri);
+
+                // restore diagonal
+                TRLIB_DAXPY(irblk+1, &minus, regdiag, &inc, delta, &inc) // delta <- delta - regdiag
+
+                *action = TRLIB_CLA_RETRANSF; returnvalue = *exit_tri; break;
             case TRLIB_CLS_HOTSTART_R:
                 /* reentry to compute unconstrained minimizer of problem with regularized hessian */
                 trlib_tri_factor_regularized_umin(irblk[1], delta, gamma, neglin, radius, h, ones, fwork_tr, refine,
@@ -544,7 +574,7 @@ trlib_int_t trlib_krylov_prepare_memory(trlib_int_t itmax, trlib_flt_t *fwork) {
 
 trlib_int_t trlib_krylov_memory_size(trlib_int_t itmax, trlib_int_t *iwork_size, trlib_int_t *fwork_size, trlib_int_t *h_pointer) {
     *iwork_size = 16+itmax;
-    *fwork_size = 25+13*itmax+trlib_tri_factor_memory_size(itmax+1);
+    *fwork_size = 26+14*itmax+trlib_tri_factor_memory_size(itmax+1);
     *h_pointer = 19+4*itmax;
     return 0;
 }

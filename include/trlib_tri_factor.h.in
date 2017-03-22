@@ -234,6 +234,19 @@ trlib_int_t trlib_tri_factor_get_regularization(
     trlib_int_t verbose, trlib_int_t unicode, char *prefix, FILE *fout,
     trlib_int_t *timing, trlib_flt_t *norm_sol, trlib_int_t *sub_fail);
 
+/** @brief Compute diagonal regularization to make tridiagonal matrix positive definite
+ *
+ *  @param[in]     n dimension
+ *  @param[in]     diag pointer to array holding diagonal of \f$ T \f$, length \p n
+ *  @param[in]     offdiag pointer to array holding offdiagonal of \f$ T \f$, length \p n-1
+ *  @param[in]     tol_away tolerance that diagonal entries in factorization should be away from zero, relative to previous entry. Good default \f$ 10^{-12} \f$.
+ *  @param[in]     security_step factor greater 1.0 that defines a margin to get away from zero in the step taken. Good default \f$ 2.0 \f$.
+ *  @param[in,out] regdiag pointer to array holding regularization term, length \p n
+ *  @retval 0
+ */
+trlib_int_t trlib_tri_factor_regularize_posdef(
+    trlib_int_t n, trlib_flt_t *diag, trlib_flt_t *offdiag,
+    trlib_flt_t tol_away, trlib_flt_t security_step, trlib_flt_t *regdiag);
 
 /** @brief Gives information on memory that has to be allocated for #trlib_tri_factor_min
  *  

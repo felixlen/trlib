@@ -572,6 +572,33 @@ trlib_int_t trlib_tri_factor_get_regularization(
 
 }
 
+trlib_int_t trlib_tri_factor_regularize_posdef(
+    trlib_int_t n, trlib_flt_t *diag, trlib_flt_t *offdiag,
+    trlib_flt_t tol_away, trlib_flt_t security_step, trlib_flt_t *regdiag) {
+
+    /* modify diagonal to be able to factorize
+       Cholesky recurrence for diagonal is
+       diag_fac[0] = diag[0]
+       diag_fac[i+1] = diag[i+1] - offdiag[i]*offdiag[i] / diag_fac[i]
+       we have to ensure diag_fac > 0 */
+
+    trlib_flt_t diag_fac = 0.0;
+    
+    regdiag[0] = 0.0;
+    if (diag[0] <= tol_away) { regdiag[0] = security_step*tol_away; }
+    diag_fac = diag[0] + regdiag[0];
+
+    for(int pivot = 0; pivot < n-1; ++pivot) {
+        regdiag[pivot+1] = 0.0;
+        if ( diag[pivot+1] - offdiag[pivot]*offdiag[pivot]/diag_fac <= tol_away * diag_fac ) {
+            regdiag[pivot+1] = security_step * fabs(offdiag[pivot]*offdiag[pivot]/diag_fac - diag[pivot+1]);
+        }
+        diag_fac = diag[pivot+1] + regdiag[pivot+1] - offdiag[pivot]*offdiag[pivot]/diag_fac;
+    }
+
+    return 0;
+}
+
 
 trlib_int_t trlib_tri_timing_size() {
 #if TRLIB_MEASURE_TIME
