@@ -43,11 +43,10 @@ def standard_tr_unconstrained(obj, grad, hessvec, x, qpsolver=trlib.trlib_solve,
     totalit = 0
     while ii < itmax:
         if ii % 20 == 0:
-            print("{:4s}{:14s}{:14s}{:14s}{:14s}{:3s}{:4s}".format(" it", "   obj", "   norm g",
-                                                                   "    rho", " radius", " ? ", " nit"))
+            print("{:4s} {:11s} {:10s} {:10s} {:10s} {:10s} {:3s} {:4s}".format("it", "obj", "||g||", "radius", "step", "rho", " ?", " nhv"))
         g[:] = grad(x)
         if np.linalg.norm(g) <= tol:
-            print("{:4d}{:14e}{:14e}".format(ii, obj(x), np.linalg.norm(g)))
+            print("{:4d} {:+2.4e} {:2.4e}".format(ii, obj(x), np.linalg.norm(g)))
             break
         niter = np.array([0])
         def hp(vec):
@@ -59,7 +58,7 @@ def standard_tr_unconstrained(obj, grad, hessvec, x, qpsolver=trlib.trlib_solve,
         rho = (obj(x+sol)-obj(x))/np.dot(sol, .5*hessvec(x, sol)+g)
         if rho >= eta1:
             accept = True
-        print("{:4d}{:14e}{:14e}{:14e}{:14e}{:3s}{:4d}".format(ii, obj(x), np.linalg.norm(g), rho, radius, '+' if accept else '-', niter[0]))
+        print("{:4d} {:+2.4e} {:2.4e} {:2.4e} {:2.4e} {:2.4e} {:3s} {:4d}".format(ii, obj(x), np.linalg.norm(g), radius, np.linalg.norm(sol), rho, ' +' if accept else ' -', niter[0]))
         if rho >= eta1:
             x = x+sol
             if rho >= eta2:
