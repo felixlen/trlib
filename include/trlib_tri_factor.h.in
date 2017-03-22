@@ -1,6 +1,5 @@
 #ifndef TRLIB_TRI_FACTOR_H
 #define TRLIB_TRI_FACTOR_H
-#include "trlib.h"
 
 #define TRLIB_TTR_CONV_BOUND    (0)
 #define TRLIB_TTR_CONV_INTERIOR (1)

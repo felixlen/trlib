@@ -20,6 +20,15 @@ if(APPLE)
 endif(APPLE)
 install(TARGETS trlib DESTINATION lib)
 
+# upon request collect all files needed for compilation in folder sources
+install ( FILES ${CMAKE_SOURCE_DIR}/src/trlib_krylov.c 
+                ${CMAKE_SOURCE_DIR}/src/trlib_tri_factor.c 
+                ${CMAKE_SOURCE_DIR}/src/trlib_leftmost.c 
+                ${CMAKE_SOURCE_DIR}/src/trlib_eigen_inverse.c 
+                ${CMAKE_SOURCE_DIR}/src/trlib_quadratic_zero.c
+                ${CMAKE_BINARY_DIR}/src/trlib_private.h
+                DESTINATION "${CMAKE_BINARY_DIR}/sources" )
+
 #find_package(HDF5)
 #find_package(SuiteSparse OPTIONAL_COMPONENTS CHOLMOD)
 #if(HDF5_FOUND AND SuiteSparse_FOUND)

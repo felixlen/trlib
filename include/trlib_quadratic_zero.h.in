@@ -1,6 +1,5 @@
 #ifndef TRLIB_QUADRATIC_ZERO_H
 #define TRLIB_QUADRATIC_ZERO_H
-#include "trlib.h"
 
 /** @brief Computes real zeros of normalized quadratic polynomial.
  *

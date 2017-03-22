@@ -95,14 +95,9 @@ trlib_int_t trlib_krylov_min(
     trlib_int_t warm_fac = 0; // flag that indicates if you we could successfully update the factorization
     trlib_flt_t sp_Msp = 0.0; // (s+, Ms+)
 
-    // local variables needed by HOTSTART_S
-    trlib_int_t nstat, nstatm, ncompl, inc, igtsv = 0;
-    trlib_flt_t z, *dl, *du, *d, *b;
-
     if (init == TRLIB_CLS_INIT)       { *status = TRLIB_CLS_INIT; }
     if (init == TRLIB_CLS_HOTSTART)   { *status = TRLIB_CLS_HOTSTART; }
     if (init == TRLIB_CLS_HOTSTART_G) { *status = TRLIB_CLS_HOTSTART_G; }
-    if (init == TRLIB_CLS_HOTSTART_S) { *status = TRLIB_CLS_HOTSTART_S; }
     if (init == TRLIB_CLS_HOTSTART_T) { *status = TRLIB_CLS_HOTSTART_T; }
     if (init == TRLIB_CLS_HOTSTART_R) { *status = TRLIB_CLS_HOTSTART_R; }
 
@@ -358,49 +353,6 @@ trlib_int_t trlib_krylov_min(
                     else { *ityp = TRLIB_CLT_L; *action = TRLIB_CLA_TRIVIAL; *status = TRLIB_CLS_L_NEW_ITER; break; }
                 }
                 break;
-            case TRLIB_CLS_HOTSTART_S:
-                /* reentry to get stationary point \f$ H_0 s_0 = -g \f$,
-                 * use Lanczos basis */
-
-                // allocate memory for factors
-                nstat = irblk[1]; nstatm = nstat-1; ncompl = itmax-nstat; inc = 1;
-                z = 0.0;
-                dl = malloc(nstatm*sizeof(trlib_flt_t));
-                du = malloc(nstatm*sizeof(trlib_flt_t));
-                d  = malloc(nstat *sizeof(trlib_flt_t));
-                b  = malloc(nstat *sizeof(trlib_flt_t));
-
-                // set factors and right hand size
-                TRLIB_DCOPY(&nstat,  delta,  &inc, d,  &inc)
-                TRLIB_DCOPY(&nstatm, gamma,  &inc, dl, &inc)
-                TRLIB_DCOPY(&nstatm, gamma,  &inc, du, &inc)
-                TRLIB_DCOPY(&nstat,  neglin, &inc, b,  &inc)
-
-                // solve for stationary point
-                dgtsv_(&nstat, &inc, dl, d, du, b, &nstat, &igtsv);
-                // copy stationary point to h
-                TRLIB_DCOPY(&nstat, b, &inc, h, &inc);
-
-                // null all entries of h that do not belong to solution
-                TRLIB_DSCAL(&ncompl, &z, h+nstat, &inc);
-
-                // compute objective (make use of the fact that T*h = -gamma[0] e_1
-                *obj = -.5*h[0]*neglin[0];
-
-                // free memory of factors
-                free(dl); free(du); free(d); free(b);
-
-                // print some information
-                if (unicode) { TRLIB_PRINTLN_2("%s","") TRLIB_PRINTLN_1("%6s%6s%6s%14s%14s%14s%14s%14s%14s", " iter ", "inewton", " type ", "   objective  ", "   \u03b3\u1d62\u208a\u2081|h\u1d62|   ", "   leftmost   ", "      \u03bb       ", "      \u03b3       ", "      \u03b4       ") }
-                else { TRLIB_PRINTLN_2("%s","") TRLIB_PRINTLN_1("%6s%6s%6s%14s%14s%14s%14s%14s%14s", " iter ", "inewton", " type ", "   objective  ", "gam(i+1)|h(i)|", "   leftmost   ", "     lam      ", "    gamma     ", "    delta     ") }
-                *type_last_head = TRLIB_CLT_HOTSTART;
-                *iter_last_head = *ii;
-
-                TRLIB_PRINTLN_1("%6ld%6ld%6s%14e%14e%14e%14e%14e%14e", *ii, *iter_tri, " hot_s", *obj, gamma[*ii]*fabs(h[*ii]), *leftmost, 0.0, *ii == 0 ? neglin[0] : gamma[*ii-1], delta[*ii]) TRLIB_PRINTLN_2("%s", "")
-
-                // say goodbye with request to variable transformation
-                if(igtsv != 0) { returnvalue = TRLIB_CLR_FAIL_LINSOLVE; } else { returnvalue = TRLIB_CLR_CONV_INTERIOR; }
-                *action = TRLIB_CLA_RETRANSF; break;
             case TRLIB_CLS_HOTSTART_R:
                 /* reentry to compute unconstrained minimizer of problem with regularized hessian */
                 trlib_tri_factor_regularized_umin(irblk[1], delta, gamma, neglin, radius, h, ones, fwork_tr, refine,

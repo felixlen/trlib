@@ -14,3 +14,13 @@ install ( FILES "${CMAKE_CURRENT_BINARY_DIR}/trlib/trlib_types.h"
                 "${CMAKE_CURRENT_BINARY_DIR}/trlib/trlib_quadratic_zero.h"
                 "${CMAKE_CURRENT_BINARY_DIR}/trlib/trlib_eigen_inverse.h"
                 DESTINATION include/trlib )
+
+# upon request collect all files needed for compilation in folder sources
+install ( FILES "${CMAKE_CURRENT_BINARY_DIR}/trlib.h" DESTINATION "${CMAKE_BINARY_DIR}/sources" )
+install ( FILES "${CMAKE_CURRENT_BINARY_DIR}/trlib/trlib_types.h"
+                "${CMAKE_CURRENT_BINARY_DIR}/trlib/trlib_krylov.h"
+                "${CMAKE_CURRENT_BINARY_DIR}/trlib/trlib_tri_factor.h"
+                "${CMAKE_CURRENT_BINARY_DIR}/trlib/trlib_leftmost.h"
+                "${CMAKE_CURRENT_BINARY_DIR}/trlib/trlib_quadratic_zero.h"
+                "${CMAKE_CURRENT_BINARY_DIR}/trlib/trlib_eigen_inverse.h"
+                DESTINATION "${CMAKE_BINARY_DIR}/sources/trlib" )

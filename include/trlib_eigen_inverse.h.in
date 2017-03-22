@@ -1,6 +1,5 @@
 #ifndef TRLIB_EIGEN_INVERSE_H
 #define TRLIB_EIGEN_INVERSE_H
-#include "trlib.h"
 
 #define TRLIB_EIR_CONV          (0)
 #define TRLIB_EIR_ITMAX         (-1)

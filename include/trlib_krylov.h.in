@@ -1,6 +1,5 @@
 #ifndef TRLIB_KRYLOV_H
 #define TRLIB_KRYLOV_H
-#include "trlib.h"
 
 #define TRLIB_CLR_CONV_BOUND    (0)
 #define TRLIB_CLR_CONV_INTERIOR (1)
@@ -31,7 +30,6 @@
 #define TRLIB_CLS_INIT          (1)
 #define TRLIB_CLS_HOTSTART      (2)
 #define TRLIB_CLS_HOTSTART_G    (3)
-#define TRLIB_CLS_HOTSTART_S    (4)
 #define TRLIB_CLS_HOTSTART_R    (5)
 #define TRLIB_CLS_HOTSTART_T    (6)
 #define TRLIB_CLS_VEC_INIT      (7)
@@ -138,15 +136,6 @@
  *  trivial as you should be able to just increase the radius and take off
  *  the computation from the previous stage. However as this is an untypical
  *  scenario, it has not been tested at all.
- *
- *  ### Reentry to get stationary point
- *
- *  In NLP applications the solution to the trust region problem sometimes is not what you want,
- *  for example in the case where you have a spurious small negative eigenvalue. The solution to
- *  the trust region problem is forced to be boundary with a solution that may be spurious and large.
- *  In this case you might better take the stationary point.
- *
- *  You can get the stationary point after a successful solve by setting `status` to #TRLIB_CLS_HOTSTART_S.
  *
  *  ### Reentry to get unconstrained minimizer of regularized problem
  *

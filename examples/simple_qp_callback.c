@@ -26,7 +26,7 @@ struct trlib_qpdata {
     trlib_flt_t *fwork;                ///< floating point workspace
     trlib_flt_t *gradient;             ///< gradient of QP
     trlib_int_t hotstart;              ///< flag that determines if hotstarted or not
-    void (*hv_cb)(double *, double *); ///< callback to compute hessian vector product
+    void (*hv_cb)(const int n, const double *, double *); ///< callback to compute hessian vector product
     trlib_int_t iter;                  ///< iteration counter
     trlib_flt_t *g;                    ///< gradient of Krylov iteration
     trlib_flt_t *gm;                   ///< previous gradient of Krylov iteration
@@ -35,7 +35,7 @@ struct trlib_qpdata {
     trlib_flt_t *Q;                    ///< matrix with Lanczos directions
 };
 
-int prepare_qp(trlib_int_t n, trlib_int_t maxiter, double *gradient, void (*hv_cb)(double *, double *), struct trlib_qpdata *data) {
+int prepare_qp(trlib_int_t n, trlib_int_t maxiter, const double *gradient, void (*hv_cb)(const int n, const double *, double *), struct trlib_qpdata *data) {
     data->n = n;
     data->maxiter = maxiter;
     data->gradient = gradient;
@@ -107,7 +107,7 @@ int solve_qp(struct trlib_qpdata *data, trlib_flt_t radius, double *sol, double 
                 dcopy_(&n, data->gradient, &inc, data->g, &inc);
                 v_dot_g = ddot_(&n, data->g, &inc, data->g, &inc);
                 dcopy_(&n, data->g, &inc, data->p, &inc); dscal_(&n, &minus, data->p, &inc); // p = -g
-                data->hv_cb(data->p, data->Hp); // Hp = H*p
+                data->hv_cb(n, data->p, data->Hp); // Hp = H*p
                 p_dot_Hp = ddot_(&n, data->p, &inc, data->Hp, &inc);
                 dcopy_(&n, data->g, &inc, data->Q, &inc); // Q(0:n) = g
                 flt1 = 1.0/sqrt(v_dot_g); dscal_(&n, &flt1, data->Q, &inc); // Q(0:n) = g/sqrt(<g,g>)
@@ -134,14 +134,14 @@ int solve_qp(struct trlib_qpdata *data, trlib_flt_t radius, double *sol, double 
             case TRLIB_CLA_UPDATE_DIR:
                 if (ityp == TRLIB_CLT_CG) { dscal_(&n, &flt2, data->p, &inc); daxpy_(&n, &minus, data->g, &inc, data->p, &inc); } // p = -g + flt2 * p
                 if (ityp == TRLIB_CLT_L) { dcopy_(&n, data->g, &inc, data->p, &inc); dscal_(&n, &flt1, data->p, &inc); } // p = flt1*g
-                data->hv_cb(data->p, data->Hp); // Hp = H*p
+                data->hv_cb(n, data->p, data->Hp); // Hp = H*p
                 p_dot_Hp = ddot_(&n, data->p, &inc, data->Hp, &inc);
                 if ( ityp == TRLIB_CLT_L) { dcopy_(&n, data->p, &inc, data->Q+(data->iter)*n, &inc); } // Q(iter*n:(iter+1)*n) = p
                 break;
             case TRLIB_CLA_CONV_HARD:
                 itp1 = data->iter+1;
                 trlib_flt_t *temp = malloc(n*sizeof(trlib_flt_t));
-                data->hv_cb(sol, temp); // temp = H*s
+                data->hv_cb(n, sol, temp); // temp = H*s
                 daxpy_(&n, &one, data->gradient, &inc, temp, &inc); // temp = H*s + g
                 daxpy_(&n, &flt1, sol, &inc, temp, &inc); // temp = H*s + g + flt1*s
                 v_dot_g = ddot_(&n, temp, &inc, temp, &inc);
@@ -162,7 +162,7 @@ int solve_qp(struct trlib_qpdata *data, trlib_flt_t radius, double *sol, double 
 /* Test the driver program to solve a 3D problem with two different radii
  */
 
-void hessvec(double *d, double *Hd) {
+void hessvec(const int n, const double *d, double *Hd) {
     Hd[0] = d[0] + 4.0*d[2];
     Hd[1] = 2.0*d[1];
     Hd[2] = 4.0*d[0] + 3.0*d[2];
@@ -189,13 +189,13 @@ int main () {
     double radius = 2.0;
     printf("Attempting to solve trust region problem with radius %f\n", radius);
     solve_qp(&data, radius, sol, &lam);
-    printf("Got lagrange multiplier %f and solution vector [%f %f %f]\n\n", radius, sol[0], sol[1], sol[2]);
+    printf("Got lagrange multiplier %f and solution vector [%f %f %f]\n\n", lam, sol[0], sol[1], sol[2]);
 
     // resolve QP with trust region radius 1.0
     radius = 1.0;
     printf("Attempting to solve trust region problem with radius %f\n", radius);
     solve_qp(&data, radius, sol, &lam);
-    printf("Got lagrange multiplier %f and solution vector [%f %f %f]\n\n", radius, sol[0], sol[1], sol[2]);
+    printf("Got lagrange multiplier %f and solution vector [%f %f %f]\n\n", lam, sol[0], sol[1], sol[2]);
 
     // clean up
     destroy_qp(&data);
