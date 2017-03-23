@@ -89,7 +89,8 @@ trlib_int_t trlib_krylov_min(
     trlib_flt_t *leftmost = fwork+15+9+12*itmax;
     trlib_flt_t *bound_bel = fwork+15+10+13*itmax;
     trlib_flt_t *regdiag = fwork+15+11+13*itmax;
-    trlib_flt_t *fwork_tr = fwork+15+12+14*itmax;
+    trlib_flt_t *convhist = fwork+15+12+14*itmax;
+    trlib_flt_t *fwork_tr = fwork+15+13+15*itmax;
 
     // local variables
     trlib_int_t returnvalue = TRLIB_CLR_CONTINUE;
@@ -126,6 +127,8 @@ trlib_int_t trlib_krylov_min(
                 *iter_last_head = 0;  // indicate that iteration headline should be printed in first iteration
                 *type_last_head = 0;  // just a safety initialization for last iteration headline type
                 *bound_bel = -1e20;
+                convhist[0] = 1.0;
+                if ( itmax_lanczos == -1 ) { convhist[0] = 0.0; }
                 if ( zero < 0.0 ) { *bound_bel = zero; }
                 memset(gamma, 0, itmax*sizeof(trlib_flt_t)); // initialize gamma to zero for safety reasons upon hotstart
 
@@ -275,9 +278,16 @@ trlib_int_t trlib_krylov_min(
                 }
 
                 // test for convergence
+                // note convergence criterion
+                if (*ii > 0) { if (*interior) { convhist[*ii] = (*v_g)/(*stop_i); } else { convhist[*ii] = (gamma[*ii]*fabs(h[*ii]))/(*stop_b); } }
                 // interior: ||g^+||_{M^-1} = (g+, M^-1 g+) = (g+, v+) small, boundary gamma(i+1)*|h(i)| small
                 if (*interior && (*v_g <= *stop_i)) { *ityp = TRLIB_CLT_CG; *action = TRLIB_CLA_TRIVIAL; returnvalue = TRLIB_CLR_CONV_INTERIOR; break; }
                 else if (!(*interior) && (gamma[*ii]*fabs(h[*ii]) <= *stop_b) ) { *ityp = TRLIB_CLT_CG; *action = TRLIB_CLA_RETRANSF; returnvalue = TRLIB_CLR_CONV_BOUND; break; }
+                // test if convergence is unlikely
+                if (convhist[0] > 0.0 && *ii > 10 && convhist[*ii-10] > 1e-1 * convhist[*ii]) { 
+                    if(*interior) { *ityp = TRLIB_CLT_CG; *action = TRLIB_CLA_TRIVIAL; returnvalue = TRLIB_CLR_UNLIKE_CONV; break; }
+                    else  { *ityp = TRLIB_CLT_CG; *action = TRLIB_CLA_RETRANSF; returnvalue = TRLIB_CLR_UNLIKE_CONV; break; }
+                }
                 // test of problem is unbounded
                 else if (isnan(*obj) || *obj < *bound_bel) { 
                     if(*interior) { *ityp = TRLIB_CLT_CG; *action = TRLIB_CLA_TRIVIAL; returnvalue = TRLIB_CLR_UNBDBEL; break; }
@@ -555,8 +565,15 @@ trlib_int_t trlib_krylov_min(
                 TRLIB_PRINTLN_2("%s","") TRLIB_PRINTLN_1("%6ld%6ld%6s%14e%14e%14e%14e%14e%14e", *ii, *iter_tri, " lcz", *obj, sqrt(*v_g), *leftmost, *lam, *ii == 0 ? neglin[0] : gamma[*ii-1], delta[*ii]) TRLIB_PRINTLN_2("%s", "")
 
                 // test for convergence
+                // note convergence criterion
+                if (*ii > 0) { if (*interior) { convhist[*ii] = (*v_g)/sqrt(*stop_i); } else { convhist[*ii] = (*v_g)/sqrt(*stop_b); } }
                 if ( ctl_invariant <= TRLIB_CLC_EXP_INV_LOC && (*exit_tri != TRLIB_TTR_CONV_INTERIOR) && *v_g <= sqrt(*stop_b)) { *ityp = TRLIB_CLT_L; *action = TRLIB_CLA_RETRANSF; returnvalue = *exit_tri; break; }
                 else if ( ctl_invariant <= TRLIB_CLC_EXP_INV_LOC && (*exit_tri == TRLIB_TTR_CONV_INTERIOR) && *v_g <= sqrt(*stop_i)) { *ityp = TRLIB_CLT_L; *action = TRLIB_CLA_RETRANSF; returnvalue = *exit_tri; break; }
+                // test if convergence is unlikely
+                if (convhist[0] > 0.0 && *ii > 10 && convhist[*ii-10] > 1e-1 * convhist[*ii]) { 
+                    if(*interior) { *ityp = TRLIB_CLT_CG; *action = TRLIB_CLA_TRIVIAL; returnvalue = TRLIB_CLR_UNLIKE_CONV; break; }
+                    else  { *ityp = TRLIB_CLT_CG; *action = TRLIB_CLA_RETRANSF; returnvalue = TRLIB_CLR_UNLIKE_CONV; break; }
+                }
                 // test of problem is unbounded
                 else if (isnan(*obj) || *obj < *bound_bel) { *ityp = TRLIB_CLT_L; *action = TRLIB_CLA_RETRANSF; returnvalue = TRLIB_CLR_UNBDBEL; break; }
                 else {
@@ -586,7 +603,7 @@ trlib_int_t trlib_krylov_prepare_memory(trlib_int_t itmax, trlib_flt_t *fwork) {
 
 trlib_int_t trlib_krylov_memory_size(trlib_int_t itmax, trlib_int_t *iwork_size, trlib_int_t *fwork_size, trlib_int_t *h_pointer) {
     *iwork_size = 16+itmax;
-    *fwork_size = 27+14*itmax+trlib_tri_factor_memory_size(itmax+1);
+    *fwork_size = 28+15*itmax+trlib_tri_factor_memory_size(itmax+1);
     *h_pointer = 19+4*itmax;
     return 0;
 }

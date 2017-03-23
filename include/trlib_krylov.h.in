@@ -7,9 +7,10 @@
 #define TRLIB_CLR_NEWTON_BREAK  (3)
 #define TRLIB_CLR_HARD_INIT_LAM (4)
 #define TRLIB_CLR_FAIL_HARD     (5)
+#define TRLIB_CLR_UNBDBEL       (6)
+#define TRLIB_CLR_UNLIKE_CONV   (7)
 #define TRLIB_CLR_CONTINUE      (10)
 #define TRLIB_CLR_ITMAX         (-1)
-#define TRLIB_CLR_UNBDBEL       (-2)
 #define TRLIB_CLR_FAIL_FACTOR   (-3)
 #define TRLIB_CLR_FAIL_LINSOLVE (-4)
 #define TRLIB_CLR_FAIL_NUMERIC  (-5)
@@ -189,7 +190,7 @@
  *  ---------
  *  If you want to investigate the problem also if the hard case, you can either sample through the invariant subspaces (`ctl_invariant` set to #TRLIB_CLC_EXP_INV_GLO) or solve the problem with a gradient for which the hard does not occur and then hotstart with the actual gradient.
  *
- *  @param[in]     init set to #TRLIB_CLS_INIT on first call, to #TRLIB_CLS_HOTSTART on hotstart with smaller radius and otherwise to \c 0
+ *  @param[in]     init set to #TRLIB_CLS_INIT on first call, to #TRLIB_CLS_HOTSTART on hotstart with smaller radius and otherwise to \c 0. Note that @p itmax_lanczos and @p zero have a different meaning on #TRLIB_CLS_INIT in comparison to the other iterations.
  *  @param[in]     radius trust region radius
  *  @param[in]     equality set to \c 1 if trust region constraint should be enforced as equality
  *  @param[in]     itmax maximum number of iterations
@@ -199,6 +200,8 @@
  *                 information is flat and Lanczos may amplify rounding errors without
  *                 reorthogonalization. If you allow a lot of Lanczos type iterations
  *                 consider reorthogonalizing the new direction against the vector storage.
+ *
+ *                 Set to \c -1 if @p init is #TRLIB_CLS_INIT if you don't the check if convergence is unlikely
  *  @param[in]     tol_rel_i relative stopping tolerance for interior solution
  *  @param[in]     tol_abs_i absolute stopping tolerance for interior solution
  *  @param[in]     tol_rel_b relative stopping tolerance for boundary solution
@@ -268,7 +271,8 @@
  *                 \f$ 15+12\texttt{itmax}+9 \f$  | \f$ 15+13\texttt{itmax}+10  \f$ | \p leftmost for #trlib_tri_factor_min
  *                 \f$ 15+12\texttt{itmax}+10\f$  | \f$ 15+13\texttt{itmax}+11  \f$ | \p bound_bel lower bound after which iteration will be exited 
  *                 \f$ 15+13\texttt{itmax}+11 \f$ | \f$ 15+14\texttt{itmax}+12 \f$  | \p regdiag for #trlib_tri_factor_regularize_posdef
- *                 \f$ 15+14\texttt{itmax}+12 \f$ | \f$ 15+14\texttt{itmax}+12 \f$ + #trlib_tri_factor_memory_size `(itmax+1)` | \p fwork for #trlib_tri_factor_min
+ *                 \f$ 15+14\texttt{itmax}+12 \f$ | \f$ 15+15\texttt{itmax}+13 \f$  | \p history of convergence criteria values
+ *                 \f$ 15+15\texttt{itmax}+13 \f$ | \f$ 15+15\texttt{itmax}+13 \f$ + #trlib_tri_factor_memory_size `(itmax+1)` | \p fwork for #trlib_tri_factor_min
  *  @param[in]     refine set to \c 1 if iterative refinement should be used on solving linear systems, otherwise to \c 0
  *  @param[in]     verbose determines the verbosity level of output that is written to \p fout
  *  @param[in]     unicode set to \c 1 if \p fout can handle unicode, otherwise to \c 0
@@ -319,6 +323,7 @@
  *  @retval        #TRLIB_CLR_FAIL_FACTOR failure on factorization, end reverse communication process
  *  @retval        #TRLIB_CLR_FAIL_LINSOLVE failure on backsolve, end reverse communication process
  *  @retval        #TRLIB_CLR_FAIL_NUMERIC failure as one of the values v_dot_g or p_dot_Hp are not a floating point number
+ *  @retval        #TRLIB_CLR_UNLIKE_CONV exit early as convergence seems to be unlikely
  *  @retval        #TRLIB_CLR_PCINDEF preconditioner apperas to be indefinite, end reverse communication process
  *  @retval        #TRLIB_CLR_UNEXPECT_INT unexpected interior solution found, expected boundary solution, end reverse communication process
  *  @retval        #TRLIB_CLR_FAIL_TTR failure occured in #trlib_tri_factor_min, check `iwork[7]` and `iwork[8]` for details
