@@ -4,57 +4,6 @@ cimport ctrlib
 cimport libc.stdio
 cimport numpy as np
 
-TRLIB_CLR_CONV_BOUND    = ctrlib._TRLIB_CLR_CONV_BOUND   
-TRLIB_CLR_CONV_INTERIOR = ctrlib._TRLIB_CLR_CONV_INTERIOR
-TRLIB_CLR_APPROX_HARD   = ctrlib._TRLIB_CLR_APPROX_HARD  
-TRLIB_CLR_NEWTON_BREAK  = ctrlib._TRLIB_CLR_NEWTON_BREAK 
-TRLIB_CLR_HARD_INIT_LAM = ctrlib._TRLIB_CLR_HARD_INIT_LAM
-TRLIB_CLR_CONTINUE      = ctrlib._TRLIB_CLR_CONTINUE     
-TRLIB_CLR_ITMAX         = ctrlib._TRLIB_CLR_ITMAX        
-TRLIB_CLR_FAIL_FACTOR   = ctrlib._TRLIB_CLR_FAIL_FACTOR  
-TRLIB_CLR_FAIL_LINSOLVE = ctrlib._TRLIB_CLR_FAIL_LINSOLVE
-TRLIB_CLR_FAIL_TTR      = ctrlib._TRLIB_CLR_FAIL_TTR     
-TRLIB_CLR_PCINDEF       = ctrlib._TRLIB_CLR_PCINDEF      
-TRLIB_CLR_UNEXPECT_INT  = ctrlib._TRLIB_CLR_UNEXPECT_INT 
-TRLIB_CLR_FAIL_HARD     = ctrlib._TRLIB_CLR_FAIL_HARD    
-TRLIB_CLT_CG            = ctrlib._TRLIB_CLT_CG           
-TRLIB_CLT_L             = ctrlib._TRLIB_CLT_L            
-TRLIB_CLA_TRIVIAL       = ctrlib._TRLIB_CLA_TRIVIAL      
-TRLIB_CLA_INIT          = ctrlib._TRLIB_CLA_INIT         
-TRLIB_CLA_RETRANSF      = ctrlib._TRLIB_CLA_RETRANSF     
-TRLIB_CLA_UPDATE_STATIO = ctrlib._TRLIB_CLA_UPDATE_STATIO
-TRLIB_CLA_UPDATE_GRAD   = ctrlib._TRLIB_CLA_UPDATE_GRAD  
-TRLIB_CLA_UPDATE_DIR    = ctrlib._TRLIB_CLA_UPDATE_DIR   
-TRLIB_CLA_NEW_KRYLOV    = ctrlib._TRLIB_CLA_NEW_KRYLOV   
-TRLIB_CLA_CONV_HARD     = ctrlib._TRLIB_CLA_CONV_HARD    
-TRLIB_CLS_INIT          = ctrlib._TRLIB_CLS_INIT         
-TRLIB_CLS_HOTSTART      = ctrlib._TRLIB_CLS_HOTSTART     
-TRLIB_CLS_HOTSTART_G    = ctrlib._TRLIB_CLS_HOTSTART_G   
-TRLIB_CLS_HOTSTART_S    = ctrlib._TRLIB_CLS_HOTSTART_S   
-TRLIB_CLS_HOTSTART_R    = ctrlib._TRLIB_CLS_HOTSTART_R   
-TRLIB_CLS_HOTSTART_T    = ctrlib._TRLIB_CLS_HOTSTART_T   
-TRLIB_CLS_VEC_INIT      = ctrlib._TRLIB_CLS_VEC_INIT     
-TRLIB_CLS_CG_NEW_ITER   = ctrlib._TRLIB_CLS_CG_NEW_ITER  
-TRLIB_CLS_CG_UPDATE_S   = ctrlib._TRLIB_CLS_CG_UPDATE_S  
-TRLIB_CLS_CG_UPDATE_GV  = ctrlib._TRLIB_CLS_CG_UPDATE_GV 
-TRLIB_CLS_CG_UPDATE_P   = ctrlib._TRLIB_CLS_CG_UPDATE_P  
-TRLIB_CLS_LANCZOS_SWT   = ctrlib._TRLIB_CLS_LANCZOS_SWT  
-TRLIB_CLS_L_UPDATE_P    = ctrlib._TRLIB_CLS_L_UPDATE_P   
-TRLIB_CLS_L_CMP_CONV    = ctrlib._TRLIB_CLS_L_CMP_CONV   
-TRLIB_CLS_L_CMP_CONV_RT = ctrlib._TRLIB_CLS_L_CMP_CONV_RT
-TRLIB_CLS_L_CHK_CONV    = ctrlib._TRLIB_CLS_L_CHK_CONV   
-TRLIB_CLS_L_NEW_ITER    = ctrlib._TRLIB_CLS_L_NEW_ITER   
-TRLIB_CLS_CG_IF_IRBLK_P = ctrlib._TRLIB_CLS_CG_IF_IRBLK_P
-TRLIB_CLS_CG_IF_IRBLK_C = ctrlib._TRLIB_CLS_CG_IF_IRBLK_C
-TRLIB_CLS_CG_IF_IRBLK_N = ctrlib._TRLIB_CLS_CG_IF_IRBLK_N
-TRLIB_CLC_NO_EXP_INV    = ctrlib._TRLIB_CLC_NO_EXP_INV   
-TRLIB_CLC_EXP_INV_LOC   = ctrlib._TRLIB_CLC_EXP_INV_LOC  
-TRLIB_CLC_EXP_INV_GLO   = ctrlib._TRLIB_CLC_EXP_INV_GLO  
-TRLIB_CLT_CG_INT        = ctrlib._TRLIB_CLT_CG_INT       
-TRLIB_CLT_CG_BOUND      = ctrlib._TRLIB_CLT_CG_BOUND     
-TRLIB_CLT_LANCZOS       = ctrlib._TRLIB_CLT_LANCZOS      
-TRLIB_CLT_HOTSTART      = ctrlib._TRLIB_CLT_HOTSTART     
-
 cdef class Callback:
     cdef public object hvfcn
     
@@ -215,7 +164,7 @@ def trlib_solve(hess, grad, radius, invM = lambda x: x, data=None, reentry=False
     if data is None:
         data = {}
     if not reentry:
-        init = 1
+        init = ctrlib._TRLIB_CLS_INIT
         if not 'fwork' in data:
             data['fwork'] = np.empty([fwork_size])
         krylov_prepare_memory(itmax, data['fwork'])
@@ -236,7 +185,10 @@ def trlib_solve(hess, grad, radius, invM = lambda x: x, data=None, reentry=False
         if not 'Q' in data:
             data['Q'] = np.empty([itmax+1, grad.shape[0]])
     else:
-        init = 2
+        if reentry != 'convex':
+            init = ctrlib._TRLIB_CLS_HOTSTART
+        else:
+            init = ctrlib._TRLIB_CLS_HOTSTART_P
 
     v_dot_g = 0.0; g_dot_g = 0.0; p_dot_Hp = 0.0
     
@@ -245,7 +197,7 @@ def trlib_solve(hess, grad, radius, invM = lambda x: x, data=None, reentry=False
             init, radius, g_dot_g, v_dot_g, p_dot_Hp, data['iwork'], data['fwork'],
             ctl_invariant=ctl_invariant, itmax=itmax, verbose=verbose)
         init = 0
-        if action == 1: # CLA_INIT
+        if action == ctrlib._TRLIB_CLA_INIT:
             data['s'][:] = 0.0
             data['gm'][:] = 0.0
             data['g'][:] = grad
@@ -256,30 +208,30 @@ def trlib_solve(hess, grad, radius, invM = lambda x: x, data=None, reentry=False
             data['Hp'][:] = hmv(data['p'])
             p_dot_Hp = np.dot(data['p'], data['Hp'])
             data['Q'][0,:] = data['v']/np.sqrt(v_dot_g)
-        if action == 2: # CLA_RETRANSF
+        if action == ctrlib._TRLIB_CLA_RETRANSF:
             data['s'][:] = np.dot(data['fwork'][h_pointer:h_pointer+iter+1], data['Q'][:iter+1,:])
-        if action == 3: # CLA_UPDATE_STATIO
-            if ityp == 1: # CLT_CG
+        if action == ctrlib._TRLIB_CLA_UPDATE_STATIO:
+            if ityp == ctrlib._TRLIB_CLT_CG:
                 data['s'] += flt1 * data['p']
         if action == 4: # CLA_UPDATE_GRAD
-            if ityp == 1: # CLT_CG
+            if ityp == ctrlib._TRLIB_CLT_CG:
                 data['Q'][iter,:] = flt2*data['v']
                 data['gm'][:] = data['g']
                 data['g'] += flt1*data['Hp']
-            if ityp == 2: # CLT_L
+            if ityp == ctrlib._TRLIB_CLT_L:
                 data['s'][:] = data['Hp'] + flt1*data['g'] + flt2*data['gm']
                 data['gm'][:] = flt3*data['g']
                 data['g'][:] = data['s']
             data['v'][:] = invM(data['g'])
             g_dot_g = np.dot(data['g'], data['g'])
             v_dot_g = np.dot(data['v'], data['g'])
-        if action == 5: # CLA_UPDATE_DIR
+        if action == ctrlib._TRLIB_CLA_UPDATE_DIR:
             data['p'][:] = flt1 * data['v'] + flt2 * data['p']
             data['Hp'][:] = hmv(data['p'])
             p_dot_Hp = np.dot(data['p'], data['Hp'])
-            if ityp == 2: # CLT_L
+            if ityp == ctrlib._TRLIB_CLT_L:
                 data['Q'][iter,:] = data['p']
-        if action == 6: # CLA_NEW_KRYLOV
+        if action == ctrlib._TRLIB_CLA_NEW_KRYLOV:
             # FIXME: adapt for M != I
             QQ, RR = np.linalg.qr(data['Q'][:iter,:].transpose(), 'complete')
             data['g'][:] = QQ[:,iter]
@@ -291,7 +243,7 @@ def trlib_solve(hess, grad, radius, invM = lambda x: x, data=None, reentry=False
             data['Hp'][:] = hmv(data['p'])
             p_dot_Hp = np.dot(data['p'], data['Hp'])
             data['Q'][iter,:] = data['p']
-        if action == 7: # CLA_CONV_HARD
+        if action == ctrlib._TRLIB_CLA_CONV_HARD:
             # FIXME: adapt for M != I
             Ms = data['s']
             Hs = hmv(data['s'])

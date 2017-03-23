@@ -29,6 +29,7 @@ cdef extern from "trlib.h":
     cdef long _TRLIB_CLS_HOTSTART_G    "TRLIB_CLS_HOTSTART_G"    
     cdef long _TRLIB_CLS_HOTSTART_R    "TRLIB_CLS_HOTSTART_R"    
     cdef long _TRLIB_CLS_HOTSTART_T    "TRLIB_CLS_HOTSTART_T"    
+    cdef long _TRLIB_CLS_HOTSTART_P    "TRLIB_CLS_HOTSTART_P"    
     cdef long _TRLIB_CLS_VEC_INIT      "TRLIB_CLS_VEC_INIT"      
     cdef long _TRLIB_CLS_CG_NEW_ITER   "TRLIB_CLS_CG_NEW_ITER"   
     cdef long _TRLIB_CLS_CG_UPDATE_S   "TRLIB_CLS_CG_UPDATE_S"   
