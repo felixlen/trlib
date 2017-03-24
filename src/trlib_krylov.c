@@ -522,7 +522,12 @@ trlib_int_t trlib_krylov_min(
                 /* convergence check is logical at this position, *but* requires gamma(ii+1).
                    wait until gradient has been updated */
                 // compute g^L(ii+1)
-                *flt1 = -delta[*ii]/gamma[*ii-1]; *flt2 = -gamma[*ii-1]/gamma[*ii-2]; *flt3 = 1.0;
+                if(*ii < 2) { 
+                    *flt1 = -delta[*ii]/gamma[*ii-1]; *flt2 = -gamma[*ii-1]; *flt3 = 1.0;
+                }
+                else {
+                    *flt1 = -delta[*ii]/gamma[*ii-1]; *flt2 = -gamma[*ii-1]/gamma[*ii-2]; *flt3 = 1.0;
+                }
                 // in the case that we just switched to Lanczos, we have to use different coefficients
                 if (*ii == *lanczos_switch && *nirblk == 1) {
                     *flt1 = -delta[*ii]/sqrt(*v_g)*(*sigma); *flt2 = -gamma[*ii-1]*(*cgl); *flt3 = gamma[*ii-1]/sqrt(*v_g);
@@ -535,6 +540,7 @@ trlib_int_t trlib_krylov_min(
                 *ityp = TRLIB_CLT_L;  *action = TRLIB_CLA_UPDATE_GRAD; *status = TRLIB_CLS_L_CMP_CONV;
                 break;
             case TRLIB_CLS_L_CMP_CONV:
+                if(isnan(v_dot_g)) { if (*interior) {*action = TRLIB_CLA_TRIVIAL;} else {*ityp = TRLIB_CLT_L; *action = TRLIB_CLA_RETRANSF;} returnvalue = TRLIB_CLR_FAIL_NUMERIC; break; } // exit if M^-1 indefinite
                 if (v_dot_g <= 0.0 && g_dot_g > 0.0) { if (*interior) {*action = TRLIB_CLA_TRIVIAL;} else {*ityp = TRLIB_CLT_L; *action = TRLIB_CLA_RETRANSF;} returnvalue = TRLIB_CLR_PCINDEF; break; } // exit if M^-1 indefinite
                 // FIXME: implement adding further invariant subspaces
                 if (g_dot_g <= zero) { if(*interior) {*action = TRLIB_CLA_TRIVIAL; } else {*ityp = TRLIB_CLT_L; *action = TRLIB_CLA_RETRANSF;} returnvalue = TRLIB_CLR_APPROX_HARD; }
