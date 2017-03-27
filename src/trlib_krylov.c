@@ -284,7 +284,7 @@ trlib_int_t trlib_krylov_min(
                 if (*interior && (*v_g <= *stop_i)) { *ityp = TRLIB_CLT_CG; *action = TRLIB_CLA_TRIVIAL; returnvalue = TRLIB_CLR_CONV_INTERIOR; break; }
                 else if (!(*interior) && (gamma[*ii]*fabs(h[*ii]) <= *stop_b) ) { *ityp = TRLIB_CLT_CG; *action = TRLIB_CLA_RETRANSF; returnvalue = TRLIB_CLR_CONV_BOUND; break; }
                 // test if convergence is unlikely
-                if ( convhist[0] > 0.0 && *ii > 10 && convhist[*ii-10] > 1e-1 * convhist[*ii]) { 
+                if ( !(*interior) && convhist[0] > 0.0 && *ii > 10 && convhist[*ii-10] > 1e-1 * convhist[*ii]) { 
                     int doit = 1;
                     for(int cit = *ii-10; cit < *ii; ++cit) { if( convhist[cit+1] > convhist[cit] ) doit = 0; }
                     if(doit) {
@@ -598,7 +598,7 @@ trlib_int_t trlib_krylov_min(
                 if ( ctl_invariant <= TRLIB_CLC_EXP_INV_LOC && (*exit_tri != TRLIB_TTR_CONV_INTERIOR) && *v_g <= sqrt(*stop_b)) { *ityp = TRLIB_CLT_L; *action = TRLIB_CLA_RETRANSF; returnvalue = *exit_tri; break; }
                 else if ( ctl_invariant <= TRLIB_CLC_EXP_INV_LOC && (*exit_tri == TRLIB_TTR_CONV_INTERIOR) && *v_g <= sqrt(*stop_i)) { *ityp = TRLIB_CLT_L; *action = TRLIB_CLA_RETRANSF; returnvalue = *exit_tri; break; }
                 // test if convergence is unlikely
-                if ( convhist[0] > 0.0 && *ii > 10 && convhist[*ii-10] > 1e-1 * convhist[*ii]) { 
+                if ( !(*interior) && convhist[0] > 0.0 && *ii > 10 && convhist[*ii-10] > 1e-1 * convhist[*ii]) { 
                     int doit = 1;
                     for(int cit = *ii-10; cit < *ii; ++cit) { if( convhist[cit+1] > convhist[cit] ) doit = 0; }
                     if(doit) {
