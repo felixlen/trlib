@@ -279,14 +279,22 @@ trlib_int_t trlib_krylov_min(
 
                 // test for convergence
                 // note convergence criterion
-                if (*ii > 0) { if (*interior) { convhist[*ii] = (*v_g)/(*stop_i); } else { convhist[*ii] = (gamma[*ii]*fabs(h[*ii]))/(*stop_b); } }
+                if (*ii > 0) { if (*interior) { convhist[*ii] = sqrt(*v_g)/(*stop_i); } else { convhist[*ii] = (gamma[*ii]*fabs(h[*ii]))/(*stop_b); } }
                 // interior: ||g^+||_{M^-1} = (g+, M^-1 g+) = (g+, v+) small, boundary gamma(i+1)*|h(i)| small
                 if (*interior && (*v_g <= *stop_i)) { *ityp = TRLIB_CLT_CG; *action = TRLIB_CLA_TRIVIAL; returnvalue = TRLIB_CLR_CONV_INTERIOR; break; }
                 else if (!(*interior) && (gamma[*ii]*fabs(h[*ii]) <= *stop_b) ) { *ityp = TRLIB_CLT_CG; *action = TRLIB_CLA_RETRANSF; returnvalue = TRLIB_CLR_CONV_BOUND; break; }
                 // test if convergence is unlikely
-                if (convhist[0] > 0.0 && *ii > 10 && convhist[*ii-10] > 1e-1 * convhist[*ii]) { 
-                    if(*interior) { *ityp = TRLIB_CLT_CG; *action = TRLIB_CLA_TRIVIAL; returnvalue = TRLIB_CLR_UNLIKE_CONV; break; }
-                    else  { *ityp = TRLIB_CLT_CG; *action = TRLIB_CLA_RETRANSF; returnvalue = TRLIB_CLR_UNLIKE_CONV; break; }
+                if ( convhist[0] > 0.0 && *ii > 10 && convhist[*ii-10] > 1e-1 * convhist[*ii]) { 
+                    int doit = 1;
+                    for(int cit = *ii-10; cit < *ii; ++cit) { if( convhist[cit+1] > convhist[cit] ) doit = 0; }
+                    if(doit) {
+                        TRLIB_PRINTLN_2("Early exit as boundary case for the last ten iterations without significant progress")
+                        if(*interior) { *ityp = TRLIB_CLT_CG; *action = TRLIB_CLA_TRIVIAL; returnvalue = TRLIB_CLR_UNLIKE_CONV; break; }
+                        else  { *ityp = TRLIB_CLT_CG; *action = TRLIB_CLA_RETRANSF; returnvalue = TRLIB_CLR_UNLIKE_CONV; break; }
+                    }
+                    else { // prepare next iteration
+                        *ityp = TRLIB_CLT_CG; *status = TRLIB_CLS_CG_UPDATE_P; *flt1 = -1.0; *flt2 = beta[*ii]; *action = TRLIB_CLA_UPDATE_DIR; break;
+                    }
                 }
                 // test of problem is unbounded
                 else if (isnan(*obj) || *obj < *bound_bel) { 
@@ -350,6 +358,13 @@ trlib_int_t trlib_krylov_min(
                 /* check for failure, beware: newton break is ok as this means most likely convergence
                    exit with error and ask the user to get (potentially invalid) solution candidate by backtransformation */
                 if (*exit_tri < 0 && *exit_tri != TRLIB_TTR_NEWTON_BREAK) {
+                    // print some information
+                    if (unicode) { TRLIB_PRINTLN_2("%s","") TRLIB_PRINTLN_1("%6s%6s%6s%14s%14s%14s%14s%14s%14s", " iter ", "inewton", " type ", "   objective  ", "   \u03b3\u1d62\u208a\u2081|h\u1d62|   ", "   leftmost   ", "      \u03bb       ", "      \u03b3       ", "      \u03b4       ") }
+                    else { TRLIB_PRINTLN_2("%s","") TRLIB_PRINTLN_1("%6s%6s%6s%14s%14s%14s%14s%14s%14s", " iter ", "inewton", " type ", "   objective  ", "gam(i+1)|h(i)|", "   leftmost   ", "     lam      ", "    gamma     ", "    delta     ") }
+                    *type_last_head = TRLIB_CLT_HOTSTART;
+                    *iter_last_head = *ii;
+                    TRLIB_PRINTLN_1("%6ld%6ld%6s%14e%14e%14e%14e%14e%14e", *ii, *iter_tri, "hnbk", *obj, gamma[*ii]*fabs(h[*ii]), *leftmost, *lam, *ii == 0 ? neglin[0] : gamma[*ii-1], delta[*ii]) TRLIB_PRINTLN_2("%s", "")
+
                     *ityp = TRLIB_CLT_CG; *action = TRLIB_CLA_RETRANSF; returnvalue = TRLIB_CLR_FAIL_TTR; break;
                 }
 
@@ -357,6 +372,13 @@ trlib_int_t trlib_krylov_min(
                 // * since this means that there is severe ill-conditioning and the user should better present a
                 // * better problem formulation. Continuing means most likely computing on garbage */
                 if (*exit_tri == TRLIB_TTR_HARD_INIT_LAM) {
+                    // print some information
+                    if (unicode) { TRLIB_PRINTLN_2("%s","") TRLIB_PRINTLN_1("%6s%6s%6s%14s%14s%14s%14s%14s%14s", " iter ", "inewton", " type ", "   objective  ", "   \u03b3\u1d62\u208a\u2081|h\u1d62|   ", "   leftmost   ", "      \u03bb       ", "      \u03b3       ", "      \u03b4       ") }
+                    else { TRLIB_PRINTLN_2("%s","") TRLIB_PRINTLN_1("%6s%6s%6s%14s%14s%14s%14s%14s%14s", " iter ", "inewton", " type ", "   objective  ", "gam(i+1)|h(i)|", "   leftmost   ", "     lam      ", "    gamma     ", "    delta     ") }
+                    *type_last_head = TRLIB_CLT_HOTSTART;
+                    *iter_last_head = *ii;
+                    TRLIB_PRINTLN_1("%6ld%6ld%6s%14e%14e%14e%14e%14e%14e", *ii, *iter_tri, "hlfl", *obj, gamma[*ii]*fabs(h[*ii]), *leftmost, *lam, *ii == 0 ? neglin[0] : gamma[*ii-1], delta[*ii]) TRLIB_PRINTLN_2("%s", "")
+
                     *ityp = TRLIB_CLT_CG; *action = TRLIB_CLA_RETRANSF; returnvalue = TRLIB_CLR_HARD_INIT_LAM; break;
                 }
 
@@ -572,13 +594,20 @@ trlib_int_t trlib_krylov_min(
 
                 // test for convergence
                 // note convergence criterion
-                if (*ii > 0) { if (*interior) { convhist[*ii] = (*v_g)/sqrt(*stop_i); } else { convhist[*ii] = (*v_g)/sqrt(*stop_b); } }
+                if (*ii > 0) { if (*interior) { convhist[*ii] = sqrt(*v_g)/sqrt(*stop_i); } else { convhist[*ii] = (*v_g)/sqrt(*stop_b); } }
                 if ( ctl_invariant <= TRLIB_CLC_EXP_INV_LOC && (*exit_tri != TRLIB_TTR_CONV_INTERIOR) && *v_g <= sqrt(*stop_b)) { *ityp = TRLIB_CLT_L; *action = TRLIB_CLA_RETRANSF; returnvalue = *exit_tri; break; }
                 else if ( ctl_invariant <= TRLIB_CLC_EXP_INV_LOC && (*exit_tri == TRLIB_TTR_CONV_INTERIOR) && *v_g <= sqrt(*stop_i)) { *ityp = TRLIB_CLT_L; *action = TRLIB_CLA_RETRANSF; returnvalue = *exit_tri; break; }
                 // test if convergence is unlikely
-                if (convhist[0] > 0.0 && *ii > 10 && convhist[*ii-10] > 1e-1 * convhist[*ii]) { 
-                    if(*interior) { *ityp = TRLIB_CLT_CG; *action = TRLIB_CLA_TRIVIAL; returnvalue = TRLIB_CLR_UNLIKE_CONV; break; }
-                    else  { *ityp = TRLIB_CLT_CG; *action = TRLIB_CLA_RETRANSF; returnvalue = TRLIB_CLR_UNLIKE_CONV; break; }
+                if ( convhist[0] > 0.0 && *ii > 10 && convhist[*ii-10] > 1e-1 * convhist[*ii]) { 
+                    int doit = 1;
+                    for(int cit = *ii-10; cit < *ii; ++cit) { if( convhist[cit+1] > convhist[cit] ) doit = 0; }
+                    if(doit) {
+                        TRLIB_PRINTLN_2("Early exit as boundary case for the last ten iterations without significant progress")
+                        *ityp = TRLIB_CLT_L; *action = TRLIB_CLA_RETRANSF; returnvalue = TRLIB_CLR_UNLIKE_CONV; break;
+                    }
+                    else { // prepare next iteration
+                        *ityp = TRLIB_CLT_L; *action = TRLIB_CLA_TRIVIAL; *status = TRLIB_CLS_L_NEW_ITER; break;
+                    }
                 }
                 // test of problem is unbounded
                 else if (isnan(*obj) || *obj < *bound_bel) { *ityp = TRLIB_CLT_L; *action = TRLIB_CLA_RETRANSF; returnvalue = TRLIB_CLR_UNBDBEL; break; }
