@@ -19,6 +19,15 @@ trlib_int_t trlib_eigen_inverse(
     trlib_flt_t minuslam = - lam_init;                // negative of current estimation of eigenvalue
     trlib_int_t inc = 1; trlib_int_t nm = n-1;
 
+    trlib_int_t seeds[TRLIB_EIR_N_STARTVEC];
+    trlib_flt_t residuals[TRLIB_EIR_N_STARTVEC];   
+
+    *iter_inv = 0;
+    *pert = 0.0;
+    info_fac = 0;
+    invnorm = 0.0;
+    minuslam = - lam_init;
+
     // obtain factorization of T - lam*I, perturb until possible
     // iter_inv is misused in this loop as flag if we can find a suitable lambda to start with
     *iter_inv = TRLIB_EIR_FAIL_FACTOR;
@@ -38,8 +47,48 @@ trlib_int_t trlib_eigen_inverse(
         minuslam = *pert - lam_init;
     }
     *lam_pert = -minuslam;
-
+    
     if ( *iter_inv == TRLIB_EIR_FAIL_FACTOR ) { TRLIB_PRINTLN_2("Failure on factorizing in inverse correction!") TRLIB_RETURN(TRLIB_EIR_FAIL_FACTOR) }
+    
+    // try with TRLIB_EIR_N_STARTVEC different start vectors and hope that it converges for one
+    seeds[0] = time(NULL);
+    for( trlib_int_t jj = 1; jj < TRLIB_EIR_N_STARTVEC; ++jj ) { seeds[jj] = rand(); }
+    for( trlib_int_t jj = 0; jj < TRLIB_EIR_N_STARTVEC; ++jj ) {
+        *iter_inv = 0;
+        srand((unsigned) seeds[jj]);
+        for( trlib_int_t kk = 0; kk < n; ++kk ) { eig[kk] = ((trlib_flt_t)rand()/(trlib_flt_t)RAND_MAX); }
+
+        TRLIB_DNRM2(invnorm, &n, eig, &inc) invnorm = 1.0/invnorm;
+        TRLIB_DSCAL(&n, &invnorm, eig, &inc) // normalize eig
+        // perform inverse iteration
+        while (1) {
+            *iter_inv += 1;
+
+            if ( *iter_inv > itmax ) { break; }
+
+            // solve (T - lam*I)*eig_new = eig_old
+            TRLIB_DPTTRS(&n, &inc, diag_fac, offdiag_fac, eig, &n, &info_fac)
+            if( info_fac != 0 ) { TRLIB_PRINTLN_2("Failure on solving inverse correction!") TRLIB_RETURN(TRLIB_EIR_FAIL_LINSOLVE) }
+
+            // normalize eig
+            TRLIB_DNRM2(invnorm, &n, eig, &inc) invnorm = 1.0/invnorm;
+            TRLIB_DSCAL(&n, &invnorm, eig, &inc)
+
+            residuals[jj] = fabs(invnorm - *pert);
+
+            // check for convergence
+            if (residuals[jj] <= tol_abs ) { TRLIB_RETURN(TRLIB_EIR_CONV) }
+        }
+    }
+
+    // no convergence with any of the starting values.
+    // take the seed with least residual and redo computation
+    trlib_int_t seedpivot = 0;
+    for(int jj = 0; jj < TRLIB_EIR_N_STARTVEC; ++jj) { if (residuals[jj] < residuals[seedpivot]) { seedpivot = jj; } }
+
+    *iter_inv = 0;
+    srand((unsigned) seeds[seedpivot]);
+    for( trlib_int_t kk = 0; kk < n; ++kk ) { eig[kk] = ((trlib_flt_t)rand()/(trlib_flt_t)RAND_MAX); }
 
     TRLIB_DNRM2(invnorm, &n, eig, &inc) invnorm = 1.0/invnorm;
     TRLIB_DSCAL(&n, &invnorm, eig, &inc) // normalize eig
@@ -47,7 +96,7 @@ trlib_int_t trlib_eigen_inverse(
     while (1) {
         *iter_inv += 1;
 
-        if ( *iter_inv > itmax ) { TRLIB_RETURN(TRLIB_EIR_ITMAX) }
+        if ( *iter_inv > itmax ) { break; }
 
         // solve (T - lam*I)*eig_new = eig_old
         TRLIB_DPTTRS(&n, &inc, diag_fac, offdiag_fac, eig, &n, &info_fac)
@@ -57,8 +106,10 @@ trlib_int_t trlib_eigen_inverse(
         TRLIB_DNRM2(invnorm, &n, eig, &inc) invnorm = 1.0/invnorm;
         TRLIB_DSCAL(&n, &invnorm, eig, &inc)
 
+        residuals[seedpivot] = fabs(invnorm - *pert);
+
         // check for convergence
-        if (fabs( invnorm - *pert ) <= tol_abs ) { TRLIB_RETURN(TRLIB_EIR_CONV) }
+        if (residuals[seedpivot] <= tol_abs ) { TRLIB_RETURN(TRLIB_EIR_CONV) }
     }
     
     TRLIB_RETURN(TRLIB_EIR_ITMAX)

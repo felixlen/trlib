@@ -284,12 +284,10 @@ trlib_int_t trlib_tri_factor_min(
         else { 
             if (unicode) { TRLIB_PRINTLN_1(" Found \u03bb\u2080 with tr residual %e! Bail out with h\u2080 + \u03b1 eig", radius - norm_sol0) }
             else { TRLIB_PRINTLN_1(" Found lam0 with tr residual %e! Bail out with h0 + alpha eig", radius - norm_sol0) }
-            srand((unsigned) time(NULL));
-            for( trlib_int_t kk = irblk[0]; kk < irblk[1]; ++kk ) { sol[kk] = ((trlib_flt_t)rand()/(trlib_flt_t)RAND_MAX); }
             *sub_fail = trlib_eigen_inverse(n0, diag, offdiag, 
                     *leftmost, 10, TRLIB_EPS_POW_5, ones,
                     diag_fac, offdiag_fac, sol, 
-                    verbose-2, unicode, " EI", NULL, eigen_timing, &ferr, &berr, &jj); // can savely overwrite ferr, berr, jj with results. only interesting: eigenvector
+                    verbose-2, unicode, " EI", fout, eigen_timing, &ferr, &berr, &jj); // can savely overwrite ferr, berr, jj with results. only interesting: eigenvector
             if (*sub_fail != 0 && *sub_fail != -1) { TRLIB_PRINTLN_2("Failure in eigenvector computation: %ld", *sub_fail) TRLIB_RETURN(TRLIB_TTR_FAIL_EIG) }
             if (*sub_fail == -1) { TRLIB_PRINTLN_2("In eigenvector computation itmax reached, continue with approximate eigenvector") }
             // compute solution as linear combination of h0 and eigenvector
@@ -370,14 +368,12 @@ trlib_int_t trlib_tri_factor_min(
         TRLIB_DNRM2(norm_sol0, &n0, sol, &inc)
 
         // compute normalized eigenvector u corresponding to leftmost of block ileftmost
-        srand((unsigned) time(NULL));
-        for( trlib_int_t kk = irblk[*ileftmost]; kk < irblk[*ileftmost+1]; ++kk ) { sol[kk] = ((trlib_flt_t)rand()/(trlib_flt_t)RAND_MAX); }
         nl = irblk[*ileftmost+1]-irblk[*ileftmost];
         *sub_fail = trlib_eigen_inverse(nl, diag+irblk[*ileftmost], offdiag+irblk[*ileftmost], 
                 leftmost[*ileftmost], 10, TRLIB_EPS_POW_5, ones,
                 diag_fac+irblk[*ileftmost], offdiag_fac+irblk[*ileftmost],
                 sol+irblk[*ileftmost], 
-                verbose-2, unicode, " EI", NULL, eigen_timing, &ferr, &berr, &jj); // can savely overwrite ferr, berr, jj with results. only interesting: eigenvector
+                verbose-2, unicode, " EI", fout, eigen_timing, &ferr, &berr, &jj); // can savely overwrite ferr, berr, jj with results. only interesting: eigenvector
         if (*sub_fail != 0) { TRLIB_RETURN(TRLIB_TTR_FAIL_EIG) }
 
         // solution is of form [h,0,...,0,alpha*u,0,...,0]

@@ -6,6 +6,8 @@
 #define TRLIB_EIR_FAIL_FACTOR   (-2)
 #define TRLIB_EIR_FAIL_LINSOLVE (-3)
 
+#define TRLIB_EIR_N_STARTVEC    (5)
+
 /** @brief Computes eigenvector to provided eigenvalue of symmetric tridiagonal matrix \f$ T \in \mathbb R^{n\times n} \f$,
  *         using inverse iteration.
  *
@@ -29,7 +31,6 @@
  *                 - on entry: allocated memory
  *                 - on exit: factorization corresponding to computed eigenvalue @p lam
  *  @param[in,out] eig pointer to array holding eigenvector, length \p n
- *                 - on entry: random nonzero vector
  *                 - on exit: eigenvector
  *  @param[in]     verbose determines the verbosity level of output that is written to \p fout
  *  @param[in]     unicode set to \c 1 if \p fout can handle unicode, otherwise to \c 0
