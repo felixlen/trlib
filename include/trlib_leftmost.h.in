@@ -17,19 +17,19 @@
  *
  *  :param nirblk: number of irreducible blocks :math:`\ell`, ensure :math:`\ell > 0`
  *  :type nirblk: trlib_int_t, input
- *  :param irblk: pointer to indices of irreducible blocks, length `nirblk+1`:
+ *  :param irblk: pointer to indices of irreducible blocks, length :c:data:`nirblk+1`:
  *
- *                 - `irblk[i]` is the start index of block :math:`i` in \p diag and \p offdiag
- *                 - `irblk[i+1] - 1` is the stop index of block :math:`i`
- *                 - `irblk[i+1] - irred[i]` the dimension :math:`n_\ell` of block :math:`i`
- *                 - `irblk[nirred]` the dimension of :math:`T`
+ *                 - :c:data:`irblk[i]` is the start index of block :math:`i` in :c:data:`diag` and :c:data:`offdiag`
+ *                 - :c:data:`irblk[i+1] - 1` is the stop index of block :math:`i`
+ *                 - :c:data:`irblk[i+1] - irred[i]` the dimension :math:`n_\ell` of block :math:`i`
+ *                 - :c:data:`irblk[nirred]` the dimension of :math:`T`
  *
  *  :type irblk: trlib_int_t, input
- *  :param diag: pointer to array holding diagonal of :math:`T`, length `irblk[nirblk]`
+ *  :param diag: pointer to array holding diagonal of :math:`T`, length :c:data:`irblk[nirblk]`
  *  :type diag: trlib_flt_t, input
- *  :param offdiag: pointer to array holding offdiagonal of :math:`T`, length `irblk[nirblk]`
+ *  :param offdiag: pointer to array holding offdiagonal of :math:`T`, length :c:data:`irblk[nirblk]`
  *  :type offdiag: trlib_flt_t, input
- *  :param warm: set :math:`\ge 1` if you want to update information about block :math:`\ell`, provide a values in @p leftmost_minor, @p ileftmost, @p leftmost; else \c 0
+ *  :param warm: set :math:`\ge 1` if you want to update information about block :math:`\ell`, provide values in :c:data:`leftmost_minor`, :c:data:`ileftmost`, :c:data:`leftmost`; else ``0``
  *  :type warm: trlib_int_t, input
  *  :param leftmost_minor: smallest eigenvalue of principal :math:`(n_\ell-1)\times (n_\ell-1)` submatrix of :math:`T_\ell`
  *  :type leftmost_minor: trlib_flt_t, input
@@ -54,11 +54,14 @@
  *      ====== ================================
  *
  *  :type timing: trlib_int_t, input/output
- *  @param[in,out] ileftmost index of block that corresponds to absolute smallest eigenvalue
- *  @param[in,out] leftmost smallest eigenvalue of :math:`T`, length :math:`\ell`
- *                 - on entry: allocated memory
- *                 - on exit: `leftmost[i]` smallest eigenvalue of :math:`T_i`
+ *  :param ileftmost: index of block that corresponds to absolute smallest eigenvalue
+ *  :type ileftmost: trlib_int_t, input/output
+ *  :param leftmost: smallest eigenvalue of :math:`T`, length :math:`\ell`
  *
+ *      - on entry: allocated memory
+ *      - on exit: :c:data:`leftmost[i]` smallest eigenvalue of :math:`T_i`
+ *
+ *  :type leftmost: trlib_flt_t, input/output
  *  :returns:      status
  *
  *                 - :c:macro:`TRLIB_LMR_CONV`          success
@@ -80,7 +83,7 @@ trlib_int_t trlib_leftmost(
  *  Method is sketched on p. 516 in [Gould1999]_.
  *
  *  Note that this function most likely will fail in the case of a reducible matrix
- *  (\p offdiag contains 0).
+ *  (:c:data:`offdiag` contains 0).
  *
  *  **Convergence**
  *  
@@ -92,7 +95,7 @@ trlib_int_t trlib_leftmost(
  *  :type diag: trlib_flt_t, input
  *  :param offdiag: pointer to array holding offdiagonal of :math:`T`, length :c:data:`n-1`
  *  :type offdiag: trlib_flt_t, input
- *  :param  warm: set :math:`\ge 1` if you provide a valid value in @p leftmost_minor, else \c 0. Exact value determines which model will be used for zero-finding
+ *  :param  warm: set :math:`\ge 1` if you provide a valid value in :c:data:`leftmost_minor`, else ``0``. Exact value determines which model will be used for zero-finding
  *
  *      ===== ======
  *      warm  model

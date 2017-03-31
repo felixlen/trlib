@@ -24,7 +24,8 @@ if read_the_docs_build:
     subprocess.check_call(['cp', 'python.rst.in', 'python.rst'])
     subprocess.check_call(['cp', 'matlab.rst.in', 'matlab.rst'])
     subprocess.check_call(['cp', 'references.rst.in', 'references.rst'])
-    subprocess.check_call(['python', 'extractdoc.py', '../include/trlib_krylov.h.in', 'capi_krylov.rst', 'API trlib_krylov'])
+    for include in ['krylov', 'tri_factor', 'leftmost', 'eigen_inverse', 'quadratic_zero', 'types']:
+        subprocess.check_call(['python', 'extractdoc.py', '../include/trlib_{:s}.h.in'.format(include), 'capi_{:s}.rst'.format(include), 'CAPI trlib_{:s}'.format(include])
 
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
