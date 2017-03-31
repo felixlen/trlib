@@ -1,2 +1,83 @@
 Installation
 ============
+
+Dependencies
+------------
+
+You have to make sure that the following requirements are provided:
+
+    - BLAS
+    - LAPACK
+    - CMake
+
+The following dependencies are optional:
+
+    - for the unittests:
+        - Check
+    - for the documentation:
+        - sphinx with read the docs theme
+    - for the python interface:
+        - Python Header, TRLIB works with Python 2 and 3 and compiles for the versions it finds
+        - Cython
+        - NumPy
+        - SciPy
+    - for the matlab interface:
+        - MATLAB with mex compiler and header files
+
+Ubuntu/Debian Packages
+----------------------
+
+To install all dependencies in a Ubuntu/Debian environment:
+
+If you want to use Python 3::
+
+    sudo apt-get install cmake check build-essential python3-dev python3-numpy python3-scipy cython3 liblapack-dev libblas-dev 
+
+If you want to use Python 2::
+
+    sudo apt-get install cmake check cython build-essential python-dev python-numpy python-scipy cython liblapack-dev libblas-dev
+
+Compilation
+-----------
+
+TRLIB is set up to create out of source builds using CMake. First create a build directory and change to that:
+
+    mkdir build
+    cd build
+
+Set up CMake in this directory::
+
+    cmake -DCMAKE_BUILD_TYPE=Release ..
+
+Instead of ``Release`` you may also choose ``Debug`` which disables compiler optimization and enables debugging.
+
+You may want change settings as described below in CMake, especially you have to turn on compilation of the python/matlab interface if you wish. After that execute::
+
+    ccmake .
+
+Press ``c`` to reconfigure with changes and ``q`` to exit.
+
+You can now compile TRLIB, generate the documentation and run the tests by executing::
+
+    make
+    make test
+    make doc
+    make install
+
+Depending on the installation location, you might have to execute ``make install`` as super user::
+
+    sudo make install
+
+CMake Options
+-------------
+
+========================= ======== ============
+Option                    default  Description
+========================= ======== ============
+``TRLIB_MEASURE_TIME``    ``OFF``  measure time for trlib function calls
+``TRLIB_MEASURE_SUBTIME`` ``OFF``  measure time for blas and lapack function calls
+``TRLIB_BUILD_MEX``       ``OFF``  build matlab interface
+``TRLIB_BUILD_PYTHON2``   ``OFF``  build python 2 interface
+``TRLIB_BUILD_PYTHON3``   ``OFF``  build python 3 interface
+========================= ======== ============
+
