@@ -1,0 +1,47 @@
+Matlab Interface
+================
+
+Installation
+------------
+
+Build trlib as declared in :ref:`installation` with CMake flag ``TRLIB_BUILD_MEX`` set to ``ON``.
+At the moment, there is nothing in CMake to install the interface.
+You have to ensure that ``$TRLIB_BUILD_DIR/bindings/matlab`` is found by your Matlab Installation.
+
+Usage
+-----
+
+From Matlab you can access trlib via the functions ``trlib``, ``trlib_options``, ``trlib_problem``, ``trlib_set_hotstart`` and ``trlib_solve``.
+
+``trlib`` is a convenience function above the others that does everything in one step::
+
+   >> Hess = diag(sparse(linspace(-1, 100, 10000)));
+   >> grad = ones(10000, 1);
+   >> [x, flag] = trlib(Hess, grad, 0.1);
+   >> norm(x)
+
+In this example we solve the indefinite problem
+
+.. math::
+
+   \min_{x \in \mathbb R^{10000}} \tfrac 12 \sum_{i = 1}^{10000} \left( \, (-1+101 \tfrac{i-1}{9999}) \, x_i^2 + x_i \right) \quad \text{s.t. } \Vert x \Vert \le 0.1
+
+Hotstart
+--------
+
+It is possible to hotstart the solution in the case that only the radius in the norm constraint changes.
+This is typically the case in applications in nonlinear programming after a rejected step.
+To employ hotstart after solution, you have to store the `TR` cell structure that contains data of the previous solution process and call `trlib_set_hotstart` before the next solution::
+
+   >> Hess = diag(sparse(linspace(-1, 100, 10000)));
+   >> grad = ones(10000, 1);
+   >> [x, flag, prob, TR] = trlib(Hess, grad, 0.1);
+   >> norm(x)
+   >> trlib_set_hotstart(TR);
+   >> [x, flag, prob, TR] = trlib_solve(prob, 0.05, TR);
+   >> norm(x)
+
+Matlab API Documentation
+------------------------
+
+For a documentation of the matlab API use the ``help`` command in matlab on the functions ``trlib``, ``trlib_options``, ``trlib_problem``, ``trlib_set_hotstart`` and ``trlib_solve``.

@@ -1,0 +1,31 @@
+.. TRLib documentation master file, created by
+   sphinx-quickstart on Thu Mar 30 09:53:51 2017.
+   You can adapt this file completely to your liking, but it should at least
+   contain the root `toctree` directive.
+
+Welcome to TRLib's documentation!
+=================================
+
+TRLib is a library that provides various methods related to the `trust region subproblem <https://de.wikipedia.org/wiki/Trust-Region-Verfahren#Bemerkung_zur_L.C3.B6sung_des_quadratischen_Problems>`_ and in particular implements the Generalized Lanczos Method [Gould1999]_ for iterative solution of the trust region subproblem:
+
+A detailed description of the problem and the method as well as the implementation can be found in [Lenders2016]_.
+
+Contents:
+---------
+
+.. toctree::
+   :maxdepth: 2
+
+   installation
+   matlab
+   python
+   capi_krylov
+   references
+
+Indices and tables
+------------------
+
+* :ref:`genindex`
+* :ref:`modindex`
+* :ref:`search`
+

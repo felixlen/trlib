@@ -60,16 +60,16 @@
 #define TRLIB_CLT_LANCZOS       (2)
 #define TRLIB_CLT_HOTSTART      (3)
 
-/** @brief Solves trust region subproblem
- *
- *  Computes minimizer to
+/** 
+ *  Solves trust region subproblem: Computes minimizer to
  * 
- *  \f$ \frac 12 \min \langle s, H s \rangle + \langle g_0, s \rangle \f$
- *  subject to the trust region constraint \f$ \Vert s \Vert_M \le r \f$,
+ *  :math:`\min \frac 12 \langle s, H s \rangle + \langle g_0, s \rangle`
+ *  subject to the trust region constraint :math:`\Vert s \Vert_M \le r`,
  *  where 
- *  - \f$ H \f$ is available via matrix-vector products \f$ v \mapsto Hv \f$,
- *  - \f$ \Vert s \Vert_M = \sqrt{\langle s, Ms \rangle} \f$ with \f$ M \f$ positive definite,
- *  - \f$ M \f$ is available via matrix-vector products of its inverse, \f$ v \mapsto M^{-1}v \f$.
+ *
+ *  - :math:`H` is available via matrix-vector products :math:`v \mapsto Hv`,
+ *  - :math:`\Vert s \Vert_M = \sqrt{\langle s, Ms \rangle}` with :math:`M` positive definite,
+ *  - :math:`M` is available via matrix-vector products of its inverse, :math:`v \mapsto M^{-1}v`.
  *
  *  The minimizer is a global minimizer (modulo floating point),
  *  as long as the hard case does not occur.
@@ -77,257 +77,308 @@
  *  corresponding to the smallest eigenvalue is degenerate.
  *
  *  In that case a global minimizer in the Krylov subspaces sampled so far is returned,
- *  sampling the complete search space can be forced by setting \p ctl_invariant to #TRLIB_CLC_EXP_INV_GLO,
+ *  sampling the complete search space can be forced by setting :c:data:`ctl_invariant` to :c:macro:`TRLIB_CLC_EXP_INV_GLO`,
  *  but if this is desired factorization based method will most likely be much more efficient.
  *
  *  A preconditioned Conjugate Gradient / Lanczos method is used,
  *  that possibly employs a reduction to a tridiagnoal subproblem
  *  that is solved using Moré-Sorensens method by explicitly
- *  factorizing the tridiagonal matrix, calling #trlib_tri_factor_min.
+ *  factorizing the tridiagonal matrix, calling :c:func:`trlib_tri_factor_min`.
  *
- *  The method builds upon algorithm 5.1 in:
- *  >   Gould, Lucidi, Roma, Toint; SIAM J. Optim. 1999, Vol. 9, No. 2, pp. 504-525,
- *  >   [doi:10.1137/S1052623497322735](http://dx.doi.org/10.1137/S1052623497322735):
- *  >   _Solving The Trust-Region Subproblem Using The Lanczos Method_
+ *  The method builds upon algorithm 5.1 in [Gould1999]_, details of the implementation can be found [Lenders2016]_:
  *
- *  Convergence
- *  -----------
- *  The stopping criterion is based on the gradient of the Lagrangian. Convergence in iteration \f$ i \f$ is reported as soon as
- *  - interior case: \f$ \Vert g_{i+1} \Vert_{M^{-1}} \le \max\{ \texttt{tol_abs_i}, \texttt{tol_rel_i} \, \Vert g_0 \Vert_{M^{-1}} \} \f$.
- *  - boundary case: \f$ \Vert g_{i+1} \Vert_{M^{-1}} \le \max\{ \texttt{tol_abs_b}, \texttt{tol_rel_b} \, \Vert g_0 \Vert_{M^{-1}} \} \f$.
- *  - hard case: \p ctl_invariant determines if this is the sole stopping criterion or if further invariant subspaces are going to be explored. See the documentation of this option.
+ *  **Convergence**
  *
- *  Calling Scheme
- *  --------------
+ *  The stopping criterion is based on the gradient of the Lagrangian. Convergence in iteration :math:`i` is reported as soon as
+ *
+ *  - interior case: :math:`\Vert g_{i+1} \Vert_{M^{-1}} \le \max\{ \texttt{tol_abs_i}, \texttt{tol_rel_i} \, \Vert g_0 \Vert_{M^{-1}} \}`.
+ *  - boundary case: :math:`\Vert g_{i+1} \Vert_{M^{-1}} \le \max\{ \texttt{tol_abs_b}, \texttt{tol_rel_b} \, \Vert g_0 \Vert_{M^{-1}} \}`.
+ *  - hard case: :c:data:`ctl_invariant` determines if this is the sole stopping criterion or if further invariant subspaces are going to be explored. See the documentation of this option.
+ *
+ *  **Calling Scheme**
+ *
  *  This function employs a reverse communication paradigm.
  *  The functions exits whenever there is an action to be performed
- *  by the user as indicated by the \p action.
+ *  by the user as indicated by the :c:data:`action`.
  *  The user should perform this action and continue with the other
  *  values unchanged as long as the return value is positive.
  *
- *  User provided storage
- *  ---------------------
+ *  **User provided storage**
+ *
  *  The user has to manage 5/6 vectors refered by the names
- *  \f$ g \f$, \f$ g_- \f$, \f$ v \f$, \f$ s \f$, \f$ p \f$, \f$ \textit{Hp} \f$
- *  and a matrix \f$ Q \f$ with \c itmax columns to store the
- *  Lanczos directions \f$ p_i \f$.
+ *  :math:`g`, :math:`g_-`, :math:`v`, :math:`s`, :math:`p`, :math:`\textit{Hp}`
+ *  and a matrix :math:`Q` with :c:data:`itmax` columns to store the
+ *  Lanczos directions :math:`p_i`.
  *  The user must perform the actions on those as indicated by the return value.
  *
- *  In the case of trivial preconditioner, \f$ M = I \f$, it always
- *  holds \f$ v = g \f$ and the vector \f$ v \f$ is not necessary.
+ *  In the case of trivial preconditioner, :math:`M = I`, it always
+ *  holds :math:`v = g` and the vector :math:`v` is not necessary.
  *
- *  \f$ s \f$ holds the solution candidate.
+ *  :math:`s` holds the solution candidate.
  *
- *  Note that the action \f$ s \leftarrow Q h \f$ will only sometimes be requested
+ *  Note that the action :math:`s \leftarrow Q h` will only sometimes be requested
  *  in the very final iteration before convergence. If memory and not computational
- *  load is an issue, you may very well save \p iter, \p ityp, \p flt1, \p flt2
- *  \p flt2 instead of \f$ q_j \f$ and when \f$ s \leftarrow Q s \f$ is requested
- *  simultaniously recompute the directions \f$ q_j \f$ and update the direction
- *  \f$ s \f$ once \f$ q_j \f$ has been computed as \f$ s \leftarrow h_j q_j \f$
- *  with initialization \f$ s \leftarrow 0 \f$.
+ *  load is an issue, you may very well save :c:data:`iter`, :c:data:`ityp`, :c:data:`flt1`, :c:data:`flt2`
+ *  :c:data:`flt2` instead of :math:`q_j` and when :math:`s \leftarrow Q s` is requested
+ *  simultaniously recompute the directions :math:`q_j` and update the direction
+ *  :math:`s` once :math:`q_j` has been computed as :math:`s \leftarrow h_j q_j`
+ *  with initialization :math:`s \leftarrow 0`.
  *
  *  Furthermore the user has to provide a integer and floating point workspace, details
- *  are described in \p iwork and \p fwork.
+ *  are described in :c:data:`iwork` and :c:data:`fwork`.
  *
- *  Resolves
- *  --------
+ *  **Resolves**
  *
- *  ### Reentry with new radius
+ *  *Reentry with new radius*
  *  
  *  You can efficiently hotstart from old results if you have a new problem
- *  with *decreased* trust region radius. Just set `status` to #TRLIB_CLS_HOTSTART.
+ *  with *decreased* trust region radius. Just set `status` to :c:macro:`TRLIB_CLS_HOTSTART`.
  *  Furthermore hotstarting with increased trust region radius should be
  *  trivial as you should be able to just increase the radius and take off
  *  the computation from the previous stage. However as this is an untypical
  *  scenario, it has not been tested at all.
  *
- *  ### Reentry to get minimizer of regularized problem
+ *  *Reentry to get minimizer of regularized problem*
  *
  *  You can reenter to compute the solution of a convexified trust region problem.
  *  You may be interested to this once you see the effect of bad conditioning or also as a cheap retry in a trust region algorithm
  *  before continuing to the next point after a discarded step.
  *
- *  In this case, call the function with `status` set to #TRLIB_CLS_HOTSTART_P.
+ *  In this case, call the function with `status` set to :c:macro:`TRLIB_CLS_HOTSTART_P`.
  *
- *  ### Reentry to get unconstrained minimizer of constant regularized problem
+ *  *Reentry to get unconstrained minimizer of constant regularized problem*
  *
  *  After a successful solve you can compute the norm of the unconstrained minimizer to the problem with regularized
- *  hessian \f$ H + \beta M \f$ (\f$ \beta \f$ large enough such that \f$ H + \beta M \f$ is positive definite)
+ *  hessian :math:`H + \beta M` (:math:`\beta` large enough such that :math:`H + \beta M` is positive definite)
  *  in the previously expanded Krylov subspace. You will certainly be interested in this if you want to implement
- *  the TRACE algorithm described in 
- *  >   Curtis, Robinson, Samadi: Mathematical Programming A, 2016, pp. 1-32,
- *  >   [doi:10.1007/s10107-016-1026-2](http://dx.doi.org/10.1007/s10107-016-1026-2):
- *  >   _A trust region algorithm with a worst-case iteration complexity of \f$ \mathcal O(\epsilon^{-3/2}) \f$ for nonconvex optimization_
+ *  the TRACE algorithm described in [Curtis2016]_.
  *
- *  In this case, call the function with `status` set to #TRLIB_CLS_HOTSTART_R and `radius` set to \f$ \beta \f$.
+ *  In this case, call the function with `status` set to :c:macro:`TRLIB_CLS_HOTSTART_R` and ``radius`` set to :math:`\beta`.
  *
- *  On exit, the \c obj field of \c fwork yields the norm of the solution vector.
+ *  On exit, the ``obj`` field of :c:data:`fwork` yields the norm of the solution vector.
  *
- *  If you not only want the norm but also the unconstrained minimizer, you can get it by one step of #TRLIB_CLA_RETRANSF.
+ *  If you not only want the norm but also the unconstrained minimizer, you can get it by one step of :c:func:`TRLIB_CLA_RETRANSF`.
  *  However since this is usually not the case, you are not asked to do this in the reverse communication scheme.
  *
- *  ### Reentry to find suitable TRACE regularization parameter
+ *  *Reentry to find suitable TRACE regularization parameter*
  *
- *  For the aforementioned TRACE algorithm, there is also the need to compute \f$ \beta \f$ such that \f$ \sigma_{\text l} \le \frac{\beta}{\Vert s(\beta) \Vert} \le \sigma_{\text u} \f$, where \f$ \Vert s(\beta) \Vert \f$ denotes the norm of the regularized unconstrained minimizer.
+ *  For the aforementioned TRACE algorithm, there is also the need to compute :math:`\beta` such that :math:`\sigma_{\text l} \le \frac{\beta}{\Vert s(\beta) \Vert} \le \sigma_{\text u}`, where :math:`\Vert s(\beta) \Vert` denotes the norm of the regularized unconstrained minimizer.
  *
- *  To get this, set `status` to #TRLIB_CLS_HOTSTART_T and `radius` to an initial guess for \f$ \beta \f$, `tol_rel_i` to \f$ \sigma_{\text l} \f$ and `tol_rel_b` to \f$ \sigma_{\text u} \f$. The field `obj` of `fwork` contains the desired solution norm on exit and `flt1` is the desired regularization parameter \f$ \beta \f$.
+ *  To get this, set :c:data:`status` to :c:macro:`TRLIB_CLS_HOTSTART_T` and :c:data:`radius` to an initial guess for :math:`\beta`, :c:data:`tol_rel_i` to :math:`\sigma_{\text l}` and :c:data:`tol_rel_b` to :math:`\sigma_{\text u}`. The field ``obj`` of :c:data:`fwork` contains the desired solution norm on exit and :c:data:`flt1` is the desired regularization parameter :math:`\beta`.
  *
- *  If you not only want the norm but also the unconstrained minimizer, you can get it by one step of #TRLIB_CLA_RETRANSF.
+ *  If you not only want the norm but also the unconstrained minimizer, you can get it by one step of :c:macro:`TRLIB_CLA_RETRANSF`.
  *  However since this is usually not the case, you are not asked to do this in the reverse communication scheme.
  *
- *  ### Reentry with new gradient
+ *  *Reentry with new gradient*
  *  
  *  You can efficiently hotstart from old results if you have a new problem
- *  with changed \f$ g_0 \f$ where the previous sampled Krylov subspace is
+ *  with changed :math:`g_0` where the previous sampled Krylov subspace is
  *  large enough to contain the solution to the new problem, convergence will
  *  *not* be checked:
- *  - get pointer `gt` to negative gradient of tridiagonal problem in `fwork` with #trlib_krylov_gt
- *  - store `gt[0]` and overwrite \f$ \texttt{gt} \leftarrow - Q_i^T \texttt{grad} \f$
- *  - set `status` to #TRLIB_CLS_HOTSTART_G and start reverse communication process
- *  - to reset data for new problem make sure that you restore `gt[0]` and set `gt[1:] = 0` for those elements previously overwritten
  *
- *  Hard case
- *  ---------
- *  If you want to investigate the problem also if the hard case, you can either sample through the invariant subspaces (`ctl_invariant` set to #TRLIB_CLC_EXP_INV_GLO) or solve the problem with a gradient for which the hard does not occur and then hotstart with the actual gradient.
+ *  - get pointer ``gt`` to negative gradient of tridiagonal problem in `fwork` with :c:func:`trlib_krylov_gt`
+ *  - store ``gt[0]`` and overwrite :math:`\texttt{gt} \leftarrow - Q_i^T \texttt{grad}`
+ *  - set :c:data:`status` to :c:macro:`TRLIB_CLS_HOTSTART_G` and start reverse communication process
+ *  - to reset data for new problem make sure that you restore ``gt[0]`` and set ``gt[1:] = 0`` for those elements previously overwritten
  *
- *  @param[in]     init set to #TRLIB_CLS_INIT on first call, to #TRLIB_CLS_HOTSTART on hotstart with smaller radius and otherwise to \c 0. Note that @p itmax_lanczos and @p zero have a different meaning on #TRLIB_CLS_INIT in comparison to the other iterations.
- *  @param[in]     radius trust region radius
- *  @param[in]     equality set to \c 1 if trust region constraint should be enforced as equality
- *  @param[in]     itmax maximum number of iterations
- *  @param[in]     itmax_lanczos maximum number of Lanczos type iterations.
+ *  **Hard case**
+ *
+ *  If you want to investigate the problem also if the hard case, you can either sample through the invariant subspaces (:c:data:`ctl_invariant` set to :c:macro:`TRLIB_CLC_EXP_INV_GLO`) or solve the problem with a gradient for which the hard does not occur and then hotstart with the actual gradient.
+
+ *
+ *  :param init: set to :c:macro:`TRLIB_CLS_INIT` on first call, to :c:macro:`TRLIB_CLS_HOTSTART` on hotstart with smaller radius and otherwise to ``0``. Note that :c:data:`itmax_lanczos` and :c:data:`zero` have a different meaning on :c:macro:`TRLIB_CLS_INIT` in comparison to the other iterations.
+ *  :type init: trlib_int_t, input
+ *  :param radius: trust region radius
+ *  :type radius: trlib_flt_t, input
+ *  :param equality: set to ``1`` if trust region constraint should be enforced as equality
+ *  :type equality: trlib_int_t, input
+ *  :param itmax: maximum number of iterations
+ *  :type itmax: trlib_int_t, input
+ *  :param itmax_lanczos: maximum number of Lanczos type iterations.
  *                 You are strongly advised to set this to a small number (say 25) unless you know better.
  *                 Keep in mind that Lanczos type iteration are only performed when curvature
  *                 information is flat and Lanczos may amplify rounding errors without
  *                 reorthogonalization. If you allow a lot of Lanczos type iterations
  *                 consider reorthogonalizing the new direction against the vector storage.
  *
- *                 Set to \c -1 if @p init is #TRLIB_CLS_INIT if you don't the check if convergence is unlikely
- *  @param[in]     tol_rel_i relative stopping tolerance for interior solution
- *  @param[in]     tol_abs_i absolute stopping tolerance for interior solution
- *  @param[in]     tol_rel_b relative stopping tolerance for boundary solution
- *  @param[in]     tol_abs_b absolute stopping tolerance for boundary solution
- *  @param[in]     zero threshold that determines when \f$ \langle p, Hp \rangle \f$ is considered to be zero and thus control eventual Lanczos switch, on first call interpreted as lower objective bound to terminate once this is reached
- *  @param[in]     ctl_invariant at the moment ignored, routine behaves as if set to #TRLIB_CLC_NO_EXP_INV
- *                 - set to #TRLIB_CLC_NO_EXP_INV if you want to search only in the first invariant Krylov subspace
- *                 - set to #TRLIB_CLC_EXP_INV_GLO if you want to continue to expand the Krylov subspaces even in the case of convergence to a local minimizer within in the subspaces sampled so far. Reverse communication continues as long as ctl_invariant is set to #TRLIB_CLC_EXP_INV_GLO, so you should reset \p ctl_invariant to either #TRLIB_CLC_EXP_INV_LOC or #TRLIB_CLC_EXP_INV_LOC if there is no reason to continue, for example because you cannot find a new nonzero random vector orthogonal to the sampled directions if \p action is #TRLIB_CLA_NEW_KRYLOV.
- *  @param[in]     g_dot_g dot product \f$ \langle g, g \rangle \f$
- *  @param[in]     v_dot_g dot product \f$ \langle v, g \rangle \f$
- *  @param[in]     p_dot_Hp dot product \f$ \langle p, Hp \rangle \f$
- *  @param[in,out] iwork integer workspace for problem, internal memory layout described in table below
- *                 - on first call, provide allocated memory for \p iwork_size entries provided by #trlib_krylov_memory_size
- *                 - leave untouched between iterations
- *                 start | end(exclusive)                | description
- *                 ------|-------------------------------|-------------
- *                 0     | 1                             | internal status flag
- *                 1     | 2                             | iteration counter
- *                 2     | 3                             | flag that indicates if \f$ H \f$ is positive definite in sampled Krylov subspace
- *                 3     | 4                             | flag that indicates if interior solution is expected 
- *                 4     | 5                             | flag that indicates if warmstart information to \p leftmost is available
- *                 5     | 6                             | index to block with smallest leftmost
- *                 6     | 7                             | flag that indicates if warmstart information to \f$ \lambda_0 \f$ is available
- *                 7     | 8                             | flag that indicates if warmstart information to \f$ \lambda \f$ is available
- *                 8     | 9                             | iteration in which switched to Lanczos iteration, \c -1: no switch occured
- *                 9     | 10                            | return code from #trlib_tri_factor_min
- *                 10    | 11                            | \p sub_fail exit code from subrotines called in #trlib_tri_factor_min
- *                 11    | 12                            | number of newton iterations needed in #trlib_tri_factor_min
- *                 12    | 13                            | last iteration in which a headline has been printed
- *                 13    | 14                            | kind of iteration headline that has been printed last
- *                 14    | 15                            | number of irreducible blocks
- *                 15    | \f$ 15+\texttt{itmax} + 1 \f$ | decomposition into irredecubile block, \p irblk for #trlib_tri_factor_min
+ *                 Set to ``-1`` if :c:data:`init` is :c:macro:`TRLIB_CLS_INIT` if you want to disable the check for unlikely convergence and exit early.
+ *  :type itmax_lanczos: trlib_int_t, input
+ *  :param tol_rel_i: relative stopping tolerance for interior solution
+ *  :type tol_rel_i: trlib_flt_t, input
+ *  :param tol_abs_i: absolute stopping tolerance for interior solution
+ *  :type tol_abs_i: trlib_flt_t, input
+ *  :param tol_rel_b: relative stopping tolerance for boundary solution
+ *  :type tol_rel_b: trlib_flt_t, input
+ *  :param tol_abs_b: absolute stopping tolerance for boundary solution
+ *  :type tol_abs_b: trlib_flt_t, input
+ *  :param zero: threshold that determines when :math:`\langle p, Hp \rangle` is considered to be zero and thus control eventual Lanczos switch, on first call interpreted as lower objective bound to terminate once this is reached
+ *  :type zero: trlib_flt_t, input
+ *  :param ctl_invariant: 
  *
- *  @param[in,out] fwork floating point workspace for problem, internal memory layout described in table below
- *                 - on very first call, provide allocated memory for at least \p fwork_size entries that has been initialized using #trlib_prepare_memory, \p fwork_size can be obtained by calling #trlib_krylov_memory_size
+ *                 - set to :c:macro:`TRLIB_CLC_NO_EXP_INV` if you want to search only in the first invariant Krylov subspace
+ *                 - set to :c:macro:`TRLIB_CLC_EXP_INV_LOC` if you wnat to continue to expand the Krylov subspaces but terminate if there is convergence indication in the subspaces sampled so far.
+ *                 - set to :c:macro:`TRLIB_CLC_EXP_INV_GLO` if you want to continue to expand the Krylov subspaces even in the case of convergence to a local minimizer within in the subspaces sampled so far. Reverse communication continues as long as ctl_invariant is set to :c:macro:`TRLIB_CLC_EXP_INV_GLO`, so you should reset :c:data:`ctl_invariant` to either :c:macro:`TRLIB_CLC_EXP_INV_LOC` or :c:macro:`TRLIB_CLC_EXP_INV_LOC` if there is no reason to continue, for example because you cannot find a new nonzero random vector orthogonal to the sampled directions if :c:data:`action` is :c:macro:`TRLIB_CLA_NEW_KRYLOV`.
+ *
+ *  :type ctl_invariant: trlib_int_t, input
+ *  :param g_dot_g: dot product :math:`\langle g, g \rangle`
+ *  :type g_dot_g: trlib_flt_t, input
+ *  :param v_dot_g: dot product :math:`\langle v, g \rangle`
+ *  :type v_dot_g: trlib_flt_t, input
+ *  :param p_dot_Hp: dot product :math:`\langle p, Hp \rangle`
+ *  :type p_dot_Hp: trlib_flt_t, input
+ *  :param iwork: integer workspace for problem, internal memory layout described in table below
+ *
+ *                 - on first call, provide allocated memory for :c:data:`iwork_size` entries provided by :c:func:`trlib_krylov_memory_size`
+ *                 - leave untouched between iterations
+ *
+ *                 ====== ================= ==========================
+ *                 start   end(exclusive)   description
+ *                 ====== ================= ==========================
+ *                 0       1                internal status flag
+ *                 1       2                iteration counter
+ *                 2       3                flag that indicates if :math:`H` is positive definite in sampled Krylov subspace
+ *                 3       4                flag that indicates if interior solution is expected 
+ *                 4       5                flag that indicates if warmstart information to :c:data:`leftmost` is available
+ *                 5       6                index to block with smallest leftmost
+ *                 6       7                flag that indicates if warmstart information to :math:`\lambda_0` is available
+ *                 7       8                flag that indicates if warmstart information to :math:`\lambda` is available
+ *                 8       9                iteration in which switched to Lanczos iteration, ``-1``: no switch occured
+ *                 9       10               return code from :c:func:`trlib_tri_factor_min`
+ *                 10      11               :c:data:`sub_fail` exit code from subrotines called in :c:func:`trlib_tri_factor_min`
+ *                 11      12               number of newton iterations needed in :c:func:`trlib_tri_factor_min`
+ *                 12      13               last iteration in which a headline has been printed
+ *                 13      14               kind of iteration headline that has been printed last
+ *                 14      15               number of irreducible blocks
+ *                 15      16 + ``itmax``   decomposition into irredecubile block, :c:data:`irblk` for :c:func:`trlib_tri_factor_min`
+ *                 ====== ================= ==========================
+ *
+ *  :type iwork: trlib_int_t, input/output
+ *  :param fwork: floating point workspace for problem, internal memory layout described in table below
+ *
+ *                 - on very first call, provide allocated memory for at least :c:data:`fwork_size` entries that has been initialized using :c:func:`trlib_prepare_memory`, :c:data:`fwork_size` can be obtained by calling :c:func:`trlib_krylov_memory_size`
  *                 - can be used for different problem instances with matching dimensions and itmax without reinitialization
  *                 - leave untouched between iterations
- *                 start                          | end (exclusive)                | description
- *                 -------------------------------|--------------------------------|--------------
- *                 0                              | 1                              | stopping tolerance in case of interior solution
- *                 1                              | 2                              | stopping tolerance in case of boundary solution
- *                 2                              | 3                              | dot product \f$ \langle v, g \rangle \f$ in current iteration
- *                 3                              | 4                              | dot product \f$ \langle p, Hp \rangle \f$ in current iteration
- *                 4                              | 5                              | ratio between projected CG gradient and Lanczos direction in current iteration
- *                 5                              | 6                              | ratio between  projected CG gradient and Lanczos direction in previous iteration
- *                 6                              | 7                              | Lagrange multiplier \f$ \lambda_0 \f$ for trust region constraint
- *                 7                              | 8                              | Lagrange multiplier \f$ \lambda \f$ for trust region constraint
- *                 8                              | 9                              | objective function value in current iterate
- *                 9                              | 10                             | \f$ \langle s_i, Mp_i \rangle \f$
- *                 10                             | 11                             | \f$ \langle p_i, Mp_i \rangle \f$
- *                 11                             | 12                             | \f$ \langle s_i, Ms_i \rangle \f$
- *                 12                             | 13                             | \f$ \sigma_i \f$
- *                 13                             | 14                             | max Rayleigh quotient, \f$ \max_i \frac{\langle p, Hp \rangle}{\langle p, M p \rangle} \f$
- *                 14                             | 15                             | min Rayleigh quotient, \f$ \min_i \frac{\langle p, Hp \rangle}{\langle p, M p \rangle} \f$
- *                 \f$ 15 \f$                     | \f$ 15+\texttt{itmax}+1 \f$    | \f$ \alpha_i, i \ge 0 \f$, step length CG
- *                 \f$ 15+\texttt{itmax}+1 \f$    | \f$ 15+2(\texttt{itmax}+1) \f$ | \f$ \beta_i, i \ge 0 \f$, step update factor CG
- *                 \f$ 15+2(\texttt{itmax}+1) \f$ | \f$ 15+3(\texttt{itmax}+1) \f$ | \p neglin for #trlib_tri_factor_min, just given by \f$ - \gamma_0 e_1 \f$
- *                 \f$ 15+3(\texttt{itmax}+1) \f$ | \f$ 15+4(\texttt{itmax}+1) \f$ | solution \f$ h_0 \f$ of tridiagonal subproblem provided as \p sol by #trlib_tri_factor_min
- *                 \f$ 15+4(\texttt{itmax}+1) \f$ | \f$ 15+5(\texttt{itmax}+1) \f$ | solution \f$ h \f$ of tridiagonal subproblem provided as \p sol by #trlib_tri_factor_min
- *                 \f$ 15+5(\texttt{itmax}+1) \f$ | \f$ 15+6(\texttt{itmax}+1) \f$ | \f$ \delta_i, i \ge 0 \f$, curvature in Lanczos, diagonal of \f$ T \f$ in Lanczos tridiagonalization process
- *                 \f$ 15+6(\texttt{itmax}+1) \f$ | \f$ 15+7(\texttt{itmax}+1) \f$ | diagonal of Cholesky of \f$ T_0 + \lambda_0 I \f$
- *                 \f$ 15+7(\texttt{itmax}+1) \f$ | \f$ 15+8(\texttt{itmax}+1) \f$ | diagonal of Cholesky of \f$ T + \lambda I \f$
- *                 \f$ 15+8(\texttt{itmax}+1) \f$ | \f$ 15+9\texttt{itmax}+8 \f$   | \f$ \gamma_i, i \ge 1 \f$, norm of gradients in Lanczos; provides offdiagonal of \f$ T \f$ in Lanczos tridiagonalization process
- *                 \f$ 15+9\texttt{itmax}+8 \f$   | \f$ 15+10\texttt{itmax}+8 \f$   | offdiagonal of Cholesky factorization of \f$ T_0 + \lambda_0 I \f$
- *                 \f$ 15+10\texttt{itmax}+8 \f$  | \f$ 15+11\texttt{itmax}+8\f$   | offdiagonal of Cholesky factorization of \f$ T + \lambda I \f$
- *                 \f$ 15+11\texttt{itmax}+8 \f$  | \f$ 15+12\texttt{itmax}+9 \f$   | \p ones for #trlib_tri_factor_min and #trlib_eigen_inverse
- *                 \f$ 15+12\texttt{itmax}+9 \f$  | \f$ 15+13\texttt{itmax}+10  \f$ | \p leftmost for #trlib_tri_factor_min
- *                 \f$ 15+12\texttt{itmax}+10\f$  | \f$ 15+13\texttt{itmax}+11  \f$ | \p bound_bel lower bound after which iteration will be exited 
- *                 \f$ 15+13\texttt{itmax}+11 \f$ | \f$ 15+14\texttt{itmax}+12 \f$  | \p regdiag for #trlib_tri_factor_regularize_posdef
- *                 \f$ 15+14\texttt{itmax}+12 \f$ | \f$ 15+15\texttt{itmax}+13 \f$  | \p history of convergence criteria values
- *                 \f$ 15+15\texttt{itmax}+13 \f$ | \f$ 15+15\texttt{itmax}+13 \f$ + #trlib_tri_factor_memory_size `(itmax+1)` | \p fwork for #trlib_tri_factor_min
- *  @param[in]     refine set to \c 1 if iterative refinement should be used on solving linear systems, otherwise to \c 0
- *  @param[in]     verbose determines the verbosity level of output that is written to \p fout
- *  @param[in]     unicode set to \c 1 if \p fout can handle unicode, otherwise to \c 0
- *  @param[in]     prefix string that is printed before iteration output
- *  @param[in]     fout output stream
- *  @param[in,out] timing gives timing details, all values are multiples of nanoseconds, provide zero allocated memory of length #trlib_krylov_timing_size()
- *                 block | description
- *                 ------|------------
- *                 0     | total duration
- *                 1     | \p timing of #trlib_tri_factor_min
- *  @param[out]    action The user should perform the following action depending on \p action and \p ityp on the vectors he manages, see the table below.
- *                 The table makes use of the notation explained in the section _User provided storage_ above and the following:
- *                 - \f$ i \f$: \f$ \texttt{iter} \f$
- *                 - \f$ q_j \f$: \f$ j \f$-th column of \f$ Q \f$
- *                 - \f$ Q_i \f$: matrix consisting of the first \f$ i+1 \f$ columns of \f$ Q \f$, \f$ Q_i = (q_0, \ldots, q_i) \f$
- *                 - \f$ h_i \f$: vector of length \f$ i+1 \f$ stored in \p fwork at start position \p h_pointer provided by #trlib_krylov_memory_size
- *                 - \f$ p \leftarrow \perp_M Q_j \f$: optionally \f$ M \f$-reorthonormalize \f$ p \f$ against \f$ Q_j \f$
- *                 - \f$ g \leftarrow \texttt{rand}\perp Q_j \f$ find nonzero random vector that is orthogonal to \f$ Q_j \f$
- *                 - Note that #TRLIB_CLA_NEW_KRYLOV is unlikely and only occurs on problems that employ the hard case and only if \p ctl_invariant != #TRLIB_CLC_NO_EXP_INV.
- *                   If you want to safe yourself from the trouble implementing this and are confident that you don't need to expand several invariant Krylov subspaces, just ensure that \p ctl_invariant is set to #TRLIB_CLC_NO_EXP_INV.
- *                 action             | ityp            | command
- *                 -------------------|-----------------|------------
- *                 #TRLIB_CLA_TRIVIAL       | #TRLIB_CLT_CG, #TRLIB_CLT_L | do nothing
- *                 #TRLIB_CLA_RETRANSF      | #TRLIB_CLT_CG, #TRLIB_CLT_L | \f$ s \leftarrow Q_i h_i \f$
- *                 #TRLIB_CLA_INIT          | #TRLIB_CLT_CG, #TRLIB_CLT_L | \f$ s \leftarrow 0 \f$, \f$ g \leftarrow g_0 \f$, \f$ g_- \leftarrow 0 \f$, \f$ v \leftarrow M^{-1} g \f$, \f$ p \leftarrow -v \f$,\f$ \textit{Hp} \leftarrow Hp \f$, \f$ \texttt{g_dot_g} \leftarrow \langle g, g \rangle \f$, \f$ \texttt{v_dot_g} \leftarrow \langle v, g \rangle \f$, \f$ \texttt{p_dot_Hp} \leftarrow \langle p, \textit{Hp} \rangle \f$, \f$ q_0 \leftarrow \frac{1}{\sqrt{\texttt{v_dot_g}}} v \f$
- *                 #TRLIB_CLA_UPDATE_STATIO | #TRLIB_CLT_CG         | \f$ s \leftarrow s + \texttt{flt1} \, p \f$
- *                 #TRLIB_CLA_UPDATE_STATIO | #TRLIB_CLT_L          | do nothing
- *                 #TRLIB_CLA_UPDATE_GRAD   | #TRLIB_CLT_CG         | \f$ q_i \leftarrow \texttt{flt2} \, v \f$, \f$ g_- \leftarrow g \f$, \f$ g \leftarrow g + \texttt{flt1} \, \textit{Hp} \f$, \f$ v \leftarrow M^{-1} g \f$, \f$ \texttt{g_dot_g} \leftarrow \langle g, g \rangle \f$, \f$ \texttt{v_dot_g} \leftarrow \langle v, g \rangle \f$
- *                 #TRLIB_CLA_UPDATE_GRAD   | #TRLIB_CLT_L          | \f$ s \leftarrow \textit{Hp} + \texttt{flt1}\, g + \texttt{flt2}\, g_- \f$, \f$ g_- \leftarrow \texttt{flt3}\, g \f$, \f$ g \leftarrow s \f$, \f$ v \leftarrow M^{-1} g \f$, \f$ \texttt{v_dot_g} \leftarrow \langle v, g \rangle \f$
- *                 #TRLIB_CLA_UPDATE_DIR    | #TRLIB_CLT_CG         | \f$ p \leftarrow \texttt{flt1} \, v + \texttt{flt2} \, p \f$ with \f$ \texttt{flt1} = -1 \f$, \f$ \textit{Hp} \leftarrow Hp \f$, \f$ \texttt{p_dot_Hp} \leftarrow \langle p, \textit{Hp} \rangle \f$
- *                 #TRLIB_CLA_UPDATE_DIR    | #TRLIB_CLT_L          | \f$ p \leftarrow \texttt{flt1} \, v + \texttt{flt2} \, p \f$ with \f$ \texttt{flt2} = 0 \f$, \f$ p \leftarrow \perp_M Q_{i-1} \f$, \f$ \textit{Hp} \leftarrow Hp \f$, \f$ \texttt{p_dot_Hp} \leftarrow \langle p, \textit{Hp} \rangle \f$, \f$ q_i \leftarrow p \f$
- *                 #TRLIB_CLA_NEW_KRYLOV    | #TRLIB_CLT_CG, #TRLIB_CLT_L | \f$ g \leftarrow \texttt{rand}\perp Q_{i-1} \f$, \f$ g_- \leftarrow 0 \f$, \f$ v \leftarrow M^{-1} g \f$, \f$ \texttt{v_dot_g} \leftarrow \langle v, g \rangle \f$, \f$ p \leftarrow \frac{1}{\sqrt{\texttt{v_dot_g}}} v \f$, \f$ \texttt{p_dot_Hp} \leftarrow \langle p, \textit{Hp} \rangle \f$, \f$ q_{i+1} \leftarrow p \f$
- *                 #TRLIB_CLA_CONV_HARD     | #TRLIB_CLT_CG, #TRLIB_CLT_L | \f$ \texttt{v_dot_g} \leftarrow \langle Hs+g_0+\texttt{flt1}\, Ms, M^{-1}(Hs+g_0) + \texttt{flt1 } s \rangle \f$
- *  @param[out]    iter iteration counter to tell user position in vector storage
- *  @param[out]    ityp iteration type, see \p action
- *  @param[out]    flt1 floating point value that user needs for actions
- *  @param[out]    flt2 floating point value that user needs for actions
- *  @param[out]    flt3 floating point value that user needs for actions
  *
- *  @retval        #TRLIB_CLR_CONTINUE no convergence yet, continue in reverse communication
- *  @retval        #TRLIB_CLR_CONV_BOUND successful exit with converged solution on boundary, end reverse communication process
- *  @retval        #TRLIB_CLR_CONV_INTERIOR successful exit with converged interior solution, end reverse communication process
- *  @retval        #TRLIB_CLR_APPROX_HARD succesful exit with approximate solution, hard case occured, end reverse communication process
- *  @retval        #TRLIB_CLR_NEWTON_BREAK exit with breakdown in Newton iteration in #trlib_tri_factor_min, most likely converged to boundary solution
- *  @retval        #TRLIB_TTR_HARD_INIT_LAM hard case encountered without being able to find suitable initial \f$ \lambda \f$ for Newton iteration, returned approximate stationary point that maybe suboptimal
- *  @retval        #TRLIB_CLR_ITMAX iteration limit exceeded, end reverse communication process
- *  @retval        #TRLIB_CLR_UNBDBEL problem seems to be unbounded from below, end reverse communication process
- *  @retval        #TRLIB_CLR_FAIL_FACTOR failure on factorization, end reverse communication process
- *  @retval        #TRLIB_CLR_FAIL_LINSOLVE failure on backsolve, end reverse communication process
- *  @retval        #TRLIB_CLR_FAIL_NUMERIC failure as one of the values v_dot_g or p_dot_Hp are not a floating point number
- *  @retval        #TRLIB_CLR_UNLIKE_CONV exit early as convergence seems to be unlikely
- *  @retval        #TRLIB_CLR_PCINDEF preconditioner apperas to be indefinite, end reverse communication process
- *  @retval        #TRLIB_CLR_UNEXPECT_INT unexpected interior solution found, expected boundary solution, end reverse communication process
- *  @retval        #TRLIB_CLR_FAIL_TTR failure occured in #trlib_tri_factor_min, check `iwork[7]` and `iwork[8]` for details
- *  @retval        #TRLIB_CLR_FAIL_HARD failure due to occurence of hard case: invariant subspace encountered without local convergence and request for early termination without exploring further invariant subspaces
+ *                 ======================== ================================= =============================================
+ *                 start                    end (exclusive)                   description
+ *                 ======================== ================================= =============================================
+ *                 0                        1                                 stopping tolerance in case of interior solution
+ *                 1                        2                                 stopping tolerance in case of boundary solution
+ *                 2                        3                                 dot product :math:`\langle v, g \rangle` in current iteration
+ *                 3                        4                                 dot product :math:`\langle p, Hp \rangle` in current iteration
+ *                 4                        5                                 ratio between projected CG gradient and Lanczos direction in current iteration
+ *                 5                        6                                 ratio between  projected CG gradient and Lanczos direction in previous iteration
+ *                 6                        7                                 Lagrange multiplier :math:`\lambda_0` for trust region constraint
+ *                 7                        8                                 Lagrange multiplier :math:`\lambda` for trust region constraint
+ *                 8                        9                                 objective function value in current iterate
+ *                 9                        10                                :math:`\langle s_i, Mp_i \rangle`
+ *                 10                       11                                :math:`\langle p_i, Mp_i \rangle`
+ *                 11                       12                                :math:`\langle s_i, Ms_i \rangle`
+ *                 12                       13                                :math:`\sigma_i`
+ *                 13                       14                                max Rayleigh quotient, :math:`\max_i \frac{\langle p, Hp \rangle}{\langle p, M p \rangle}`
+ *                 14                       15                                min Rayleigh quotient, :math:`\min_i \frac{\langle p, Hp \rangle}{\langle p, M p \rangle}`
+ *                 15                       16 +    :c:data:`itmax`           :math:`\alpha_i, i \ge 0`, step length CG
+ *                 16 +    :c:data:`itmax`  17 +  2 :c:data:`itmax`           :math:`\beta_i, i \ge 0`, step update factor CG
+ *                 17 +  2 :c:data:`itmax`  18 +  3 :c:data:`itmax`           :c:data:`neglin` for :c:func:`trlib_tri_factor_min`, just given by :math:`- \gamma_0 e_1`
+ *                 18 +  3 :c:data:`itmax`  19 +  4 :c:data:`itmax`           solution :math:`h_0` of tridiagonal subproblem provided as :c:data:`sol` by :c:func:`trlib_tri_factor_min`
+ *                 19 +  4 :c:data:`itmax`  20 +  5 :c:data:`itmax`           solution :math:`h` of tridiagonal subproblem provided as :c:data:`sol` by :c:func:`trlib_tri_factor_min`
+ *                 20 +  5 :c:data:`itmax`  21 +  6 :c:data:`itmax`           :math:`\delta_i, i \ge 0`, curvature in Lanczos, diagonal of :math:`T` in Lanczos tridiagonalization process
+ *                 21 +  6 :c:data:`itmax`  22 +  7 :c:data:`itmax`           diagonal of Cholesky of :math:`T_0 + \lambda_0 I`
+ *                 22 +  7 :c:data:`itmax`  23 +  8 :c:data:`itmax`           diagonal of Cholesky of :math:`T + \lambda I`
+ *                 23 +  8 :c:data:`itmax`  23 +  9 :c:data:`itmax`           :math:`\gamma_i, i \ge 1`, norm of gradients in Lanczos; provides offdiagonal of \f$ T \f$ in Lanczos tridiagonalization process
+ *                 23 +  9 :c:data:`itmax`  23 + 10 :c:data:`itmax`           offdiagonal of Cholesky factorization of :math:` T_0 + \lambda_0 I`
+ *                 23 + 10 :c:data:`itmax`  23 + 11 :c:data:`itmax`           offdiagonal of Cholesky factorization of :math:` T + \lambda I`
+ *                 23 + 11 :c:data:`itmax`  24 + 12 :c:data:`itmax`           :c:data:`ones` for :c:func:`trlib_tri_factor_min` and :c:func:`trlib_eigen_inverse`
+ *                 24 + 12 :c:data:`itmax`  25 + 13 :c:data:`itmax`           :c:data:`leftmost` for :c:func:`trlib_tri_factor_min`
+ *                 25 + 13 :c:data:`itmax`  26 + 13 :c:data:`itmax`           :c:data:`bound_bel` lower bound after which iteration will be exited 
+ *                 26 + 13 :c:data:`itmax`  27 + 14 :c:data:`itmax`           :c:data:`regdiag` for :c:func:`trlib_tri_factor_regularize_posdef`
+ *                 27 + 14 :c:data:`itmax`  28 + 15 :c:data:`itmax`           history of convergence criteria values
+ *                 28 + 15 :c:data:`itmax`  28 + 15 :c:data:`itmax` + ``fmz`` :c:data:`fwork` for :c:func:`trlib_tri_factor_min`, ``fmz`` is given by :c:func:trlib_tri_factor_memory_size() with argument ``itmax+1``
+ *                 ======================== ================================= =============================================
+ *
+ *
+ *  :type fwork: trlib_flt_t, input/output
+ *  :param refine: set to ``1`` if iterative refinement should be used on solving linear systems, otherwise to ``0``
+ *  :type refine: trlib_int_t, input
+ *  :param verbose: determines the verbosity level of output that is written to :c:data:`fout`
+ *  :type verbose: trlib_int_t, input
+ *  :param unicode: set to ``1`` if :c:data:`fout` can handle unicode, otherwise to ``0``
+ *  :type unicode: trlib_int_t, input
+ *  :param prefix: string that is printed before iteration output
+ *  :type prefix: char, input
+ *  :param fout: output stream
+ *  :type fout: FILE, input
+ *  :param timing: gives timing details, all values are multiples of nanoseconds, provide zero allocated memory of length :c:func:`trlib_krylov_timing_size`
+ *                 
+ *                 ====== ============
+ *                 block   description
+ *                 ====== ============
+ *                 0       total duration
+ *                 1       :c:data:`timing` of :c:func:`trlib_tri_factor_min`
+ *                 ====== ============
+ *
+ *  :type timing: trlib_int_t, input/output
+ *  :param action: The user should perform the following action depending on :c:data:`action` and :c:data:`ityp` on the vectors he manages, see the table below.
+ *                 The table makes use of the notation explained in the *User provided storage* above and the following:
+ *
+ *                 - :math:`i`: :c:data:`iter`
+ *                 - :math:`q_j`: :math:`j`-th column of :math:`Q`
+ *                 - :math:`Q_i`: matrix consisting of the first :math:`i+1` columns of :math:`Q`, :math:`Q_i = (q_0, \ldots, q_i)`
+ *                 - :math:`h_i`: vector of length :math:`i+1` stored in :c:data:`fwork` at start position :c:data:`h_pointer` provided by :c:func:`trlib_krylov_memory_size`
+ *                 - :math:`p \leftarrow \perp_M Q_j`: optionally :math:`M`-reorthonormalize :math:`p` against :math:`Q_j`
+ *                 - :math:`g \leftarrow \texttt{rand}\perp Q_j` find nonzero random vector that is orthogonal to :math:`Q_j`
+ *                 - Note that :c:macro:`TRLIB_CLA_NEW_KRYLOV` is unlikely and only occurs on problems that employ the hard case and only if :c:data:`ctl_invariant` :math:`\neq` :c:macro:`TRLIB_CLC_NO_EXP_INV`.
+ *                   If you want to safe yourself from the trouble implementing this and are confident that you don't need to expand several invariant Krylov subspaces, just ensure that :c:data:`ctl_invariant` is set to :c:macro:`TRLIB_CLC_NO_EXP_INV`.
+ *
+ *                 =================================== ================================================= =============================
+ *                 action                              ityp                                              command
+ *                 =================================== ================================================= =============================
+ *                 :c:macro:`TRLIB_CLA_TRIVIAL`        :c:macro:`TRLIB_CLT_CG`, :c:macro:`TRLIB_CLT_L`   do nothing
+ *                 :c:macro:`TRLIB_CLA_RETRANSF`       :c:macro:`TRLIB_CLT_CG`, :c:macro:`TRLIB_CLT_L`   :math:`s \leftarrow Q_i h_i`
+ *                 :c:macro:`TRLIB_CLA_INIT`           :c:macro:`TRLIB_CLT_CG`, :c:macro:`TRLIB_CLT_L`   :math:`s \leftarrow 0`, :math:`g \leftarrow g_0`, :math:`g_- \leftarrow 0`, :math:`v \leftarrow M^{-1} g`, :math:`p \leftarrow -v`, :math:`\textit{Hp} \leftarrow Hp`, :math:`\texttt{g_dot_g} \leftarrow \langle g, g \rangle`, :math:`\texttt{v_dot_g} \leftarrow \langle v, g \rangle`, :math:`\texttt{p_dot_Hp} \leftarrow \langle p, \textit{Hp} \rangle`, :math:`q_0 \leftarrow \frac{1}{\sqrt{\texttt{v_dot_g}}} v`
+ *                 :c:macro:`TRLIB_CLA_UPDATE_STATIO`  :c:macro:`TRLIB_CLT_CG`                           :math:`s \leftarrow s + \texttt{flt1} \, p`
+ *                 :c:macro:`TRLIB_CLA_UPDATE_STATIO`  :c:macro:`TRLIB_CLT_L`                            do nothing
+ *                 :c:macro:`TRLIB_CLA_UPDATE_GRAD`    :c:macro:`TRLIB_CLT_CG`                           :math:`q_i \leftarrow \texttt{flt2} \, v`, :math:`g_- \leftarrow g`, :math:`g \leftarrow g + \texttt{flt1} \, \textit{Hp}`, :math:`v \leftarrow M^{-1} g`, :math:`\texttt{g_dot_g} \leftarrow \langle g, g \rangle`, :math:`\texttt{v_dot_g} \leftarrow \langle v, g \rangle`
+ *                 :c:macro:`TRLIB_CLA_UPDATE_GRAD`    :c:macro:`TRLIB_CLT_L`                            :math:`s \leftarrow \textit{Hp} + \texttt{flt1}\, g + \texttt{flt2}\, g_-`, :math:`g_- \leftarrow \texttt{flt3}\, g`, :math:`g \leftarrow s`, :math:`v \leftarrow M^{-1} g`, :math:`\texttt{v_dot_g} \leftarrow \langle v, g \rangle`
+ *                 :c:macro:`TRLIB_CLA_UPDATE_DIR`     :c:macro:`TRLIB_CLT_CG`                           :math:`p \leftarrow \texttt{flt1} \, v + \texttt{flt2} \, p` with :math:`\texttt{flt1} = -1`, :math:`\textit{Hp} \leftarrow Hp`, :math:`\texttt{p_dot_Hp} \leftarrow \langle p, \textit{Hp} \rangle`
+ *                 :c:macro:`TRLIB_CLA_UPDATE_DIR`     :c:macro:`TRLIB_CLT_L`                            :math:`p \leftarrow \texttt{flt1} \, v + \texttt{flt2} \, p` with :math:`\texttt{flt2} = 0`, :math:`p \leftarrow \perp_M Q_{i-1}`, :math:`\textit{Hp} \leftarrow Hp`, :math:`\texttt{p_dot_Hp} \leftarrow \langle p, \textit{Hp} \rangle`, :math:`q_i \leftarrow p`
+ *                 :c:macro:`TRLIB_CLA_NEW_KRYLOV`     :c:macro:`TRLIB_CLT_CG`, :c:macro:`TRLIB_CLT_L`   :math:`g \leftarrow \texttt{rand}\perp Q_{i-1}`, :math:`g_- \leftarrow 0`, :math:`v \leftarrow M^{-1} g`, :math:`\texttt{v_dot_g} \leftarrow \langle v, g \rangle`, :math:`p \leftarrow \frac{1}{\sqrt{\texttt{v_dot_g}}} v`, :math:`\texttt{p_dot_Hp} \leftarrow \langle p, \textit{Hp} \rangle`, :math:`q_{i+1} \leftarrow p`
+ *                 :c:macro:`TRLIB_CLA_CONV_HARD`      :c:macro:`TRLIB_CLT_CG`, :c:macro:`TRLIB_CLT_L`   :math:`\texttt{v_dot_g} \leftarrow \langle Hs+g_0+\texttt{flt1}\, Ms, M^{-1}(Hs+g_0) + \texttt{flt1 } s \rangle`
+ *                 =================================== ================================================= =============================
+ *
+ *  :type action: trlib_int_t, output
+ *  :param iter: iteration counter to tell user position in vector storage
+ *  :type iter: trlib_int_t, output
+ *  :param ityp: iteration type, see :c:data:`action`
+ *  :type ityp: trlib_int_t, output
+ *  :param flt1: floating point value that user needs for actions
+ *  :type flt1: trlib_flt_t, output
+ *  :param flt2: floating point value that user needs for actions
+ *  :type flt2: trlib_flt_t, output
+ *  :param flt3: floating point value that user needs for actions
+ *  :type flt3: trlib_flt_t, output
+ *
+ *  :returns: status flag with following meaning:
+ *
+ *      - :c:macro:`TRLIB_CLR_CONTINUE` no convergence yet, continue in reverse communication
+ *      - :c:macro:`TRLIB_CLR_CONV_BOUND` successful exit with converged solution on boundary, end reverse communication process
+ *      - :c:macro:`TRLIB_CLR_CONV_INTERIOR` successful exit with converged interior solution, end reverse communication process
+ *      - :c:macro:`TRLIB_CLR_APPROX_HARD` succesful exit with approximate solution, hard case occured, end reverse communication process
+ *      - :c:macro:`TRLIB_CLR_NEWTON_BREAK` exit with breakdown in Newton iteration in :c:func:`trlib_tri_factor_min`, most likely converged to boundary solution
+ *      - :c:macro:`TRLIB_TTR_HARD_INIT_LAM` hard case encountered without being able to find suitable initial :math:`\lambda` for Newton iteration, returned approximate stationary point that maybe suboptimal
+ *      - :c:macro:`TRLIB_CLR_ITMAX` iteration limit exceeded, end reverse communication process
+ *      - :c:macro:`TRLIB_CLR_UNBDBEL` problem seems to be unbounded from below, end reverse communication process
+ *      - :c:macro:`TRLIB_CLR_FAIL_FACTOR` failure on factorization, end reverse communication process
+ *      - :c:macro:`TRLIB_CLR_FAIL_LINSOLVE` failure on backsolve, end reverse communication process
+ *      - :c:macro:`TRLIB_CLR_FAIL_NUMERIC` failure as one of the values :c:data:`v_dot_g` or :c:data:`p_dot_Hp` are not a floating point number
+ *      - :c:macro:`TRLIB_CLR_UNLIKE_CONV` exit early as convergence seems to be unlikely
+ *      - :c:macro:`TRLIB_CLR_PCINDEF` preconditioner apperas to be indefinite, end reverse communication process
+ *      - :c:macro:`TRLIB_CLR_UNEXPECT_INT` unexpected interior solution found, expected boundary solution, end reverse communication process
+ *      - :c:macro:`TRLIB_CLR_FAIL_TTR` failure occured in :c:func:`trlib_tri_factor_min`, check :c:data:`iwork[7]` and :c:data:`iwork[8]` for details
+ *      - :c:macro:`TRLIB_CLR_FAIL_HARD` failure due to occurence of hard case: invariant subspace encountered without local convergence and request for early termination without exploring further invariant subspaces
+ *
+ *  :rtype: trlib_int_t
+ *
  *
  */
 
@@ -342,40 +393,54 @@ trlib_int_t trlib_krylov_min(
     trlib_flt_t *flt1, trlib_flt_t *flt2, trlib_flt_t *flt3
 );
 
-/** @brief Prepares floating point workspace for #trlib_krylov_min
+/** Prepares floating point workspace for :c:func::`trlib_krylov_min`
  *  
- *  Initializes floating point workspace \p fwork for #trlib_krylov_min
+ *  Initializes floating point workspace :c:data:`fwork` for :c:func:`trlib_krylov_min`
  *
- *  @param[in]     itmax maximum number of iterations
- *  @param[in,out] fwork floating point workspace to be used by #trlib_krylov_min
+ *  :param itmax: maximum number of iterations
+ *  :type itmax: trlib_int_t, input
+ *  :param fwork: floating point workspace to be used by :c:func:`trlib_krylov_min`
+ *  :type fwork: trlib_flt_t, input/output
  *  
- *  @retval 0
+ *  :returns: ``0``
+ *  :rtype: trlib_int_t
  */
 
 trlib_int_t trlib_krylov_prepare_memory(trlib_int_t itmax, trlib_flt_t *fwork);
 
-/** @brief Gives information on memory that has to be allocated for #trlib_krylov_min
+/** Gives information on memory that has to be allocated for :c:func::`trlib_krylov_min`
  *  
- *  @param[in]     itmax maximum number of iterations
- *  @param[out]    iwork_size size of integer workspace iwork that has to be allocated for #trlib_krylov_min
- *  @param[out]    fwork_size size of floating point workspace fwork that has to be allocated for #trlib_krylov_min
- *  @param[out]    h_pointer start index of vector \f$ h \f$ that has to be used in reverse communication in action #TRLIB_CLA_RETRANSF
+ *  :param itmax: maximum number of iterations
+ *  :type itmax: trlib_int_t, input
+ *  :param iwork_size: size of integer workspace iwork that has to be allocated for :c:func:`trlib_krylov_min`
+ *  :type iwork_size: trlib_int_t, output
+ *  :param fwork_size: size of floating point workspace fwork that has to be allocated for :c:func:`trlib_krylov_min`
+ *  :type fwork_size: trlib_int_t, output
+ *  :param h_pointer: start index of vector :math:`h` that has to be used in reverse communication in action :c:macro:`TRLIB_CLA_RETRANSF`
+ *  :type h_pointer: trlib_int_t, output
  *  
- *  @retval 0
+ *  :returns: ``0``
+ *  :rtype: trlib_int_t
  */
 
 trlib_int_t trlib_krylov_memory_size(trlib_int_t itmax, trlib_int_t *iwork_size, trlib_int_t *fwork_size, trlib_int_t *h_pointer);
 
-/** @brief size that has to be allocated for \p timing in #trlib_krylov_min
+/** size that has to be allocated for :c:data:`timing` in :c:func:`trlib_krylov_min`
+ *
+ *  :returns: ``0``
+ *  :rtype: trlib_int_t
  */
 trlib_int_t trlib_krylov_timing_size();
 
-/** @brief Gives pointer to negative gradient of tridiagonal problem
+/** Gives pointer to negative gradient of tridiagonal problem
  *  
- *  @param[in] itmax maximum number of iterations
- *  @param[in,out] gt_pointer pointer to negative gradient of tridiagonal subproblem
+ *  :param itmax: itmax maximum number of iterations
+ *  :type itmax: trlib_int_t, input
+ *  :param gt_pointer: pointer to negative gradient of tridiagonal subproblem
+ *  :type gt_pointer: trlib_int_t, output
  *
- *  @retval 0
+ *  :returns: ``0``
+ *  :rtype: trlib_int_t
  */
 
 trlib_int_t trlib_krylov_gt(trlib_int_t itmax, trlib_int_t *gt_pointer);
