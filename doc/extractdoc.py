@@ -34,7 +34,7 @@ while '/**' in instring:
 
     functions.append((function, doc))
 
-outlines = [sys.argv[3], '='.join(['' for ii in range(len(1+sys.argv[3]))]), '', '', 'Functions', '------------', '', '']
+outlines = [sys.argv[3], '='.join(['' for ii in range(1+len(sys.argv[3]))]), '', '', 'Functions', '------------', '', '']
 
 for fun in functions:
     outlines.append('.. c:function:: {:s}\n\n{:s}\n\n'.format(fun[0], fun[1]))
