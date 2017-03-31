@@ -8,47 +8,76 @@
 
 #define TRLIB_EIR_N_STARTVEC    (5)
 
-/** @brief Computes eigenvector to provided eigenvalue of symmetric tridiagonal matrix \f$ T \in \mathbb R^{n\times n} \f$,
- *         using inverse iteration.
+/** Computes eigenvector to provided eigenvalue of symmetric tridiagonal matrix :math:`T \in \mathbb R^{n\times n}`,
+ *  using inverse iteration.
  *
- *  For a description of the method see <https://en.wikipedia.org/wiki/Inverse_iteration>.
+ *  For a description of the method see https://en.wikipedia.org/wiki/Inverse_iteration.
  *
- *  Convergence
- *  -----------
- *  Convergence is reported if \f$ \vert \frac{1}{\Vert w_{i+1} \Vert} - \texttt{pert} \vert \le \texttt{tol_abs} \f$, where \f$ (T-\lambda I) w_{i+1} = v_i \f$, \f$ v_i \f$ the current normalized iterate and \f$ \texttt{pert} \f$ is the perturbation applied to the provided eigenvalue.
+ *  **Convergence**
+ *  
+ *  Convergence is reported if :math:`\vert \frac{1}{\Vert w_{i+1} \Vert} - \texttt{pert} \vert \le \texttt{tol_abs}`, where :math:`(T-\lambda I) w_{i+1} = v_i`, :math:`v_i` the current normalized iterate and :math:`\texttt{pert}` is the perturbation applied to the provided eigenvalue.
  *
- *  @param[in]     n dimension, ensure \f$ n > 0 \f$
- *  @param[in]     diag pointer to array holding diagonal of \f$ T \f$, length \p n
- *  @param[in]     offdiag pointer to array holding offdiagonal of \f$ T \f$, length \c n-1
- *  @param[in]     lam_init estimation of eigenvalue corresponding to eigenvector to compute
- *  @param[in]     itmax maximum number of iterations
- *  @param[in]     tol_abs absolute stopping tolerance in inverse iteration, good default may be \f$ \sqrt{\texttt{macheps}} \f$
- *  @param[in]     ones array with every value \c 1.0, length \p n
- *  @param[in,out] diag_fac pointer to array holding diagonal of Cholesky factorization of \f$ T - \lambda I \f$, length \p n
- *                 - on entry: allocated memory
- *                 - on exit: factorization corresponding to computed eigenvalue @p lam
- *  @param[in,out] offdiag_fac pointer to array holding offdiagonal of Cholesky factorization of \f$ T - \lambda I \f$, length \c n-1
- *                 - on entry: allocated memory
- *                 - on exit: factorization corresponding to computed eigenvalue @p lam
- *  @param[in,out] eig pointer to array holding eigenvector, length \p n
- *                 - on exit: eigenvector
- *  @param[in]     verbose determines the verbosity level of output that is written to \p fout
- *  @param[in]     unicode set to \c 1 if \p fout can handle unicode, otherwise to \c 0
- *  @param[in]     prefix string that is printed before iteration output
- *  @param[in]     fout output stream
- *  @param[in,out] timing gives timing details, provide allocated zero initialized memory of length #trlib_eigen_timing_size()
- *                 block | description
- *                 ------|--------------
- *                 0     | total duration
- *                 1     | timing of linear algebra calls
- *  @param[out]    lam_pert eigenvalue corresponding to eigenvector
- *  @param[out]    pert perturbation applied to provided eigenvalue
- *  @param[out]    iter_inv number of inverse iterations
+ *  :param n: dimension, ensure :math:`n > 0`
+ *  :type n: trlib_int_t, input
+ *  :param diag: pointer to array holding diagonal of :math:`T`, length :c:data:`n`
+ *  :type diag: trlib_flt_t, input
+ *  :param offdiag: pointer to array holding offdiagonal of :math:`T`, length :c:data:`n-1`
+ *  :type offdiag: trlib_flt_t, input
+ *  :param lam_init: estimation of eigenvalue corresponding to eigenvector to compute
+ *  :type lam_init: trlib_flt_t, input
+ *  :param itmax: maximum number of iterations
+ *  :type itmax: trlib_int_t, input
+ *  :param tol_abs: absolute stopping tolerance in inverse iteration, good default may be :math:`\sqrt{\texttt{macheps}}` (:c:macro:`TRLIB_EPS_POW_5`)
+ *  :type tol_abs: trlib_flt_t, input
+ *  :param ones: array with every value ``1.0``, length :c:data:`n`
+ *  :type ones: trlib_flt_t, input
+ *  :param diag_fac: pointer to array holding diagonal of Cholesky factorization of :math:`T - \lambda I`, length :c:data:`n`
  *
- *  @retval        #TRLIB_EIR_CONV          success
- *  @retval        #TRLIB_EIR_ITMAX         iteration limit exceeded
- *  @retval        #TRLIB_EIR_FAIL_FACTOR   failure on matrix factorization
- *  @retval        #TRLIB_EIR_FAIL_LINSOLVE failure on backsolve
+ *      - on entry: allocated memory
+ *      - on exit: factorization corresponding to computed eigenvalue @p lam
+ *
+ *  :type diag_fac: trlib_flt_t, input/output
+ *  :param offdiag_fac: pointer to array holding offdiagonal of Cholesky factorization of :math:`T - \lambda I`, length :c:data:`n-1`
+ *
+ *      - on entry: allocated memory
+ *      - on exit: factorization corresponding to computed eigenvalue @p lam
+ *
+ *  :type offidag_fac: trlib_flt_t, input/output
+ *  :param eig: pointer to array holding eigenvector, length :c:data:`n`
+ *  :type eig: trlib_flt_t, input/output
+ *  :param verbose: determines the verbosity level of output that is written to :c:data:`fout`
+ *  :type verbose: trlib_int_t, input
+ *  :param unicode: set to ``1`` if :c:data:`fout` can handle unicode, otherwise to ``0``
+ *  :type unicode: trlib_int_t, input
+ *  :param prefix: string that is printed before iteration output
+ *  :type prefix: char, input
+ *  :param fout: output stream
+ *  :type fout: FILE, input
+ *  :param timing: gives timing details, provide allocated zero initialized memory of length :c:func:`trlib_eigen_timing_size`
+ *
+ *      ====== ================================
+ *      block   description
+ *      ====== ================================
+ *      0       total duration
+ *      1       timing of linear algebra calls
+ *      ====== ================================
+ *
+ *  :type timing: trlib_int_t, input/output
+ *  :param lam_pert: eigenvalue corresponding to eigenvector
+ *  :type lam_pert: trlib_flt_t, output
+ *  :param pert: perturbation applied to provided eigenvalue
+ *  :type pert: trlib_flt_t, output
+ *  :param iter_inv: number of inverse iterations
+ *  :type iter_inv: trlib_int_t, output
+ *
+ *  :returns:      status
+ *
+ *                 - :c:macro:`TRLIB_EIR_CONV`          success
+ *                 - :c:macro:`TRLIB_EIR_ITMAX`         iteration limit exceeded
+ *                 - :c:macro:`TRLIB_EIR_FAIL_FACTOR`   failure on matrix factorization
+ *                 - :c:macro:`TRLIB_EIR_FAIL_LINSOLVE` failure on backsolve
+ *
+ *  :rtype: trlib_int_t
  */
 
 trlib_int_t trlib_eigen_inverse(
@@ -58,7 +87,7 @@ trlib_int_t trlib_eigen_inverse(
         trlib_flt_t *eig, trlib_int_t verbose, trlib_int_t unicode, char *prefix, FILE *fout,
         trlib_int_t *timing, trlib_flt_t *lam_pert, trlib_flt_t *pert, trlib_int_t *iter_inv);
 
-/** @brief size that has to be allocated for \p timing in #trlib_eigen_inverse
+/** size that has to be allocated for :c:data:`timing` in :c:func:`trlib_eigen_inverse`
  */
 trlib_int_t trlib_eigen_timing_size();
 

@@ -20,6 +20,10 @@ Contents:
    matlab
    python
    capi_krylov
+   capi_leftmost
+   capi_eigen_inverse
+   capi_quadratic_zero
+   capi_types
    references
 
 Indices and tables
