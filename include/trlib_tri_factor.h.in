@@ -34,7 +34,7 @@
  *
  *      - interior solution: the stationary point :math:`T h = - g` is suitable, iterative refinement is used in the solution of this system.
  *      - hard case: the smallest eigenvalue :math:`-\theta` was found to be degenerate and :math:`h = v + \alpha w` is returned with :math:`v` solution of :math:`(T + \theta I) v = -g`, :math:`w` eigenvector corresponding to :math:`- \theta` and :math:`\alpha` chosen to satisfy the trust region constraint and being a minimizer.
- *      - boundary and hard case: convergence in Newton iteration is reported if :math:`\Vert h(\lambda) \Vert - r \le \texttt{tol_rel} \, r` with :math:`(T+\lambda I) h(\lambda) = -g`, Newton breakdown reported if :math:`\vert d\lambda \vert \le \texttt{macheps} \vert \lambda \vert`.
+ *      - boundary and hard case: convergence in Newton iteration is reported if :math:`\Vert h(\lambda) \Vert - r \le \texttt{tol}\_\texttt{rel} \, r` with :math:`(T+\lambda I) h(\lambda) = -g`, Newton breakdown reported if :math:`\vert d\lambda \vert \le \texttt{macheps} \vert \lambda \vert`.
  *
  *  :param nirblk: number of irreducible blocks :math:`\ell`, ensure :math:`\ell > 0`
  *  :type nirblk: trlib_int_t, input

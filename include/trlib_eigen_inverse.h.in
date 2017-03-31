@@ -15,7 +15,7 @@
  *
  *  **Convergence**
  *  
- *  Convergence is reported if :math:`\vert \frac{1}{\Vert w_{i+1} \Vert} - \texttt{pert} \vert \le \texttt{tol_abs}`, where :math:`(T-\lambda I) w_{i+1} = v_i`, :math:`v_i` the current normalized iterate and :math:`\texttt{pert}` is the perturbation applied to the provided eigenvalue.
+ *  Convergence is reported if :math:`\vert \frac{1}{\Vert w_{i+1} \Vert} - \texttt{pert} \vert \le \texttt{tol}\_\texttt{abs}`, where :math:`(T-\lambda I) w_{i+1} = v_i`, :math:`v_i` the current normalized iterate and :math:`\texttt{pert}` is the perturbation applied to the provided eigenvalue.
  *
  *  :param n: dimension, ensure :math:`n > 0`
  *  :type n: trlib_int_t, input

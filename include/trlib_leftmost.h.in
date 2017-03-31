@@ -87,7 +87,7 @@ trlib_int_t trlib_leftmost(
  *
  *  **Convergence**
  *  
- *  Convergence is reported if :math:`\texttt{up}-\texttt{low} \le \texttt{tol_abs} * \max\{1, \vert \texttt{low} \vert, \vert \texttt{up} \vert \}` or :math:`\texttt{prlp} \le \texttt{tol_abs}`, :math:`\texttt{low}` and :math:`\texttt{up}` denote bracket values enclosing the leftmost eigenvalue and :math:`\texttt{prlp}` denotes the last-pivot function value used in root finding.
+ *  Convergence is reported if :math:`\texttt{up}-\texttt{low} \le \texttt{tol}\_\texttt{abs} * \max\{1, \vert \texttt{low} \vert, \vert \texttt{up} \vert \}` or :math:`\texttt{prlp} \le \texttt{tol}\_\texttt{abs}`, :math:`\texttt{low}` and :math:`\texttt{up}` denote bracket values enclosing the leftmost eigenvalue and :math:`\texttt{prlp}` denotes the last-pivot function value used in root finding.
  *
  *  :param n: dimension, ensure :math:`n > 0`
  *  :type n: trlib_int_t, input
