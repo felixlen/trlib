@@ -1,2 +1,138 @@
 Python Interface
 ================
+
+Installation
+------------
+
+We don't have a `setup.py` yet but use CMake to build the interface.
+Ensure that either `TRLIB_BUILD_PYTHON2` or `TRLIB_BUILD_PYTHON3` is set to `ON` before compilation, depending on the python version you like to use.
+At the moment you have to ensure that `$TRLIB_INSTALL_DIR/build` is contained in your `$PYTHON_PATH`.
+
+.. py:function:: trlib_solve(hess, grad, radius, invM = lambda x: x, TR=None, reentry=False, verbose=0, ctl_invariant=0)
+
+    Solves trust-region subproblem
+    
+    :math:`\min_{x \in \mathbb R^n} \tfrac 12 x^T H x + g^T x \quad \text{s.t.} \, \Vert x \Vert_M \le r`
+
+    with a projected CG/Lanczos method.
+
+    :param hess: hessian matrix/operator `H` with shape (n,n)
+    :type hess: {sparse matrix, dense matrix, LinearOperator}
+    :param grad: gradient `g` with shape (n,1)
+    :type grad: array
+    :param radius: trust-region radius `r`
+    :type radius: float
+    :param invM: inverse of matrix/operator defining trust-region constraint norm, default: identity, acts as preconditioner in CG/Lanczos
+    :type invM: {sparse matrix, dense matrix, LinearOperator}, optional
+    :param TR: TR output of previous call for hotstarting
+    :type TR: dict, optional
+    :param reentry: set this to `True`, if you want to resolve with all data fixed but changed trust-region radius, provide `TR` of previous call
+    :type reentry: boolean, optional
+    :param verbose: verbosity level, default `0`
+    :type verbose: int, optional
+    ctl_invariant: flag that determines how to treat hard-case, see C API of :c:func:`trlib_krylov_min`, default `0`
+    :type ctl_invariant: int, optional
+
+    :returns: (sol, TR): solution vector and trust-region instance data, needed for warmstart
+
+        - TR['ret'] gives return code of :c:func:`trlib_krylov_min`,
+        - TR['obj'] gives objective funtion value,
+        - TR['lam'] lagrange multiplier
+
+    :rtype: (array, dict)
+
+    :Example:
+    
+        Solve a sample large-scale problem with indefinite diagonal hessian matrix:
+   
+        >>> import scipy.sparse
+        >>> import numpy as np
+        >>> H = scipy.sparse.diags(np.linspace(-1.0, 100.0, 1000),0)
+        >>> g = np.ones(1000)
+        >>> x, TR = trlib.trlib_solve(H, g, 1.0)
+        >>> np.linalg.norm(x)
+        0.99999999999999978
+        >>> x, TR = trlib.trlib_solve(H, g, .5, reentry=True, TR=TR)
+        0.50000000000005329
+
+.. py:function:: umin(obj, grad, hessvec, x, tol=1e-5, eta1=1e-2, eta2=.95, gamma1=.5, gamma2=2., itmax=-1, verbose=1)
+
+    Standard Trust Region Algorithm for Unconstrained Optimization Problem:
+
+        :math:`\min_{x \in \mathbb R^n} f(x)`
+
+    This implements Algorithm 6.1 of [Gould1999]_ with slight modifications:
+
+        - check for descent
+        - aggresive trust region reduction upon failed step if next iteration will have the same subproblem solution
+        
+        
+    :param obj: callback that computes :math:`x \mapsto f(x)`
+    :type obj: function
+    :param grad: callback that computes :math:`x \mapsto \nabla f(x)`
+    :type grad: function
+    :param hessvec: callback that computes :math:`(x, d) \mapsto \nabla^2 f(x) \cdot d`
+    :type hessvec: function
+    :param x: starting point
+    :type x: array
+    :param tol: convergence tolerance, convergence achieved if :math:`\Vert \nabla f(x) \Vert_2 \le \texttt{tol}`
+    :type tol: float, optional
+    :param eta1: tolerance to discard step in trust region algorithm: :math:`\rho = \frac{\text{actual reducion}}{\text{predicted reduction}} \le \eta_1`
+    :type eta1: float, optional
+    :param eta2: tolerance to enlarge trust region in trust region algorithm: :math:`\rho = \frac{\text{actual reducion}}{\text{predicted reduction}} \ge \eta_2`
+    :type eta2: float, optional
+    :param gamma1: reduction factor for trust region radius upon failed step
+    :type gamma1: float, optional
+    :param gamma2: blow-up factor for trust region radius upon succesfully accepted step
+    :type gamma2: float, optional
+    :param itmax: maximum number of iterations
+    :type itmax: int, optional
+    :param verbose: verbosity level
+    :type verbose: int, optional
+
+    :returns: last point, solution in case of convergence
+    :rtype: array
+
+    :Example:
+
+        Compute the minimizer of the extended Rosenbrock function in R^10:
+
+        >>> import trlib
+        >>> import numpy as np
+        >>> import scipy.optimize
+        >>> trlib.umin(scipy.optimize.rosen, scipy.optimize.rosen_der, scipy.optimize.rosen_hess_prod, np.zeros(10))
+        it   obj         ‖g‖        radius     step       rho          ?  nhv
+           0 +9.0000e+00 6.0000e+00 3.1623e-01 3.1623e-01 -2.9733e-01  -    2
+           1 +9.0000e+00 6.0000e+00 1.5811e-01 1.5811e-01 +9.6669e-01  +    0
+           2 +8.6458e+00 5.0685e+00 3.1623e-01 3.1623e-01 +2.4105e-01  +    5
+           3 +8.5464e+00 2.0904e+01 3.1623e-01 1.8711e-01 +1.1361e+00  +    7
+           4 +7.5523e+00 5.1860e+00 6.3246e-01 6.2354e-01 -5.0077e+00  -    8
+           5 +7.5523e+00 5.1860e+00 3.1623e-01 3.1623e-01 +7.2941e-01  +    0
+           6 +7.1073e+00 1.3532e+01 3.1623e-01 2.4811e-01 +1.2836e+00  +    9
+           7 +6.3028e+00 6.1031e+00 6.3246e-01 4.0848e-01 +5.8886e-01  +    9
+           8 +5.9622e+00 1.6234e+01 6.3246e-01 2.1087e-01 +1.1893e+00  +   10
+           9 +4.8955e+00 4.6504e+00 1.2649e+00 5.7036e-01 -1.7558e+00  -   10
+          10 +4.8955e+00 4.6504e+00 5.1332e-01 5.1332e-01 -6.7456e-01  -    0
+          11 +4.8955e+00 4.6504e+00 2.5666e-01 2.5666e-01 +1.0507e+00  +    0
+          12 +4.3447e+00 6.1833e+00 5.1332e-01 4.1590e-01 +5.9133e-01  +   10
+          13 +3.9902e+00 1.6533e+01 5.1332e-01 2.1157e-01 +1.1863e+00  +   10
+          14 +2.9133e+00 4.7129e+00 1.0266e+00 5.6456e-01 -1.6059e+00  -   10
+          15 +2.9133e+00 4.7129e+00 5.0810e-01 5.0810e-01 -5.7730e-01  -    0
+          16 +2.9133e+00 4.7129e+00 2.5405e-01 2.5405e-01 +1.0568e+00  +    0
+          17 +2.3636e+00 6.0237e+00 5.0810e-01 4.1557e-01 +5.4052e-01  +   10
+          18 +2.0447e+00 1.6488e+01 5.0810e-01 1.8313e-01 +1.1450e+00  +   10
+          19 +1.0851e+00 3.7054e+00 1.0162e+00 3.8037e-01 +2.0492e-01  +   10
+        it   obj         ‖g‖        radius     step       rho          ?  nhv
+          20 +1.0047e+00 1.4515e+01 1.0162e+00 1.3411e-01 +1.0904e+00  +   10
+          21 +3.7776e-01 1.2123e+00 2.0324e+00 4.2342e-01 -1.1558e+00  -   10
+          22 +3.7776e-01 1.2123e+00 3.8108e-01 3.8108e-01 -3.7686e-01  -    0
+          23 +3.7776e-01 1.2123e+00 1.9054e-01 1.9054e-01 +9.4089e-01  +    0
+          24 +2.4119e-01 3.5489e+00 1.9054e-01 1.9054e-01 +1.2584e+00  +   10
+          25 +1.2688e-01 2.9419e+00 3.8108e-01 1.9886e-01 +1.2520e+00  +   10
+          26 +5.7708e-02 3.2321e+00 7.6216e-01 1.4598e-01 +1.2840e+00  +   10
+          27 +2.0136e-02 1.5044e+00 1.5243e+00 1.4197e-01 +1.1901e+00  +   10
+          28 +5.2154e-03 1.5659e+00 3.0487e+00 6.9041e-02 +1.1823e+00  +   10
+          29 +6.1955e-04 3.0998e-01 6.0973e+00 4.0825e-02 +1.0863e+00  +   10
+          30 +1.8524e-05 1.2279e-01 1.2195e+01 5.7325e-03 +1.0204e+00  +   10
+          31 +2.2110e-08 2.0846e-03 2.4389e+01 2.7853e-04 +1.0008e+00  +   10
+          32 +3.6798e-14 5.5874e-06

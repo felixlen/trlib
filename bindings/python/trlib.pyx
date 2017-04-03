@@ -154,36 +154,88 @@ def tri_min(long [::1] irblk, double [::1] diag, double [::1] offdiag,
     return ret, obj, sol, True if iwarm0==1 else False, lam0, True if iwarm==1 else False, lam, \
         True if iwarm_leftmost==1 else False, ileftmost, leftmost
 
-def trlib_solve(hess, grad, radius, invM = lambda x: x, data=None, reentry=False, verbose=0, ctl_invariant=0):
+def trlib_solve(hess, grad, radius, invM = lambda x: x, TR=None, reentry=False, verbose=0, ctl_invariant=0):
+    r"""
+    Solves trust-region subproblem
+    
+    min .5 x^T H x + g^x   s.t.  || x ||_M <= r
+
+    with a projected CG/Lanczos method.
+
+    Parameters:
+    -----------
+    hess: {sparse matrix, dense matrix, LinearOperator}
+        hessian matrix/operator `H` with shape (n,n)
+    grad: array
+        gradient `g` with shape (n,1)
+    radius: float
+        trust-region radius `r`
+    invM: {sparse matrix, dense matrix, LinearOperator}, optional
+        inverse of matrix/operator defining trust-region constraint norm, default: identity, acts as preconditioner in CG/Lanczos
+    TR: dict, optional
+        TR output of previous call for hotstarting
+    reentry: boolean, optional
+        set this to `True`, if you want to resolve with all data fixed but changed trust-region radius, provide `TR` of previous call
+    verbose: int, optional
+        verbosity level
+    ctl_invariant: int, optional
+        flag that determines how to treat hard-case, see C API of trlib_krylov_min, default `0`
+
+    Returns:
+    --------
+    array
+        solution vector
+    dict
+        trust-region instance data `TR`, needed for warmstart.
+        
+            - TR['ret'] gives return code of trlib_krylov_min,
+            - TR['obj'] gives objective funtion value,
+            - TR['lam'] lagrange multiplier
+
+    Examples:
+    ---------
+    Solve a sample large-scale problem with indefinite diagonal hessian matrix:
+   
+    >>> import scipy.sparse
+    >>> import numpy as np
+    >>> H = scipy.sparse.diags(np.linspace(-1.0, 100.0, 1000),0)
+    >>> g = np.ones(1000)
+    >>> x, TR = trlib.trlib_solve(H, g, 1.0)
+    >>> np.linalg.norm(x)
+    0.99999999999999978
+    >>> x, TR = trlib.trlib_solve(H, g, .5, reentry=True, TR=TR)
+    0.50000000000005329
+    """
+
     if hasattr(hess, 'dot'):
         hmv = lambda x: hess.dot(x)
     else:
         hmv = hess
     itmax = 2*grad.shape[0]
     iwork_size, fwork_size, h_pointer = krylov_memory_size(itmax)
-    if data is None:
-        data = {}
+    if TR is None:
+        TR = {}
     if not reentry:
         init = ctrlib._TRLIB_CLS_INIT
-        if not 'fwork' in data:
-            data['fwork'] = np.empty([fwork_size])
-        krylov_prepare_memory(itmax, data['fwork'])
-        if not 'iwork' in data:
-            data['iwork'] = np.empty([iwork_size], dtype=np.int)
-        if not 's' in data:
-            data['s'] = np.empty(grad.shape)
-        if not 'g' in data:
-            data['g'] = np.empty(grad.shape)
-        if not 'v' in data:
-            data['v'] = np.empty(grad.shape)
-        if not 'gm' in data:
-            data['gm'] = np.empty(grad.shape)
-        if not 'p' in data:
-            data['p'] = np.empty(grad.shape)
-        if not 'Hp' in data:
-            data['Hp'] = np.empty(grad.shape)
-        if not 'Q' in data:
-            data['Q'] = np.empty([itmax+1, grad.shape[0]])
+        if not 'fwork' in TR:
+            TR['fwork'] = np.empty([fwork_size])
+        krylov_prepare_memory(itmax, TR['fwork'])
+        if not 'iwork' in TR:
+            TR['iwork'] = np.empty([iwork_size], dtype=np.int)
+        if not 's' in TR:
+            TR['s'] = np.empty(grad.shape)
+        if not 'g' in TR:
+            TR['g'] = np.empty(grad.shape)
+        if not 'v' in TR:
+            TR['v'] = np.empty(grad.shape)
+        if not 'gm' in TR:
+            TR['gm'] = np.empty(grad.shape)
+        if not 'p' in TR:
+            TR['p'] = np.empty(grad.shape)
+        if not 'Hp' in TR:
+            TR['Hp'] = np.empty(grad.shape)
+        if not 'Q' in TR:
+            TR['Q'] = np.empty([itmax+1, grad.shape[0]])
     else:
         if reentry != 'convex':
             init = ctrlib._TRLIB_CLS_HOTSTART
@@ -194,66 +246,185 @@ def trlib_solve(hess, grad, radius, invM = lambda x: x, data=None, reentry=False
     
     while True:
         ret, action, iter, ityp, flt1, flt2, flt3 = krylov_min(
-            init, radius, g_dot_g, v_dot_g, p_dot_Hp, data['iwork'], data['fwork'],
+            init, radius, g_dot_g, v_dot_g, p_dot_Hp, TR['iwork'], TR['fwork'],
             ctl_invariant=ctl_invariant, itmax=itmax, verbose=verbose)
         init = 0
         if action == ctrlib._TRLIB_CLA_INIT:
-            data['s'][:] = 0.0
-            data['gm'][:] = 0.0
-            data['g'][:] = grad
-            data['v'][:] = invM(data['g'])
-            g_dot_g = np.dot(data['g'], data['g'])
-            v_dot_g = np.dot(data['v'], data['g'])
-            data['p'][:] = -data['v']
-            data['Hp'][:] = hmv(data['p'])
-            p_dot_Hp = np.dot(data['p'], data['Hp'])
-            data['Q'][0,:] = data['v']/np.sqrt(v_dot_g)
+            TR['s'][:] = 0.0
+            TR['gm'][:] = 0.0
+            TR['g'][:] = grad
+            TR['v'][:] = invM(TR['g'])
+            g_dot_g = np.dot(TR['g'], TR['g'])
+            v_dot_g = np.dot(TR['v'], TR['g'])
+            TR['p'][:] = -TR['v']
+            TR['Hp'][:] = hmv(TR['p'])
+            p_dot_Hp = np.dot(TR['p'], TR['Hp'])
+            TR['Q'][0,:] = TR['v']/np.sqrt(v_dot_g)
         if action == ctrlib._TRLIB_CLA_RETRANSF:
-            data['s'][:] = np.dot(data['fwork'][h_pointer:h_pointer+iter+1], data['Q'][:iter+1,:])
+            TR['s'][:] = np.dot(TR['fwork'][h_pointer:h_pointer+iter+1], TR['Q'][:iter+1,:])
         if action == ctrlib._TRLIB_CLA_UPDATE_STATIO:
             if ityp == ctrlib._TRLIB_CLT_CG:
-                data['s'] += flt1 * data['p']
-        if action == 4: # CLA_UPDATE_GRAD
+                TR['s'] += flt1 * TR['p']
+        if action == ctrlib._TRLIB_CLA_UPDATE_GRAD:
             if ityp == ctrlib._TRLIB_CLT_CG:
-                data['Q'][iter,:] = flt2*data['v']
-                data['gm'][:] = data['g']
-                data['g'] += flt1*data['Hp']
+                TR['Q'][iter,:] = flt2*TR['v']
+                TR['gm'][:] = TR['g']
+                TR['g'] += flt1*TR['Hp']
             if ityp == ctrlib._TRLIB_CLT_L:
-                data['s'][:] = data['Hp'] + flt1*data['g'] + flt2*data['gm']
-                data['gm'][:] = flt3*data['g']
-                data['g'][:] = data['s']
-            data['v'][:] = invM(data['g'])
-            g_dot_g = np.dot(data['g'], data['g'])
-            v_dot_g = np.dot(data['v'], data['g'])
+                TR['s'][:] = TR['Hp'] + flt1*TR['g'] + flt2*TR['gm']
+                TR['gm'][:] = flt3*TR['g']
+                TR['g'][:] = TR['s']
+            TR['v'][:] = invM(TR['g'])
+            g_dot_g = np.dot(TR['g'], TR['g'])
+            v_dot_g = np.dot(TR['v'], TR['g'])
         if action == ctrlib._TRLIB_CLA_UPDATE_DIR:
-            data['p'][:] = flt1 * data['v'] + flt2 * data['p']
-            data['Hp'][:] = hmv(data['p'])
-            p_dot_Hp = np.dot(data['p'], data['Hp'])
+            TR['p'][:] = flt1 * TR['v'] + flt2 * TR['p']
+            TR['Hp'][:] = hmv(TR['p'])
+            p_dot_Hp = np.dot(TR['p'], TR['Hp'])
             if ityp == ctrlib._TRLIB_CLT_L:
-                data['Q'][iter,:] = data['p']
+                TR['Q'][iter,:] = TR['p']
         if action == ctrlib._TRLIB_CLA_NEW_KRYLOV:
             # FIXME: adapt for M != I
-            QQ, RR = np.linalg.qr(data['Q'][:iter,:].transpose(), 'complete')
-            data['g'][:] = QQ[:,iter]
-            data['gm'][:] = 0.0
-            data['v'][:] = invM(data['g'])
-            g_dot_g = np.dot(data['g'], data['g'])
-            v_dot_g = np.dot(data['v'], data['g'])
-            data['p'][:] = data['v']/np.sqrt(v_dot_g)
-            data['Hp'][:] = hmv(data['p'])
-            p_dot_Hp = np.dot(data['p'], data['Hp'])
-            data['Q'][iter,:] = data['p']
+            QQ, RR = np.linalg.qr(TR['Q'][:iter,:].transpose(), 'complete')
+            TR['g'][:] = QQ[:,iter]
+            TR['gm'][:] = 0.0
+            TR['v'][:] = invM(TR['g'])
+            g_dot_g = np.dot(TR['g'], TR['g'])
+            v_dot_g = np.dot(TR['v'], TR['g'])
+            TR['p'][:] = TR['v']/np.sqrt(v_dot_g)
+            TR['Hp'][:] = hmv(TR['p'])
+            p_dot_Hp = np.dot(TR['p'], TR['Hp'])
+            TR['Q'][iter,:] = TR['p']
         if action == ctrlib._TRLIB_CLA_CONV_HARD:
             # FIXME: adapt for M != I
-            Ms = data['s']
-            Hs = hmv(data['s'])
-            g_dot_g = np.dot(data['g'], data['g'])
-            v_dot_g = np.dot(Hs+grad+flt1*Ms, invM(Hs+grad)+flt1*data['s'])
+            Ms = TR['s']
+            Hs = hmv(TR['s'])
+            g_dot_g = np.dot(TR['g'], TR['g'])
+            v_dot_g = np.dot(Hs+grad+flt1*Ms, invM(Hs+grad)+flt1*TR['s'])
         if ret < 10:
             break
     if ret < 0:
-        print("Warning, status: %d" % ret, data['iwork'][7], data['iwork'][8])
+        print("Warning, status: %d" % ret, TR['iwork'][7], TR['iwork'][8])
         pass
-    data['ret'] = ret
-    data['iter'] = iter
-    return data['s'], data
+    TR['ret'] = ret
+    TR['iter'] = iter
+    TR['obj'] = TR['fwork'][8]
+    TR['lam'] = TR['fwork'][7]
+    return TR['s'], TR
+
+def umin(obj, grad, hessvec, x, tol=1e-5, eta1=1e-2, eta2=.95, gamma1=.5, gamma2=2., itmax=-1, verbose=1):
+    """
+    Standard Trust Region Algorithm for Unconstrained Optimization Problem:
+
+        min f(x)
+
+    This implements Algorithm 6.1 of [Gould1999]_
+
+    with slight modification:
+        - check for descent
+        - aggresive trust region reduction upon failed step if next iteration will have the same subproblem solution
+        
+        
+    Parameters
+    ----------
+    obj : function
+        callback that computes x |-> f(x)
+    grad : function
+        callback that computes x |-> nabla f(x)
+    hessvec : function
+        callback that computes (x,d) |-> hv = nabla^2 f(x) * d
+    x : float, n
+        starting point
+    tol, eta1, eta2, gamma1, gamma2 : float, optional
+        algorithm parameters
+    itmax : int, optional
+        maximum number of iterations
+    verbose : int, optional
+        verbosity level, default `1`
+
+
+    Returns
+    -------
+    x : array
+        last point, solution in case of convergence
+
+    Examples
+    --------
+    To compute the minimizer of the extended Rosenbrock function in R^10:
+
+    >>> import trlib
+    >>> import numpy as np
+    >>> import scipy.optimize
+    >>> trlib.umin(scipy.optimize.rosen, scipy.optimize.rosen_der, scipy.optimize.rosen_hess_prod, np.zeros(10))
+    it   obj         ‖g‖        radius     step       rho          ?  nhv
+       0 +9.0000e+00 6.0000e+00 3.1623e-01 3.1623e-01 -2.9733e-01  -    2
+       1 +9.0000e+00 6.0000e+00 1.5811e-01 1.5811e-01 +9.6669e-01  +    0
+       2 +8.6458e+00 5.0685e+00 3.1623e-01 3.1623e-01 +2.4105e-01  +    5
+       3 +8.5464e+00 2.0904e+01 3.1623e-01 1.8711e-01 +1.1361e+00  +    7
+       4 +7.5523e+00 5.1860e+00 6.3246e-01 6.2354e-01 -5.0077e+00  -    8
+       5 +7.5523e+00 5.1860e+00 3.1623e-01 3.1623e-01 +7.2941e-01  +    0
+       6 +7.1073e+00 1.3532e+01 3.1623e-01 2.4811e-01 +1.2836e+00  +    9
+       7 +6.3028e+00 6.1031e+00 6.3246e-01 4.0848e-01 +5.8886e-01  +    9
+       8 +5.9622e+00 1.6234e+01 6.3246e-01 2.1087e-01 +1.1893e+00  +   10
+       9 +4.8955e+00 4.6504e+00 1.2649e+00 5.7036e-01 -1.7558e+00  -   10
+      10 +4.8955e+00 4.6504e+00 5.1332e-01 5.1332e-01 -6.7456e-01  -    0
+      11 +4.8955e+00 4.6504e+00 2.5666e-01 2.5666e-01 +1.0507e+00  +    0
+      12 +4.3447e+00 6.1833e+00 5.1332e-01 4.1590e-01 +5.9133e-01  +   10
+      13 +3.9902e+00 1.6533e+01 5.1332e-01 2.1157e-01 +1.1863e+00  +   10
+      14 +2.9133e+00 4.7129e+00 1.0266e+00 5.6456e-01 -1.6059e+00  -   10
+      15 +2.9133e+00 4.7129e+00 5.0810e-01 5.0810e-01 -5.7730e-01  -    0
+      16 +2.9133e+00 4.7129e+00 2.5405e-01 2.5405e-01 +1.0568e+00  +    0
+      17 +2.3636e+00 6.0237e+00 5.0810e-01 4.1557e-01 +5.4052e-01  +   10
+      18 +2.0447e+00 1.6488e+01 5.0810e-01 1.8313e-01 +1.1450e+00  +   10
+      19 +1.0851e+00 3.7054e+00 1.0162e+00 3.8037e-01 +2.0492e-01  +   10
+    it   obj         ‖g‖        radius     step       rho          ?  nhv
+      20 +1.0047e+00 1.4515e+01 1.0162e+00 1.3411e-01 +1.0904e+00  +   10
+      21 +3.7776e-01 1.2123e+00 2.0324e+00 4.2342e-01 -1.1558e+00  -   10
+      22 +3.7776e-01 1.2123e+00 3.8108e-01 3.8108e-01 -3.7686e-01  -    0
+      23 +3.7776e-01 1.2123e+00 1.9054e-01 1.9054e-01 +9.4089e-01  +    0
+      24 +2.4119e-01 3.5489e+00 1.9054e-01 1.9054e-01 +1.2584e+00  +   10
+      25 +1.2688e-01 2.9419e+00 3.8108e-01 1.9886e-01 +1.2520e+00  +   10
+      26 +5.7708e-02 3.2321e+00 7.6216e-01 1.4598e-01 +1.2840e+00  +   10
+      27 +2.0136e-02 1.5044e+00 1.5243e+00 1.4197e-01 +1.1901e+00  +   10
+      28 +5.2154e-03 1.5659e+00 3.0487e+00 6.9041e-02 +1.1823e+00  +   10
+      29 +6.1955e-04 3.0998e-01 6.0973e+00 4.0825e-02 +1.0863e+00  +   10
+      30 +1.8524e-05 1.2279e-01 1.2195e+01 5.7325e-03 +1.0204e+00  +   10
+      31 +2.2110e-08 2.0846e-03 2.4389e+01 2.7853e-04 +1.0008e+00  +   10
+      32 +3.6798e-14 5.5874e-06
+    """
+    ii = 0
+    if itmax == -1:
+        itmax = 10*x.shape[0]
+    g = np.empty_like(x)
+    radius = 1.0/np.sqrt(x.shape[0])
+    data = None
+    reentry = False
+    accept = False
+    while ii < itmax:
+        if verbose > 0 and ii % 20 == 0:
+            print(u"{:4s} {:11s} {:10s} {:10s} {:10s} {:11s} {:s} {:4s}".format("it", "obj", u"\u2016g\u2016", "radius", "step", "rho", " ?", " nhv"))
+        g[:] = grad(x)
+        if np.linalg.norm(g) <= tol:
+            print("{:4d} {:+2.4e} {:2.4e}".format(ii, obj(x), np.linalg.norm(g)))
+            break
+        niter = np.array([0])
+        def hp(vec):
+            niter[0] += 1
+            return hessvec(x, vec)
+        sol, data = trlib_solve(hp, g, radius, TR=data, reentry=reentry)
+        accept = False;
+        actual = obj(x+sol) - obj(x)
+        pred = np.dot(sol, .5*hessvec(x,sol)+g)
+        rho = actual/pred
+        if rho >= eta1 and actual < 0.0:
+            accept = True
+        print("{:4d} {:+2.4e} {:2.4e} {:2.4e} {:2.4e} {:+2.4e}  {:s} {:4d}".format(ii, obj(x), np.linalg.norm(g), radius, np.linalg.norm(sol), rho, '+' if accept else '-', niter[0]))
+        if rho >= eta1 and actual < 0.0:
+            x = x+sol
+            if rho >= eta2:
+                radius = gamma2*radius
+        if rho < eta1 or actual >= 0.0:
+            radius = min(max(1e-8*radius, .9*np.linalg.norm(sol)), gamma1*radius)
+        reentry = not accept
+        ii += 1
+    return x

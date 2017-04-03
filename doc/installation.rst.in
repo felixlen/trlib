@@ -16,6 +16,7 @@ The following dependencies are optional:
         - Check
     - for the documentation:
         - sphinx with read the docs theme
+        - numpydoc
     - for the python interface:
         - Python Header, TRLIB works with Python 2 and 3 and compiles for the versions it finds
         - Cython
@@ -31,11 +32,11 @@ To install all dependencies in a Ubuntu/Debian environment:
 
 If you want to use Python 3::
 
-    sudo apt-get install cmake check build-essential python3-dev python3-numpy python3-scipy cython3 liblapack-dev libblas-dev 
+    sudo apt-get install cmake check build-essential python3-dev python3-numpy python3-scipy cython3 liblapack-dev libblas-dev python3-sphinx python3-sphinx-rtd-theme
 
 If you want to use Python 2::
 
-    sudo apt-get install cmake check cython build-essential python-dev python-numpy python-scipy cython liblapack-dev libblas-dev
+    sudo apt-get install cmake check cython build-essential python-dev python-numpy python-scipy cython liblapack-dev libblas-dev python-sphinx python-sphinx-rtd-theme
 
 Compilation
 -----------
