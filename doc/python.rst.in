@@ -16,7 +16,7 @@ Use the function :py:function:`trlib_solve` to solve a trust region subproblem u
 Functions
 ---------
 
-.. py:function:: trlib_solve(hess, grad, radius, invM = lambda x: x, TR=None, reentry=False, verbose=0, ctl_invariant=0)
+.. py:function:: trlib_solve(hess, grad, radius, invM = lambda x: x, TR=None, reentry=False, verbose=0, ctl_invariant=0, convexify=1, earlyterm=1)
 
     Solves trust-region subproblem
     
@@ -36,9 +36,9 @@ Functions
     :type TR: dict, optional
     :param reentry: set this to `True`, if you want to resolve with all data fixed but changed trust-region radius, provide `TR` of previous call
     :type reentry: boolean, optional
-    :param verbose: verbosity level, default `0`
+    :param verbose: verbosity level
     :type verbose: int, optional
-    :param ctl_invariant: flag that determines how to treat hard-case, see C API of :c:func:`trlib_krylov_min`, default `0`
+    :param ctl_invariant: flag that determines how to treat hard-case, see C API of :c:func:`trlib_krylov_min`
     :type ctl_invariant: int, optional
     :param convexify: flag that determines if resolving with convexified should be tried if solution seems unrealistic
     :type convexify: int, optional
