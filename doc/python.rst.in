@@ -40,6 +40,11 @@ Functions
     :type verbose: int, optional
     :param ctl_invariant: flag that determines how to treat hard-case, see C API of :c:func:`trlib_krylov_min`, default `0`
     :type ctl_invariant: int, optional
+    :param convexify: flag that determines if resolving with convexified should be tried if solution seems unrealistic
+    :type convexify: int, optional
+    :param earlyterm: flag that determines if solver should terminate early prior to convergence if it seems unlikely that progress will be made soon
+    :type earlyterm: int, optional
+
 
     :returns: (sol, TR): solution vector and trust-region instance data, needed for warmstart
 

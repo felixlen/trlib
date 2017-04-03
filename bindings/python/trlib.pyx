@@ -27,10 +27,10 @@ def krylov_memory_size(long itmax):
 def krylov_min(long init, double radius, double g_dot_g, double v_dot_g, double p_dot_Hp,
         long[::1] iwork not None, double [::1] fwork not None,
         equality = False, long itmax = 500, long itmax_lanczos = 100,
-        long ctl_invariant=0,
+        long ctl_invariant=0, long convexify=1, long earlyterm=1,
         double tol_rel_i = np.finfo(np.float).eps**.5, double tol_abs_i = 0.0,
         double tol_rel_b = np.finfo(np.float).eps**.3, double tol_abs_b = 0.0,
-        double zero = np.finfo(np.float).eps, long verbose=0, refine = True,
+        double zero = np.finfo(np.float).eps, double obj_lo=-1e20, long verbose=0, refine = True,
         long[::1] timing = None, prefix=""):
     cdef long [:] timing_b
     if timing is None:
@@ -42,7 +42,8 @@ def krylov_min(long init, double radius, double g_dot_g, double v_dot_g, double 
     cdef double flt1, flt2, flt3
     eprefix = prefix.encode('UTF-8')
     ret = ctrlib.trlib_krylov_min(init, radius, 1 if equality else 0, itmax, itmax_lanczos,
-            tol_rel_i, tol_abs_i, tol_rel_b, tol_abs_b, zero, ctl_invariant, g_dot_g, v_dot_g, p_dot_Hp,
+            tol_rel_i, tol_abs_i, tol_rel_b, tol_abs_b, zero, obj_lo,
+            ctl_invariant, convexify, earlyterm, g_dot_g, v_dot_g, p_dot_Hp,
             &iwork[0] if iwork.shape[0] > 0 else NULL, &fwork[0] if fwork.shape[0] > 0 else NULL,
             1 if refine else 0, verbose, 1, eprefix, <libc.stdio.FILE*> libc.stdio.stdout,
             &timing_b[0] if timing_b.shape[0] > 0 else NULL, &action, &iter, &ityp, &flt1, &flt2, &flt3)
@@ -154,7 +155,7 @@ def tri_min(long [::1] irblk, double [::1] diag, double [::1] offdiag,
     return ret, obj, sol, True if iwarm0==1 else False, lam0, True if iwarm==1 else False, lam, \
         True if iwarm_leftmost==1 else False, ileftmost, leftmost
 
-def trlib_solve(hess, grad, radius, invM = lambda x: x, TR=None, reentry=False, verbose=0, ctl_invariant=0):
+def trlib_solve(hess, grad, radius, invM = lambda x: x, TR=None, reentry=False, verbose=0, ctl_invariant=0, convexify=1, earlyterm=1):
     r"""
     Solves trust-region subproblem
     
@@ -180,6 +181,10 @@ def trlib_solve(hess, grad, radius, invM = lambda x: x, TR=None, reentry=False, 
         verbosity level
     ctl_invariant: int, optional
         flag that determines how to treat hard-case, see C API of trlib_krylov_min, default `0`
+    convexify: int, optional
+        flag that determines if resolving with convexified should be tried if solution seems unrealistic
+    earlyterm: int, optional
+        flag that determines if solver should terminate early prior to convergence if it seems unlikely that progress will be made soon
 
     Returns:
     --------
@@ -247,7 +252,8 @@ def trlib_solve(hess, grad, radius, invM = lambda x: x, TR=None, reentry=False, 
     while True:
         ret, action, iter, ityp, flt1, flt2, flt3 = krylov_min(
             init, radius, g_dot_g, v_dot_g, p_dot_Hp, TR['iwork'], TR['fwork'],
-            ctl_invariant=ctl_invariant, itmax=itmax, verbose=verbose)
+            ctl_invariant=ctl_invariant, itmax=itmax, verbose=verbose,
+            convexify=convexify, earlyterm=earlyterm)
         init = 0
         if action == ctrlib._TRLIB_CLA_INIT:
             TR['s'][:] = 0.0
@@ -301,6 +307,8 @@ def trlib_solve(hess, grad, radius, invM = lambda x: x, TR=None, reentry=False, 
             Hs = hmv(TR['s'])
             g_dot_g = np.dot(TR['g'], TR['g'])
             v_dot_g = np.dot(Hs+grad+flt1*Ms, invM(Hs+grad)+flt1*TR['s'])
+        if action == ctrlib._TRLIB_CLA_OBJVAL:
+            obj = .5*np.dot(TR['s'], hmv(TR['s'])) + np.dot(TR['s'], grad)
         if ret < 10:
             break
     if ret < 0:

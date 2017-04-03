@@ -38,7 +38,7 @@ struct trlib_qpdata {
 int prepare_qp(trlib_int_t n, trlib_int_t maxiter, const double *gradient, void (*hv_cb)(const int n, const double *, double *), struct trlib_qpdata *data) {
     data->n = n;
     data->maxiter = maxiter;
-    data->gradient = gradient;
+    data->gradient = (double *)gradient;
     data->hv_cb = hv_cb;
     data->hotstart = 0;
     trlib_int_t iwork_size, fwork_size, h_pointer;
@@ -78,7 +78,9 @@ int solve_qp(struct trlib_qpdata *data, trlib_flt_t radius, double *sol, double 
     trlib_flt_t tol_rel_b = 1e-5;
     trlib_flt_t tol_abs_i = 0.0;
     trlib_flt_t tol_abs_b = 0.0;
-
+    trlib_flt_t obj_lo = -1e20;
+    trlib_int_t convexify = 1;
+    trlib_int_t earlyterm = 1;
 
     trlib_int_t ret = 0;
 
@@ -97,7 +99,8 @@ int solve_qp(struct trlib_qpdata *data, trlib_flt_t radius, double *sol, double 
     while(1) {
         ret = trlib_krylov_min(init, radius, equality, data->maxiter, maxlanczos,
                 tol_rel_i, tol_abs_i, tol_rel_b, tol_abs_b,
-                TRLIB_EPS*TRLIB_EPS, ctl_invariant, v_dot_g, v_dot_g, p_dot_Hp, data->iwork, data->fwork, 
+                TRLIB_EPS*TRLIB_EPS, obj_lo, ctl_invariant, convexify, earlyterm,
+                v_dot_g, v_dot_g, p_dot_Hp, data->iwork, data->fwork, 
                 refine, verbose, unicode, "", stdout, NULL,
                 &action, &(data->iter), &ityp, &flt1, &flt2, &flt3);
         init = 0;

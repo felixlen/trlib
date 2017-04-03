@@ -29,6 +29,7 @@
 #define TRLIB_CLA_UPDATE_DIR    (5)
 #define TRLIB_CLA_NEW_KRYLOV    (6)
 #define TRLIB_CLA_CONV_HARD     (7)
+#define TRLIB_CLA_OBJVAL        (8)
 
 #define TRLIB_CLS_INIT          (1)
 #define TRLIB_CLS_HOTSTART      (2)
@@ -186,7 +187,7 @@
  *  If you want to investigate the problem also if the hard case, you can either sample through the invariant subspaces (:c:data:`ctl_invariant` set to :c:macro:`TRLIB_CLC_EXP_INV_GLO`) or solve the problem with a gradient for which the hard does not occur and then hotstart with the actual gradient.
 
  *
- *  :param init: set to :c:macro:`TRLIB_CLS_INIT` on first call, to :c:macro:`TRLIB_CLS_HOTSTART` on hotstart with smaller radius and otherwise to ``0``. Note that :c:data:`itmax_lanczos` and :c:data:`zero` have a different meaning on :c:macro:`TRLIB_CLS_INIT` in comparison to the other iterations.
+ *  :param init: set to :c:macro:`TRLIB_CLS_INIT` on first call, to :c:macro:`TRLIB_CLS_HOTSTART` on hotstart with smaller radius and otherwise to ``0``.
  *  :type init: trlib_int_t, input
  *  :param radius: trust region radius
  *  :type radius: trlib_flt_t, input
@@ -201,7 +202,6 @@
  *                 reorthogonalization. If you allow a lot of Lanczos type iterations
  *                 consider reorthogonalizing the new direction against the vector storage.
  *
- *                 Set to ``-1`` if :c:data:`init` is :c:macro:`TRLIB_CLS_INIT` if you want to disable the check for unlikely convergence and exit early.
  *  :type itmax_lanczos: trlib_int_t, input
  *  :param tol_rel_i: relative stopping tolerance for interior solution
  *  :type tol_rel_i: trlib_flt_t, input
@@ -211,8 +211,10 @@
  *  :type tol_rel_b: trlib_flt_t, input
  *  :param tol_abs_b: absolute stopping tolerance for boundary solution
  *  :type tol_abs_b: trlib_flt_t, input
- *  :param zero: threshold that determines when :math:`\langle p, Hp \rangle` is considered to be zero and thus control eventual Lanczos switch, on first call interpreted as lower objective bound to terminate once this is reached
+ *  :param zero: threshold that determines when :math:`\langle p, Hp \rangle` is considered to be zero and thus control eventual Lanczos switch
  *  :type zero: trlib_flt_t, input
+ *  :param obj_lo: lower bound on objective, returns if a point is found with function value :math:`\le \texttt{obj}\_\texttt{lo}`. Set to a positive value to ignore this bound.
+ *  :type obj_lo: trlib_flt_t, input
  *  :param ctl_invariant: 
  *
  *                 - set to :c:macro:`TRLIB_CLC_NO_EXP_INV` if you want to search only in the first invariant Krylov subspace
@@ -220,6 +222,10 @@
  *                 - set to :c:macro:`TRLIB_CLC_EXP_INV_GLO` if you want to continue to expand the Krylov subspaces even in the case of convergence to a local minimizer within in the subspaces sampled so far. Reverse communication continues as long as ctl_invariant is set to :c:macro:`TRLIB_CLC_EXP_INV_GLO`, so you should reset :c:data:`ctl_invariant` to either :c:macro:`TRLIB_CLC_EXP_INV_LOC` or :c:macro:`TRLIB_CLC_EXP_INV_LOC` if there is no reason to continue, for example because you cannot find a new nonzero random vector orthogonal to the sampled directions if :c:data:`action` is :c:macro:`TRLIB_CLA_NEW_KRYLOV`.
  *
  *  :type ctl_invariant: trlib_int_t, input
+ *  :param convexify: set to `1` if you like to monitor if the tridiagonal solution and the backtransformed solution match and if not resolve with a convexified problem, else set to `0`
+ *  :type convexify: trlib_int_t, input
+ *  :param earlyterm: set to `1` if you like to terminate in the boundary case if it unlikely that much progress will be made fast but no convergence is reached, else set to `0`
+ *  :type earlyterm: trlib_int_t, input
  *  :param g_dot_g: dot product :math:`\langle g, g \rangle`
  *  :type g_dot_g: trlib_flt_t, input
  *  :param v_dot_g: dot product :math:`\langle v, g \rangle`
@@ -248,8 +254,9 @@
  *                 11      12               number of newton iterations needed in :c:func:`trlib_tri_factor_min`
  *                 12      13               last iteration in which a headline has been printed
  *                 13      14               kind of iteration headline that has been printed last
- *                 14      15               number of irreducible blocks
- *                 15      16 + ``itmax``   decomposition into irredecubile block, :c:data:`irblk` for :c:func:`trlib_tri_factor_min`
+ *                 14      15               status variable if convexified version is going to be resolved
+ *                 15      16               number of irreducible blocks
+ *                 16      17 + ``itmax``   decomposition into irredecubile block, :c:data:`irblk` for :c:func:`trlib_tri_factor_min`
  *                 ====== ================= ==========================
  *
  *  :type iwork: trlib_int_t, input/output
@@ -290,10 +297,9 @@
  *                 23 + 10 :c:data:`itmax`  23 + 11 :c:data:`itmax`           offdiagonal of Cholesky factorization of :math:`T + \lambda I`
  *                 23 + 11 :c:data:`itmax`  24 + 12 :c:data:`itmax`           :c:data:`ones` for :c:func:`trlib_tri_factor_min` and :c:func:`trlib_eigen_inverse`
  *                 24 + 12 :c:data:`itmax`  25 + 13 :c:data:`itmax`           :c:data:`leftmost` for :c:func:`trlib_tri_factor_min`
- *                 25 + 13 :c:data:`itmax`  26 + 13 :c:data:`itmax`           :c:data:`bound_bel` lower bound after which iteration will be exited 
- *                 26 + 13 :c:data:`itmax`  27 + 14 :c:data:`itmax`           :c:data:`regdiag` for :c:func:`trlib_tri_factor_regularize_posdef`
- *                 27 + 14 :c:data:`itmax`  28 + 15 :c:data:`itmax`           history of convergence criteria values
- *                 28 + 15 :c:data:`itmax`  28 + 15 :c:data:`itmax` + ``fmz`` :c:data:`fwork` for :c:func:`trlib_tri_factor_min`, ``fmz`` is given by :c:func:`trlib_tri_factor_memory_size` with argument ``itmax+1``
+ *                 25 + 13 :c:data:`itmax`  26 + 14 :c:data:`itmax`           :c:data:`regdiag` for :c:func:`trlib_tri_factor_regularize_posdef`
+ *                 26 + 14 :c:data:`itmax`  27 + 15 :c:data:`itmax`           history of convergence criteria values
+ *                 27 + 15 :c:data:`itmax`  27 + 15 :c:data:`itmax` + ``fmz`` :c:data:`fwork` for :c:func:`trlib_tri_factor_min`, ``fmz`` is given by :c:func:`trlib_tri_factor_memory_size` with argument ``itmax+1``
  *                 ======================== ================================= =============================================
  *
  *
@@ -344,6 +350,7 @@
  *                 :c:macro:`TRLIB_CLA_UPDATE_DIR`     :c:macro:`TRLIB_CLT_L`                            :math:`p \leftarrow \texttt{flt1} \, v + \texttt{flt2} \, p` with :math:`\texttt{flt2} = 0`, :math:`p \leftarrow \perp_M Q_{i-1}`, :math:`\textit{Hp} \leftarrow Hp`, :math:`\texttt{p}\_\texttt{dot}\_\texttt{Hp} \leftarrow \langle p, \textit{Hp} \rangle`, :math:`q_i \leftarrow p`
  *                 :c:macro:`TRLIB_CLA_NEW_KRYLOV`     :c:macro:`TRLIB_CLT_CG`, :c:macro:`TRLIB_CLT_L`   :math:`g \leftarrow \texttt{rand}\perp Q_{i-1}`, :math:`g_- \leftarrow 0`, :math:`v \leftarrow M^{-1} g`, :math:`\texttt{v}\_\texttt{dot}\_\texttt{g} \leftarrow \langle v, g \rangle`, :math:`p \leftarrow \frac{1}{\sqrt{\texttt{v}\_\texttt{dot}\_\texttt{g}}} v`, :math:`\texttt{p}\_\texttt{dot}\_\texttt{Hp} \leftarrow \langle p, \textit{Hp} \rangle`, :math:`q_{i+1} \leftarrow p`
  *                 :c:macro:`TRLIB_CLA_CONV_HARD`      :c:macro:`TRLIB_CLT_CG`, :c:macro:`TRLIB_CLT_L`   :math:`\texttt{v}\_\texttt{dot}\_\texttt{g} \leftarrow \langle Hs+g_0+\texttt{flt1}\, Ms, M^{-1}(Hs+g_0) + \texttt{flt1} s \rangle`
+ *                 :c:macro:`TRLIB_CLA_OBJVAL`         :c:macro:`TRLIB_CLT_CG`, :c:macro:`TRLIB_CLT_L`   :math:`\texttt{g}\_\texttt{dot}\_\texttt{g} \leftarrow \tfrac 12 \langle s, Hs \rangle + \langle g, s \rangle`
  *                 =================================== ================================================= =============================
  *
  *  :type action: trlib_int_t, output
@@ -385,8 +392,9 @@
 trlib_int_t trlib_krylov_min(
     trlib_int_t init, trlib_flt_t radius, trlib_int_t equality, trlib_int_t itmax, trlib_int_t itmax_lanczos,
     trlib_flt_t tol_rel_i, trlib_flt_t tol_abs_i,
-    trlib_flt_t tol_rel_b, trlib_flt_t tol_abs_b, trlib_flt_t zero,
-    trlib_int_t ctl_invariant, trlib_flt_t g_dot_g, trlib_flt_t v_dot_g, trlib_flt_t p_dot_Hp,
+    trlib_flt_t tol_rel_b, trlib_flt_t tol_abs_b, trlib_flt_t zero, trlib_flt_t obj_lo,
+    trlib_int_t ctl_invariant, trlib_int_t convexify, trlib_int_t earlyterm,
+    trlib_flt_t g_dot_g, trlib_flt_t v_dot_g, trlib_flt_t p_dot_Hp,
     trlib_int_t *iwork, trlib_flt_t *fwork, trlib_int_t refine,
     trlib_int_t verbose, trlib_int_t unicode, char *prefix, FILE *fout, trlib_int_t *timing,
     trlib_int_t *action, trlib_int_t *iter, trlib_int_t *ityp,

@@ -57,8 +57,9 @@ cdef extern from "trlib.h":
     long trlib_krylov_min(
         long init, double radius, long equality, long itmax, long itmax_lanczos,
         double tol_rel_i, double tol_abs_i,
-        double tol_rel_b, double tol_abs_b, double zero,
-        long ctl_invariant, double g_dot_g, double v_dot_g, double p_dot_Hp,
+        double tol_rel_b, double tol_abs_b, double zero, double obj_lo,
+        long ctl_invariant, long convexify, long earlyterm,
+        double g_dot_g, double v_dot_g, double p_dot_Hp,
         long *iwork, double *fwork, int refine,
         long verbose, long unicode, char *prefix, libc.stdio.FILE *fout, long *timing,
         long *action, long *iter, long *ityp,

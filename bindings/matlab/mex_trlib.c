@@ -6,8 +6,9 @@
 const char *trlib_fields [] = {
     "init", "radius", "equality", "itmax", "itmax_lanczos",
     "tol_rel_i", "tol_abs_i",
-    "tol_rel_b", "tol_abs_b", "zero",
-    "ctl_invariant", "g_dot_g", "v_dot_g", "p_dot_Hp",
+    "tol_rel_b", "tol_abs_b", "zero", "obj_lo",
+    "ctl_invariant", "convexify", "earlyterm",
+    "g_dot_g", "v_dot_g", "p_dot_Hp",
     "iwork", "fwork", "h_pointer", "refine",
     "verbose", "action", "iter", "ityp", "flt", "krylov_min_retval"
 };
@@ -32,7 +33,10 @@ void call_krylov_min (mxArray *TR)
     trlib_flt_t *tol_abs_i = mxGetData (mxGetField (TR, 0, "tol_abs_i"));
     trlib_flt_t *tol_abs_b = mxGetData (mxGetField (TR, 0, "tol_abs_b"));
     trlib_flt_t *zero = mxGetData (mxGetField (TR, 0, "zero"));
+    trlib_flt_t *obj_lo = mxGetData (mxGetField (TR, 0, "obj_lo"));
     trlib_int_t *ctl_invariant = mxGetData (mxGetField (TR, 0, "ctl_invariant"));
+    trlib_int_t *convexify = mxGetData (mxGetField (TR, 0, "convexify"));
+    trlib_int_t *earlyterm = mxGetData (mxGetField (TR, 0, "earlyterm"));
     trlib_flt_t *g_dot_g = mxGetData (mxGetField (TR, 0, "g_dot_g"));
     trlib_flt_t *v_dot_g = mxGetData (mxGetField (TR, 0, "v_dot_g"));
     trlib_flt_t *p_dot_Hp = mxGetData (mxGetField (TR, 0, "p_dot_Hp"));
@@ -48,7 +52,8 @@ void call_krylov_min (mxArray *TR)
 
     *krylov_min_retval = trlib_krylov_min (*init, *radius, *equality, *itmax,
             *itmax_lanczos, *tol_rel_i, *tol_abs_i, *tol_rel_b, *tol_abs_b,
-            *zero, *ctl_invariant, *g_dot_g, *v_dot_g, *p_dot_Hp, iwork, fwork,
+            *zero, *obj_lo, *ctl_invariant, *convexify, *earlyterm,
+            *g_dot_g, *v_dot_g, *p_dot_Hp, iwork, fwork,
             *refine, *verbose, 0, "mex_trlib: ", stdout, NULL, action, iter, ityp,
             flt, flt+1, flt+2);
     *init = 0;
@@ -110,7 +115,10 @@ void mexFunction (int nlhs, mxArray *plhs [], int nrhs, const mxArray *prhs [])
         mxSetField (plhs [0], 0, "tol_abs_i", mxCreateDoubleScalar (0.0));
         mxSetField (plhs [0], 0, "tol_abs_b", mxCreateDoubleScalar (0.0));
         mxSetField (plhs [0], 0, "zero", mxCreateDoubleScalar (2.22e-16));
+        mxSetField (plhs [0], 0, "obj_lo", mxCreateDoubleScalar (-1e20));
         mxSetField (plhs [0], 0, "ctl_invariant", mxCreateInt64Scalar (0));
+        mxSetField (plhs [0], 0, "convexify", mxCreateInt64Scalar (1));
+        mxSetField (plhs [0], 0, "earlyterm", mxCreateInt64Scalar (1));
         mxSetField (plhs [0], 0, "g_dot_g", mxCreateDoubleScalar (0.0));
         mxSetField (plhs [0], 0, "v_dot_g", mxCreateDoubleScalar (0.0));
         mxSetField (plhs [0], 0, "p_dot_Hp", mxCreateDoubleScalar (0.0));

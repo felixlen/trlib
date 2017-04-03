@@ -181,9 +181,9 @@ trlib_int_t trlib_test_solve_qp(struct trlib_test_qp *qp) {
         trlib_krylov_memory_size(qp->itmax, &iwork_size, &fwork_size, &h_pointer);
 
         while(1) {
-            qp->ret = trlib_krylov_min(init, qp->radius, qp->equality, qp->itmax, init == TRLIB_CLS_INIT ? -1 : 100,
+            qp->ret = trlib_krylov_min(init, qp->radius, qp->equality, qp->itmax, 100,
                     qp->tol_rel_i, qp->tol_abs_i, qp->tol_rel_b, qp->tol_abs_b,
-                    TRLIB_EPS*TRLIB_EPS, qp->ctl_invariant, v_dot_g, v_dot_g, p_dot_Hp, work->iwork, work->fwork, 
+                    TRLIB_EPS*TRLIB_EPS, -1e20, qp->ctl_invariant, 0, 0, v_dot_g, v_dot_g, p_dot_Hp, work->iwork, work->fwork, 
                     qp->refine, qp->verbose, qp->unicode, qp->prefix, qp->stream, qp->timing,
                     &action, &(qp->iter), &ityp, &flt1, &flt2, &flt3);
             init = 0;
@@ -280,6 +280,9 @@ trlib_int_t trlib_test_solve_qp(struct trlib_test_qp *qp) {
                     p_dot_Hp = ddot_(&n, work->p, &inc, work->Hp, &inc);
                     dcopy_(&n, work->p, &inc, work->Q+(qp->iter+1)*n, &inc); // Q(iter*n:(iter1)*n) = p
                     break;
+                case TRLIB_CLA_OBJVAL:
+                    // FIXME: implement this and add a test for convexification
+                    break;
             }
             //fprintf(stderr, "<g,g> = %e, <v,g> = %e, <p,Hp> = %e\n", v_dot_g, v_dot_g, p_dot_Hp);
             if( qp->ret < 10 ) { break; }
@@ -361,7 +364,7 @@ trlib_int_t trlib_test_resolve_new_gradient(struct trlib_test_qp *qp) {
         while(1) {
             qp->ret = trlib_krylov_min(init, qp->radius, qp->equality, qp->itmax, 100,
                     qp->tol_rel_i, qp->tol_abs_i, qp->tol_rel_b, qp->tol_abs_b,
-                    TRLIB_EPS*TRLIB_EPS, qp->ctl_invariant, v_dot_g, v_dot_g, p_dot_Hp, work->iwork, work->fwork, 
+                    TRLIB_EPS*TRLIB_EPS, -1e20, qp->ctl_invariant, 0, 0, v_dot_g, v_dot_g, p_dot_Hp, work->iwork, work->fwork, 
                     qp->refine, qp->verbose, qp->unicode, qp->prefix, qp->stream, qp->timing,
                     &action, &(qp->iter), &ityp, &flt1, &flt2, &flt3);
             init = 0;
