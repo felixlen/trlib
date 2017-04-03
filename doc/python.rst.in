@@ -8,6 +8,14 @@ We don't have a ``setup.py`` yet but use CMake to build the interface.
 Ensure that either ``TRLIB_BUILD_PYTHON2` or ``TRLIB_BUILD_PYTHON3`` is set to `ON` before compilation, depending on the python version you like to use.
 At the moment you have to ensure that ``$TRLIB_INSTALL_DIR/build`` is contained in your ``$PYTHON_PATH``.
 
+Usage
+-----
+
+Use the function :py:function:`trlib_solve` to solve a trust region subproblem und :py:function:`umin` to solve an unconstrained nonlinear optimization problem with a standard trust-region algorithm.
+
+Functions
+---------
+
 .. py:function:: trlib_solve(hess, grad, radius, invM = lambda x: x, TR=None, reentry=False, verbose=0, ctl_invariant=0)
 
     Solves trust-region subproblem
@@ -30,7 +38,7 @@ At the moment you have to ensure that ``$TRLIB_INSTALL_DIR/build`` is contained 
     :type reentry: boolean, optional
     :param verbose: verbosity level, default `0`
     :type verbose: int, optional
-    ctl_invariant: flag that determines how to treat hard-case, see C API of :c:func:`trlib_krylov_min`, default `0`
+    :param ctl_invariant: flag that determines how to treat hard-case, see C API of :c:func:`trlib_krylov_min`, default `0`
     :type ctl_invariant: int, optional
 
     :returns: (sol, TR): solution vector and trust-region instance data, needed for warmstart
