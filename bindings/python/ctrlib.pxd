@@ -24,6 +24,7 @@ cdef extern from "trlib.h":
     cdef long _TRLIB_CLA_UPDATE_DIR    "TRLIB_CLA_UPDATE_DIR"    
     cdef long _TRLIB_CLA_NEW_KRYLOV    "TRLIB_CLA_NEW_KRYLOV"    
     cdef long _TRLIB_CLA_CONV_HARD     "TRLIB_CLA_CONV_HARD"     
+    cdef long _TRLIB_CLA_OBJVAL        "TRLIB_CLA_OBJVAL"        
     cdef long _TRLIB_CLS_INIT          "TRLIB_CLS_INIT"          
     cdef long _TRLIB_CLS_HOTSTART      "TRLIB_CLS_HOTSTART"      
     cdef long _TRLIB_CLS_HOTSTART_G    "TRLIB_CLS_HOTSTART_G"    

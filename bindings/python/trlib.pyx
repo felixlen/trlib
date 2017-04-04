@@ -155,7 +155,11 @@ def tri_min(long [::1] irblk, double [::1] diag, double [::1] offdiag,
     return ret, obj, sol, True if iwarm0==1 else False, lam0, True if iwarm==1 else False, lam, \
         True if iwarm_leftmost==1 else False, ileftmost, leftmost
 
-def trlib_solve(hess, grad, radius, invM = lambda x: x, TR=None, reentry=False, verbose=0, ctl_invariant=0, convexify=1, earlyterm=1):
+def trlib_solve(hess, grad, radius, invM = lambda x: x, TR=None, reentry=False,
+        verbose=0, ctl_invariant=0, convexify=1, earlyterm=1,
+        double tol_rel_i = np.finfo(np.float).eps**.5, double tol_abs_i = 0.0,
+        double tol_rel_b = np.finfo(np.float).eps**.3, double tol_abs_b = 0.0
+        ):
     r"""
     Solves trust-region subproblem
     
@@ -250,10 +254,15 @@ def trlib_solve(hess, grad, radius, invM = lambda x: x, TR=None, reentry=False, 
     v_dot_g = 0.0; g_dot_g = 0.0; p_dot_Hp = 0.0
     
     while True:
+        if verbose > 2:
+            print(TR['iwork'][:5])
         ret, action, iter, ityp, flt1, flt2, flt3 = krylov_min(
             init, radius, g_dot_g, v_dot_g, p_dot_Hp, TR['iwork'], TR['fwork'],
             ctl_invariant=ctl_invariant, itmax=itmax, verbose=verbose,
-            convexify=convexify, earlyterm=earlyterm)
+            convexify=convexify, earlyterm=earlyterm,
+            tol_rel_i=tol_rel_i, tol_abs_i=tol_abs_i, tol_rel_b=tol_rel_b, tol_abs_b=tol_abs_b)
+        if verbose > 2:
+            print(TR['iwork'][:5], ret, action, iter, ityp, flt1, flt2, flt3)
         init = 0
         if action == ctrlib._TRLIB_CLA_INIT:
             TR['s'][:] = 0.0

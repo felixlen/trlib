@@ -100,6 +100,8 @@ trlib_int_t trlib_krylov_min_internal(
     trlib_flt_t one = 1.0;
     trlib_flt_t minus = -1.0;
     trlib_flt_t sp_Msp = 0.0; // (s+, Ms+)
+    trlib_flt_t eta_i = 0.0; // forcing parameter
+    trlib_flt_t eta_b = 0.0; // forcing parameter
 
     if (init == TRLIB_CLS_INIT)       { *status = TRLIB_CLS_INIT; }
     if (init == TRLIB_CLS_HOTSTART)   { *status = TRLIB_CLS_HOTSTART; }
@@ -133,8 +135,26 @@ trlib_int_t trlib_krylov_min_internal(
                 break;
             case TRLIB_CLS_VEC_INIT:
                 if (v_dot_g <= 0.0 && g_dot_g > 0.0) { *ityp = TRLIB_CLT_CG; *action = TRLIB_CLA_TRIVIAL; returnvalue = TRLIB_CLR_PCINDEF; break; } // exit if M^-1 indefinite
-                *stop_i = fmax(tol_abs_i, tol_rel_i*sqrt(v_dot_g)); *stop_i = (*stop_i)*(*stop_i); // set interior stopping tolerance, note that this is squared as for efficiency we compare norm^2 <= tol
-                *stop_b = fmax(tol_abs_b, tol_rel_b*sqrt(v_dot_g)); // set boundary stopping tolerance, here no square as we directly compare norm <= tol
+                if( tol_rel_i >= 0.0 ) {
+                    eta_i = tol_rel_i;
+                }
+                if( tol_rel_i == -1.0 ) {
+                    eta_i = fmin(5e-1, sqrt(sqrt(v_dot_g)));
+                }
+                if( tol_rel_i == -2.0 ) {
+                    eta_i = fmin(5e-1, sqrt(v_dot_g));
+                }
+                *stop_i = fmax(tol_abs_i, eta_i*sqrt(v_dot_g)); *stop_i = (*stop_i)*(*stop_i); // set interior stopping tolerance, note that this is squared as for efficiency we compare norm^2 <= tol
+                if( tol_rel_b >= 0.0 ) { 
+                    eta_b = tol_rel_b;
+                }
+                if( tol_rel_b == -1.0 ) {
+                    eta_b = fmax(1e-5, fmin(5e-1, sqrt(sqrt(v_dot_g))));
+                }
+                if( tol_rel_b == -2.0 ) {
+                    eta_b = fmax(1e-5, fmin(5e-1, sqrt(v_dot_g)));
+                }
+                *stop_b = fmax(tol_abs_b, eta_b*sqrt(v_dot_g)); // set boundary stopping tolerance, here no square as we directly compare norm <= tol
                 *v_g = v_dot_g; // store (v, g)
                 *p_Hp = p_dot_Hp; // store (p, Hp)
                 neglin[0] = - sqrt(v_dot_g); // set neglin = - gamma_0 e_1 
@@ -281,8 +301,8 @@ trlib_int_t trlib_krylov_min_internal(
                 else if (!(*interior) && (gamma[*ii]*fabs(h[*ii]) <= *stop_b) ) { *ityp = TRLIB_CLT_CG; *action = TRLIB_CLA_RETRANSF; returnvalue = TRLIB_CLR_CONV_BOUND; break; }
                 // test if convergence is unlikely
                 if ( !(*interior) && earlyterm && *ii > 10 && convhist[*ii-10] > 1e-1 * convhist[*ii]) { 
-                    int doit = 1;
-                    for(int cit = *ii-10; cit < *ii; ++cit) { if( convhist[cit+1] > convhist[cit] ) doit = 0; }
+                    trlib_int_t doit = 1;
+                    for(trlib_int_t cit = *ii-10; cit < *ii; ++cit) { if( convhist[cit+1] > convhist[cit] ) doit = 0; }
                     if(doit) {
                         TRLIB_PRINTLN_2("Early exit as boundary case for the last ten iterations without significant progress")
                         if(*interior) { *ityp = TRLIB_CLT_CG; *action = TRLIB_CLA_TRIVIAL; returnvalue = TRLIB_CLR_UNLIKE_CONV; break; }
@@ -386,14 +406,19 @@ trlib_int_t trlib_krylov_min_internal(
 
                 TRLIB_PRINTLN_1("%6ld%6ld%6s%14e%14e%14e%14e%14e%14e", *ii, *iter_tri, " hot", *obj, gamma[*ii]*fabs(h[*ii]), *leftmost, *lam, *ii == 0 ? neglin[0] : gamma[*ii-1], delta[*ii]) TRLIB_PRINTLN_2("%s", "")
 
+                if ( earlyterm ) { 
+                    TRLIB_PRINTLN_2("Early exit as hotstart with early termination on")
+                    *ityp = TRLIB_CLT_CG; *action = TRLIB_CLA_RETRANSF; returnvalue = TRLIB_CLR_UNLIKE_CONV; break;
+                }
+                
                 // test for convergence
                 if ( (*exit_tri != TRLIB_TTR_CONV_INTERIOR) && gamma[*ii]*fabs(h[*ii]) <= *stop_b) { *ityp = TRLIB_CLT_CG; *action = TRLIB_CLA_RETRANSF; returnvalue = *exit_tri; break; }
                 else if ( (*exit_tri == TRLIB_TTR_CONV_INTERIOR) && gamma[*ii]*fabs(h[*ii]) <= sqrt(*stop_i)) { *ityp = TRLIB_CLT_CG; *action = TRLIB_CLA_RETRANSF; returnvalue = *exit_tri; break; }
                 else if (isnan(*obj) || *obj < obj_lo) { *ityp = TRLIB_CLT_CG; *action = TRLIB_CLA_RETRANSF; returnvalue = TRLIB_CLR_UNBDBEL; break; }
                 else {
                     // prepare next iteration
-                    if (lanczos_switch < 0) { *ityp = TRLIB_CLT_CG; *status = TRLIB_CLS_CG_UPDATE_P; *flt1 = -1.0; *flt2 = beta[*ii]; *action = TRLIB_CLA_UPDATE_DIR; break; }
-                    else { *ityp = TRLIB_CLT_L; *action = TRLIB_CLA_TRIVIAL; *status = TRLIB_CLS_L_NEW_ITER; break; }
+                    if (lanczos_switch < 0) { returnvalue = TRLIB_CLR_CONTINUE; *ityp = TRLIB_CLT_CG; *status = TRLIB_CLS_CG_UPDATE_P; *flt1 = -1.0; *flt2 = beta[*ii]; *action = TRLIB_CLA_UPDATE_DIR; break; }
+                    else { returnvalue = TRLIB_CLR_CONTINUE; *ityp = TRLIB_CLT_L; *action = TRLIB_CLA_TRIVIAL; *status = TRLIB_CLS_L_NEW_ITER; break; }
                 }
                 break;
             case TRLIB_CLS_HOTSTART_P:
@@ -595,8 +620,8 @@ trlib_int_t trlib_krylov_min_internal(
                 else if ( ctl_invariant <= TRLIB_CLC_EXP_INV_LOC && (*exit_tri == TRLIB_TTR_CONV_INTERIOR) && *v_g <= sqrt(*stop_i)) { *ityp = TRLIB_CLT_L; *action = TRLIB_CLA_RETRANSF; returnvalue = *exit_tri; break; }
                 // test if convergence is unlikely
                 if ( !(*interior) && earlyterm && *ii > 10 && convhist[*ii-10] > 1e-1 * convhist[*ii]) { 
-                    int doit = 1;
-                    for(int cit = *ii-10; cit < *ii; ++cit) { if( convhist[cit+1] > convhist[cit] ) doit = 0; }
+                    trlib_int_t doit = 1;
+                    for(trlib_int_t cit = *ii-10; cit < *ii; ++cit) { if( convhist[cit+1] > convhist[cit] ) doit = 0; }
                     if(doit) {
                         TRLIB_PRINTLN_2("Early exit as boundary case for the last ten iterations without significant progress")
                         *ityp = TRLIB_CLT_L; *action = TRLIB_CLA_RETRANSF; returnvalue = TRLIB_CLR_UNLIKE_CONV; break;
@@ -638,7 +663,9 @@ trlib_int_t trlib_krylov_min(
     trlib_flt_t *flt1, trlib_flt_t *flt2, trlib_flt_t *flt3) {
 
     trlib_int_t ret = -20;
+
     trlib_int_t *outerstatus = iwork+14;
+    *iter = *(iwork+1);
     if (init == TRLIB_CLS_INIT || init == TRLIB_CLS_HOTSTART) { *outerstatus = 0; }
 
     if( *outerstatus < 100 || *outerstatus == 300 ) {
