@@ -662,7 +662,7 @@ trlib_int_t trlib_krylov_min(
     trlib_int_t *action, trlib_int_t *iter, trlib_int_t *ityp,
     trlib_flt_t *flt1, trlib_flt_t *flt2, trlib_flt_t *flt3) {
 
-    trlib_int_t ret = -20;
+    trlib_int_t ret = -1000;
 
     trlib_int_t *outerstatus = iwork+14;
     *iter = *(iwork+1);
@@ -681,7 +681,7 @@ trlib_int_t trlib_krylov_min(
         }
     }
 
-    if( ret >= 0 ) {
+    if( ret >= 0 || ret == -1000 ) {
 
         if( *outerstatus < 100 && ret < 10 && *action != TRLIB_CLA_TRIVIAL ) { *outerstatus = 100 + ret; return 10; }
         if( *outerstatus >= 100 && *outerstatus < 200 ) { ret = *outerstatus - 100; *outerstatus = 0; *action = TRLIB_CLA_TRIVIAL; }
