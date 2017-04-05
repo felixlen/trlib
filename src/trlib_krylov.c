@@ -681,46 +681,50 @@ trlib_int_t trlib_krylov_min(
         }
     }
 
-    if( *outerstatus < 100 && ret < 10 && *action != TRLIB_CLA_TRIVIAL ) { *outerstatus = 100 + ret; return 10; }
-    if( *outerstatus >= 100 && *outerstatus < 200 ) { ret = *outerstatus - 100; *outerstatus = 0; *action = TRLIB_CLA_TRIVIAL; }
+    if( ret >= 0 ) {
 
-    if( ret < 10 && *outerstatus < 100 && convexify ) {
-        // exit, check if we should convexify
-        trlib_flt_t lam = fwork[7];
-        trlib_flt_t obj = fwork[8];
-        if( lam > 1e-2*fmax(1.0, fwork[13]) && fwork[14] < 0.0 && fabs(fwork[14]) < 1e-8 * fwork[13]) { // do only if it seems to make sense based on eigenvalue estimation
-            // ask caller to compute objective value
-            *outerstatus = 200 + ret;
-            *action = TRLIB_CLA_OBJVAL;
-            return 10;
+        if( *outerstatus < 100 && ret < 10 && *action != TRLIB_CLA_TRIVIAL ) { *outerstatus = 100 + ret; return 10; }
+        if( *outerstatus >= 100 && *outerstatus < 200 ) { ret = *outerstatus - 100; *outerstatus = 0; *action = TRLIB_CLA_TRIVIAL; }
+
+        if( ret < 10 && *outerstatus < 100 && convexify ) {
+            // exit, check if we should convexify
+            trlib_flt_t lam = fwork[7];
+            trlib_flt_t obj = fwork[8];
+            if( lam > 1e-2*fmax(1.0, fwork[13]) && fwork[14] < 0.0 && fabs(fwork[14]) < 1e-8 * fwork[13]) { // do only if it seems to make sense based on eigenvalue estimation
+                // ask caller to compute objective value
+                *outerstatus = 200 + ret;
+                *action = TRLIB_CLA_OBJVAL;
+                return 10;
+            }
         }
+        if( *outerstatus > 200 && *outerstatus < 300 ) {
+            trlib_flt_t lam = fwork[7];
+            trlib_flt_t obj = fwork[8];
+            trlib_flt_t realobj = g_dot_g;
+            if( fabs(obj - realobj) > fmax(1e-6, 1e-1*fabs(realobj)) || realobj > 0.0) {
+                TRLIB_PRINTLN_2("leftmost: %e lam: %e raymax: %e raymin: %e\n", fwork[24+12*itmax], fwork[7], fwork[13], fwork[14])
+                TRLIB_PRINTLN_2("mismatch between objective value as predicted from tridiagonal solution and actually computed: tridiag: %e, actual: %e\n", obj, realobj)
+                TRLIB_PRINTLN_2("recomputing with regularized hessian\n");
+                init = TRLIB_CLS_HOTSTART_P;
+                ret = trlib_krylov_min_internal(init, radius, equality, itmax, itmax_lanczos,
+                        tol_rel_i, tol_abs_i, tol_rel_b, tol_abs_b, zero, obj_lo,
+                        ctl_invariant, convexify, earlyterm, g_dot_g, v_dot_g, p_dot_Hp,
+                        iwork, fwork, refine, verbose, unicode, prefix, fout, timing,
+                        action, iter, ityp, flt1, flt2, flt3);
+                *outerstatus = 300;
+                return ret;
+            }
+            else {
+                ret = *outerstatus - 200;
+                *outerstatus = 0;
+                return ret;
+            }
+
+        }
+
+        if( *outerstatus == 300 && ret < 10 ) { *outerstatus = 0; return ret; }
+
     }
-    if( *outerstatus > 200 && *outerstatus < 300 ) {
-        trlib_flt_t lam = fwork[7];
-        trlib_flt_t obj = fwork[8];
-        trlib_flt_t realobj = g_dot_g;
-        if( fabs(obj - realobj) > fmax(1e-6, 1e-1*fabs(realobj)) || realobj > 0.0) {
-            TRLIB_PRINTLN_2("leftmost: %e lam: %e raymax: %e raymin: %e\n", fwork[24+12*itmax], fwork[7], fwork[13], fwork[14])
-            TRLIB_PRINTLN_2("mismatch between objective value as predicted from tridiagonal solution and actually computed: tridiag: %e, actual: %e\n", obj, realobj)
-            TRLIB_PRINTLN_2("recomputing with regularized hessian\n");
-            init = TRLIB_CLS_HOTSTART_P;
-            ret = trlib_krylov_min_internal(init, radius, equality, itmax, itmax_lanczos,
-                    tol_rel_i, tol_abs_i, tol_rel_b, tol_abs_b, zero, obj_lo,
-                    ctl_invariant, convexify, earlyterm, g_dot_g, v_dot_g, p_dot_Hp,
-                    iwork, fwork, refine, verbose, unicode, prefix, fout, timing,
-                    action, iter, ityp, flt1, flt2, flt3);
-            *outerstatus = 300;
-            return ret;
-        }
-        else {
-            ret = *outerstatus - 200;
-            *outerstatus = 0;
-            return ret;
-        }
-
-    }
-
-    if( *outerstatus == 300 && ret < 10 ) { *outerstatus = 0; return ret; }
 
     return ret;
 }
