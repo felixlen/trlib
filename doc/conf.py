@@ -23,6 +23,7 @@ if read_the_docs_build:
     subprocess.check_call(['cp', 'installation.rst.in', 'installation.rst'])
     subprocess.check_call(['cp', 'python.rst.in', 'python.rst'])
     subprocess.check_call(['cp', 'matlab.rst.in', 'matlab.rst'])
+    subprocess.check_call(['cp', 'cexample.rst.in', 'cexample.rst'])
     subprocess.check_call(['cp', 'references.rst.in', 'references.rst'])
     for include in ['krylov', 'tri_factor', 'leftmost', 'eigen_inverse', 'quadratic_zero', 'types']:
         subprocess.check_call(['python', 'extractdoc.py', '../include/trlib_{:s}.h.in'.format(include), 'capi_{:s}.rst'.format(include), 'CAPI trlib_{:s}'.format(include)])

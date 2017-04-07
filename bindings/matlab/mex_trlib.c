@@ -110,9 +110,9 @@ void mexFunction (int nlhs, mxArray *plhs [], int nrhs, const mxArray *prhs [])
         mxSetField (plhs [0], 0, "equality", mxCreateInt64Scalar (0));
         mxSetField (plhs [0], 0, "itmax", mxCreateInt64Scalar (*itmax));
         mxSetField (plhs [0], 0, "itmax_lanczos", mxCreateInt64Scalar (100));
-        mxSetField (plhs [0], 0, "tol_rel_i", mxCreateDoubleScalar (1.4901e-8));
-        mxSetField (plhs [0], 0, "tol_rel_b", mxCreateDoubleScalar (2.0134e-5));
+        mxSetField (plhs [0], 0, "tol_rel_i", mxCreateDoubleScalar (-2.0));
         mxSetField (plhs [0], 0, "tol_abs_i", mxCreateDoubleScalar (0.0));
+        mxSetField (plhs [0], 0, "tol_rel_b", mxCreateDoubleScalar (-3.0));
         mxSetField (plhs [0], 0, "tol_abs_b", mxCreateDoubleScalar (0.0));
         mxSetField (plhs [0], 0, "zero", mxCreateDoubleScalar (2.22e-16));
         mxSetField (plhs [0], 0, "obj_lo", mxCreateDoubleScalar (-1e20));

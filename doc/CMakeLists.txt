@@ -3,6 +3,7 @@ configure_file("${CMAKE_CURRENT_SOURCE_DIR}/index.rst.in"        "${CMAKE_CURREN
 configure_file("${CMAKE_CURRENT_SOURCE_DIR}/installation.rst.in" "${CMAKE_CURRENT_BINARY_DIR}/installation.rst")
 configure_file("${CMAKE_CURRENT_SOURCE_DIR}/matlab.rst.in"       "${CMAKE_CURRENT_BINARY_DIR}/matlab.rst")
 configure_file("${CMAKE_CURRENT_SOURCE_DIR}/python.rst.in"       "${CMAKE_CURRENT_BINARY_DIR}/python.rst")
+configure_file("${CMAKE_CURRENT_SOURCE_DIR}/cexample.rst.in"     "${CMAKE_CURRENT_BINARY_DIR}/cexample.rst")
 configure_file("${CMAKE_CURRENT_SOURCE_DIR}/references.rst.in"   "${CMAKE_CURRENT_BINARY_DIR}/references.rst")
 
 add_custom_command(OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/capi_krylov.rst"

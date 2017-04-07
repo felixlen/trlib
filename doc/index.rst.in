@@ -19,6 +19,7 @@ Contents:
    installation
    matlab
    python
+   cexample
    capi_krylov
    capi_tri_factor
    capi_leftmost

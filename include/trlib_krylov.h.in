@@ -92,9 +92,22 @@
  *
  *  The stopping criterion is based on the gradient of the Lagrangian. Convergence in iteration :math:`i` is reported as soon as
  *
- *  - interior case: :math:`\Vert g_{i+1} \Vert_{M^{-1}} \le \max\{ \texttt{tol}\_\texttt{abs}\_\texttt{i}, \texttt{tol}\_\texttt{rel}\_\texttt{i} \, \Vert g_0 \Vert_{M^{-1}} \}`.
- *  - boundary case: :math:`\Vert g_{i+1} \Vert_{M^{-1}} \le \max\{ \texttt{tol}\_\texttt{abs}\_\texttt{b}, \texttt{tol}\_\texttt{rel}\_\texttt{b} \, \Vert g_0 \Vert_{M^{-1}} \}`.
+ *  - interior case: :math:`\Vert g_{i+1} \Vert_{M^{-1}} \le \max\{ \texttt{tol}\_\texttt{abs}\_\texttt{i}, \eta_i \, \Vert g_0 \Vert_{M^{-1}} \}`.
+ *  - boundary case: :math:`\Vert g_{i+1} \Vert_{M^{-1}} \le \max\{ \texttt{tol}\_\texttt{abs}\_\texttt{b}, \eta_b \, \Vert g_0 \Vert_{M^{-1}} \}`.
  *  - hard case: :c:data:`ctl_invariant` determines if this is the sole stopping criterion or if further invariant subspaces are going to be explored. See the documentation of this option.
+ *
+ *  Here 
+ *  :math:`\eta_i = \begin{cases} \texttt{tol}\_\texttt{rel}\_\texttt{i} & \texttt{tol}\_\texttt{rel}\_\texttt{i} > 0 \\ \min\{ 0.5, \sqrt{\Vert g_{i+1} \Vert_{M^{-1}}} \} & \texttt{tol}\_\texttt{rel}\_\texttt{i} = -1 \\ \min\{ 0.5, \Vert g_{i+1} \Vert_{M^{-1}} \} & \texttt{tol}\_\texttt{rel}\_\texttt{i} = -2 \end{cases},`
+ *  :math:`\eta_b = \begin{cases} \texttt{tol}\_\texttt{rel}\_\texttt{b} & \texttt{tol}\_\texttt{rel}\_\texttt{b} > 0 \\ \min\{ 0.5, \sqrt{\Vert g_{i+1} \Vert_{M^{-1}}} \} & \texttt{tol}\_\texttt{rel}\_\texttt{b} = -1 \\ \min\{ 0.5, \Vert g_{i+1} \Vert_{M^{-1}} \} & \texttt{tol}\_\texttt{rel}\_\texttt{b} = -2, \\ \max\{10^{-6}, \min\{ 0.5, \sqrt{\Vert g_{i+1} \Vert_{M^{-1}}} \}\} & \texttt{tol}\_\texttt{rel}\_\texttt{b} = -3 \\ \max\{10^{-6}, \min\{ 0.5, \Vert g_{i+1} \Vert_{M^{-1}}\} \} & \texttt{tol}\_\texttt{rel}\_\texttt{b} = -4 \end{cases}.`
+ *
+ *  Choice of :math:`\eta_i` and :math:`\eta_b` depend on the application, the author has good overall experience in unconstrained optimization with :math:`\texttt{tol}\_\texttt{rel}\_\texttt{i} = -2` and :math:`\texttt{tol}\_\texttt{rel}\_\texttt{b} = -3`.
+ *  Some remarks to keep in mind when choosing the tolerances:
+ *
+ *  - Choosing fixed small values for :math:`\eta_i` and :math:`\eta_b`, for example :math:`\texttt{tol}\_\texttt{rel}\_\texttt{i} = 10^{-8}` and :math:`\texttt{tol}\_\texttt{rel}\_\texttt{b} = 10^{-6}` lead to quick convergence in a NLP algorithm with lowest number of function evaluations but at a possible excessive amount of matrix-vector products as this also solves problems accurately far away from the solution.
+ *  - Choosing :math:`\eta \sim O(\sqrt{\Vert g \Vert_{M^{-1}}})` leads to superlinear convergence in a nonlinear programming algorithm.
+ *  - Choosing :math:`\eta \sim O(\Vert g \Vert_{M^{-1}})` leads to quadratic convergence in a nonlinear programming algorithm.
+ *  - It is questionable whether it makes sense to solve the boundary with very high accuracy, as the final solution of a nonlinear program should be interior.
+ *
  *
  *  **Calling Scheme**
  *

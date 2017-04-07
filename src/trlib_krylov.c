@@ -138,21 +138,24 @@ trlib_int_t trlib_krylov_min_internal(
                 if( tol_rel_i >= 0.0 ) {
                     eta_i = tol_rel_i;
                 }
-                if( tol_rel_i == -1.0 ) {
+                if( fabs(tol_rel_i +1.0) < 1e-8 ) {
                     eta_i = fmin(5e-1, sqrt(sqrt(v_dot_g)));
                 }
-                if( tol_rel_i == -2.0 ) {
+                if( fabs(tol_rel_i +2.0) < 1e-8 ) {
                     eta_i = fmin(5e-1, sqrt(v_dot_g));
                 }
                 *stop_i = fmax(tol_abs_i, eta_i*sqrt(v_dot_g)); *stop_i = (*stop_i)*(*stop_i); // set interior stopping tolerance, note that this is squared as for efficiency we compare norm^2 <= tol
                 if( tol_rel_b >= 0.0 ) { 
                     eta_b = tol_rel_b;
                 }
-                if( tol_rel_b == -1.0 ) {
-                    eta_b = fmax(1e-5, fmin(5e-1, sqrt(sqrt(v_dot_g))));
+                if( fabs(tol_rel_b +1.0) < 1e-8 || fabs(tol_rel_b +3.0) < 1e-8 ) {
+                    eta_b = fmin(5e-1, sqrt(sqrt(v_dot_g)));
                 }
-                if( tol_rel_b == -2.0 ) {
-                    eta_b = fmax(1e-5, fmin(5e-1, sqrt(v_dot_g)));
+                if( fabs(tol_rel_b +2.0) < 1e-8 || fabs(tol_rel_b +4.0) < 1e-8 ) {
+                    eta_b = fmin(5e-1, sqrt(v_dot_g));
+                }
+                if( tol_rel_b < -2.5 ) {
+                    eta_b = fmax(1e-6, eta_b);
                 }
                 *stop_b = fmax(tol_abs_b, eta_b*sqrt(v_dot_g)); // set boundary stopping tolerance, here no square as we directly compare norm <= tol
                 *v_g = v_dot_g; // store (v, g)
