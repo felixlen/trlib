@@ -50,6 +50,5 @@ if(CHECK_FOUND)
         target_include_directories("test_${t}_valgrind" PRIVATE "${CMAKE_BINARY_DIR}/include" "${CMAKE_CURRENT_BINARY_DIR}" ${CHECK_INCLUDE_DIRS})
         add_test("test_${t}_valgrind" valgrind  --leak-check=full --show-leak-kinds=all --show-reachable=yes --error-exitcode=1 --errors-for-leak-kinds=all "${CMAKE_CURRENT_BINARY_DIR}/test_${t}_valgrind")
     endforeach(t)
-    add_test("test_simple_qp_callback_valgrind" valgrind  --leak-check=full --show-leak-kinds=all --show-reachable=yes --error-exitcode=1 --errors-for-leak-kinds=all "${CMAKE_CURRENT_BINARY_DIR}/../examples/simple_qp_callback")
 
 endif(CHECK_FOUND)
