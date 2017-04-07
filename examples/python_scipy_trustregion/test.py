@@ -23,35 +23,31 @@ n = 1
 for ii in range(9):
     n = 2*n
 
-    print("trlib n = {:d}".format(n))
-    nhp = 0
-    curtime = time.time()
-    restr = _trustregion_trlib._minimize_trust_trlib(scipy.optimize.rosen, 0.0*np.ones([n]), jac=scipy.optimize.rosen_der, hessp=hesspgat)
-    trtime = time.time()-curtime
-    nhptrlib = nhp
-    print("solution time:    {:e} s\n# hessian vector: {:d}\n# NLP iterations: {:d}\nobjective:        {:e}\nmessage:          {:s}".format(trtime, nhp, restr['nit'], restr['fun'], restr['message']))
+    print("n = {:d}".format(n))
+    print("subproblem solver      time          #iter  #hpev  #hev   obj            message")
 
-    print("\ntrlib inexact=False n = {:d}".format(n))
     nhp = 0
     curtime = time.time()
-    restr = _trustregion_trlib._minimize_trust_trlib(scipy.optimize.rosen, 0.0*np.ones([n]), jac=scipy.optimize.rosen_der, hessp=hesspgat, inexact=False)
-    trtime = time.time()-curtime
-    nhptrlib = nhp
-    print("solution time:    {:e} s\n# hessian vector: {:d}\n# NLP iterations: {:d}\nobjective:        {:e}\nmessage:          {:s}".format(trtime, nhp, restr['nit'], restr['fun'], restr['message']))
+    res = scipy.optimize._trustregion_ncg._minimize_trust_ncg(scipy.optimize.rosen, 0.0*np.ones([n]), jac=scipy.optimize.rosen_der, hessp=hesspgat)
+    soltime = time.time()-curtime
+    print("ncg:                   {:+2.4e}s  {:5d}  {:5d}  {:5d}  {:+2.4e}s   {:s}".format(soltime, res['nit'], nhp, 0, res['fun'], res['message']))
+
+    nhp = 0
+    curtime = time.time()
+    res = _trustregion_trlib._minimize_trust_trlib(scipy.optimize.rosen, 0.0*np.ones([n]), jac=scipy.optimize.rosen_der, hessp=hesspgat)
+    soltime = time.time()-curtime
+    print("trlib, inexact=True:   {:+2.4e}s  {:5d}  {:5d}  {:5d}  {:+2.4e}s   {:s}".format(soltime, res['nit'], nhp, 0, res['fun'], res['message']))
+
+    nhp = 0
+    curtime = time.time()
+    res = _trustregion_trlib._minimize_trust_trlib(scipy.optimize.rosen, 0.0*np.ones([n]), jac=scipy.optimize.rosen_der, hessp=hesspgat, inexact=False)
+    soltime = time.time()-curtime
+    print("trlib, inexact=False:  {:+2.4e}s  {:5d}  {:5d}  {:5d}  {:+2.4e}s   {:s}".format(soltime, res['nit'], nhp, 0, res['fun'], res['message']))
     
-    print("\nncg n = {:d}".format(n))
-    nhp = 0
-    curtime = time.time()
-    resncg = scipy.optimize._trustregion_ncg._minimize_trust_ncg(scipy.optimize.rosen, 0.0*np.ones([n]), jac=scipy.optimize.rosen_der, hessp=hesspgat)
-    ncgtime = time.time()-curtime
-    nhpncg = nhp
-    print("solution time:    {:e} s\n# hessian vector: {:d}\n# NLP iterations: {:d}\nobjective:        {:e}\nmessage:          {:s}".format(ncgtime, nhp, resncg['nit'], resncg['fun'], resncg['message']))
-
     if hasexact:
-        print("\nexact n = {:d}".format(n))
         curtime = time.time()
-        resexa = _trustregion_exact._minimize_trustregion_exact(scipy.optimize.rosen, 0.0*np.ones([n]), jac=scipy.optimize.rosen_der, hess=scipy.optimize.rosen_hess)
-        exatime = time.time()-curtime
-        print("solution time:    {:e} s\n# hessians:       {:d}\n# NLP iterations: {:d}\nobjective:        {:e}\nmessage:          {:s}".format(exatime, resexa['nhev'], resexa['nit'], resexa['fun'], resexa['message']))
+        res = _trustregion_exact._minimize_trustregion_exact(scipy.optimize.rosen, 0.0*np.ones([n]), jac=scipy.optimize.rosen_der, hess=scipy.optimize.rosen_hess)
+        soltime = time.time()-curtime
+        print("exact:                 {:+2.4e}s  {:5d}  {:5d}  {:5d}  {:+2.4e}s   {:s}".format(soltime, res['nit'], 0, res['nhev'], res['fun'], res['message']))
 
-    print("\n\n")
+    print("")
