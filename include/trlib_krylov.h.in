@@ -451,7 +451,7 @@ trlib_int_t trlib_krylov_memory_size(trlib_int_t itmax, trlib_int_t *iwork_size,
  *  :returns: ``0``
  *  :rtype: trlib_int_t
  */
-trlib_int_t trlib_krylov_timing_size();
+trlib_int_t trlib_krylov_timing_size(void);
 
 /** Gives pointer to negative gradient of tridiagonal problem
  *  

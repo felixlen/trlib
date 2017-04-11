@@ -56,7 +56,7 @@ trlib_int_t trlib_leftmost_irreducible(
     trlib_flt_t oabs0 = 0.0, oabs1 = 0.0;   // temporaries in Gershgorin limit computation
 
     trlib_int_t continue_outer_loop = 0;    // local spaghetti code control variable
-    trlib_int_t model_type;
+    trlib_int_t model_type = 0;
 
     // trivial case: one-dimensional. return diagonal value
     if (n == 1) { *leftmost = diag[0]; TRLIB_RETURN(TRLIB_LMR_CONV) }

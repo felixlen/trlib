@@ -88,9 +88,9 @@ This function does the actual solution process by answering the reverse communic
         trlib_int_t refine = 1;
         trlib_int_t verbose = 1;
         trlib_int_t unicode = 0;
-        trlib_flt_t tol_rel_i = -2;
-        trlib_flt_t tol_rel_b = -2;
+        trlib_flt_t tol_rel_i = -2.0;
         trlib_flt_t tol_abs_i = 0.0;
+        trlib_flt_t tol_rel_b = -3.0;
         trlib_flt_t tol_abs_b = 0.0;
         trlib_flt_t obj_lo = -1e20;
         trlib_int_t convexify = 1;

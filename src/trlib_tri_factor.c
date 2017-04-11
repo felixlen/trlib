@@ -34,10 +34,8 @@ trlib_int_t trlib_tri_factor_min(
     trlib_int_t nm0 = irblk[1]-1;                            // length of offdiagonal of first block
     trlib_int_t info_fac = 0;                                // factorization information
     trlib_int_t ret = 0;                                     // return code
-    trlib_int_t newton = 0;                                  // perform newton iteration
     trlib_flt_t lam_pert = 0.0;                           // perturbation of leftmost eigenvalue as starting value for lam
     trlib_flt_t norm_sol0 = 0.0;                          // norm of h_0(lam)
-    trlib_int_t interior = 0;                                // solution is interior
     *iter_newton = 0;                                // newton iteration counter
     trlib_int_t jj = 0;                                      // local iteration counter
     trlib_flt_t dlam     = 0.0;                           // increment in newton iteration
@@ -71,7 +69,6 @@ trlib_int_t trlib_tri_factor_min(
             else { TRLIB_PRINTLN_1("  violates ||h0|| - radius >= 0, but is %e, switch to coldstart", norm_sol0-radius) }
             *warm0 = 0; 
         }
-        else { newton = 1; }
     }
     if (nirblk == 1 || !*warm0) {
         // seek for lam0, h_0 with (T0+lam0*I) pos def and ||h_0(lam_0)|| = radius
@@ -99,7 +96,7 @@ trlib_int_t trlib_tri_factor_min(
                     TRLIB_RETURN(TRLIB_TTR_FAIL_LINSOLVE)
                 }
                 TRLIB_DNRM2(norm_sol0, &n0, sol0, &inc)
-                if (norm_sol0 >= radius) { *warm0 = 1; newton = 1; } else { *warm0 = 0; }
+                if (norm_sol0 >= radius) { *warm0 = 1; } else { *warm0 = 0; }
             }
         }
         if(!*warm0) {

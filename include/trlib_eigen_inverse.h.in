@@ -89,6 +89,6 @@ trlib_int_t trlib_eigen_inverse(
 
 /** size that has to be allocated for :c:data:`timing` in :c:func:`trlib_eigen_inverse`
  */
-trlib_int_t trlib_eigen_timing_size();
+trlib_int_t trlib_eigen_timing_size(void);
 
 #endif
