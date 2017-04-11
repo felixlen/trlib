@@ -437,6 +437,7 @@ trlib_int_t trlib_krylov_min_internal(
                 memset(h, 0.0, (*ii+1)*sizeof(trlib_flt_t));
 
                 *warm_lam0 = 0; *warm_lam = 0; *warm_leftmost = 0; warm_fac0 = 0; warm_fac = 0;
+                irblk[1] = *ii+1;
                 *exit_tri = trlib_tri_factor_min(
                     1, irblk, delta, gamma, neglin, radius, 100+3*(*ii),
                     TRLIB_EPS, fmin(tol_rel_b, 1e1*TRLIB_EPS_POW_75), *pos_def, equality,
