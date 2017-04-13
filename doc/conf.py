@@ -22,6 +22,7 @@ if read_the_docs_build:
     subprocess.check_call(['cp', 'index.rst.in', 'index.rst'])
     subprocess.check_call(['cp', 'installation.rst.in', 'installation.rst'])
     subprocess.check_call(['cp', 'python.rst.in', 'python.rst'])
+    subprocess.check_call(['cp', 'julia.rst.in', 'julia.rst'])
     subprocess.check_call(['cp', 'matlab.rst.in', 'matlab.rst'])
     subprocess.check_call(['cp', 'cexample.rst.in', 'cexample.rst'])
     subprocess.check_call(['cp', 'references.rst.in', 'references.rst'])

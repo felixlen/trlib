@@ -1,0 +1,63 @@
+Julia Interface
+===============
+
+Installation
+------------
+
+Ensure that ``TRLIB_INSTALL_DIR/lib`` is part of your ``LD_LIBRARY_PATH`` environment variable.
+
+You include the Julia interface by adding::
+
+    include("TRLIB_DIR/bindings/julia/trlib.jl")
+    using trlib
+
+to your Julia code.
+
+Usage
+-----
+
+The interface allows to solve the trust region problem
+
+    :math:`\min_{x \in \mathbb R^n} \tfrac 12 x^T H x + x^T g \quad \text{s.t.} \, \Vert x \Vert \le \text{radius}`
+
+respective
+
+    :math:`\min_{x \in \mathbb R^n} \tfrac 12 x^T H x + x^T g \quad \text{s.t.} \, \Vert x \Vert_M \le \text{radius}`
+
+with :math:`\Vert x \Vert_M = \sqrt{ x^T M x }`.
+
+The module provides a type ``trlib_data`` to hold the necessary data of a trust region problem and a function ``trlib_solve`` to solve the trust region problem.
+
+To instaniate the data holding a trust region problem instance, execute::
+
+    TR = trlib.trlib_data(H, g)
+
+respective::
+
+    TR = trlib.trlib_data(H, g, invM)
+
+where `H` is such data the action `H * p` is defined, yielding :math:`Hp` and `invM` such that `invM * p` is defined yielding :math:`M^{-1} p`.
+
+You can then solve the problem with::
+
+    trlib.trlib_solve(TR, radius)
+
+and get the solution as `TR.sol`, the lagrange multiplier as `TR.lam` and the objective value as `TR.obj`.
+
+To hotstart the solution process with changed radius, just execute `trlib_solve` again.
+
+:Example:
+    
+    Solve a sample large-scale problem with indefinite diagonal hessian matrix::
+
+        julia> include("TRLIB_DIR/bindings/julia/trlib.jl");
+        julia> using trlib;
+        julia> H = spdiagm(linspace(-1.0, 100.0, n));
+        julia> g = ones(1000);
+        julia> TR = trlib.trlib_data(H, g);
+        julia> trlib.trlib_solve(TR, 1.0);
+        julia> norm(TR.sol)
+        (1.0000000000000002,2.9355512148709044,-15.283315647553387)
+        julia> trlib.trlib_solve(TR, 0.5);
+        julia> norm(TR.sol), TR.lam, TR.obj
+        (0.5000000000000001,28.860019828697034,-11.01602177675002)
