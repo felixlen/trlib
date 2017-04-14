@@ -6,7 +6,7 @@ Installation
 
 We don't have a ``setup.py`` yet but use CMake to build the interface.
 Ensure that either ``TRLIB_BUILD_PYTHON2` or ``TRLIB_BUILD_PYTHON3`` is set to ``ON`` before compilation, depending on the python version you like to use.
-At the moment you have to ensure that ``$TRLIB_INSTALL_DIR/build`` is contained in your ``$PYTHON_PATH``.
+At the moment you have to ensure that ``$TRLIB_DIR/build`` is contained in your ``$PYTHON_PATH``.
 
 Usage
 -----
@@ -64,9 +64,9 @@ Functions
         >>> g = np.ones(1000)
         >>> x, TR = trlib.trlib_solve(H, g, 1.0)
         >>> np.linalg.norm(x)
-        0.99999999999999978
+        1.0000000000000002
         >>> x, TR = trlib.trlib_solve(H, g, .5, reentry=True, TR=TR)
-        0.50000000000005329
+        0.50000000000000011
 
 .. py:function:: umin(obj, grad, hessvec, x, tol=1e-5, eta1=1e-2, eta2=.95, gamma1=.5, gamma2=2., itmax=-1, verbose=1)
 

@@ -1,3 +1,25 @@
+# MIT License
+#
+# Copyright (c) 2016--2017 Felix Lenders
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+# 
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+# 
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+
 import numpy as np
 import scipy.sparse.linalg
 cimport ctrlib
@@ -211,17 +233,56 @@ def trlib_solve(hess, grad, radius, invM = lambda x: x, TR=None, reentry=False,
     >>> g = np.ones(1000)
     >>> x, TR = trlib.trlib_solve(H, g, 1.0)
     >>> np.linalg.norm(x)
-    0.99999999999999978
+    1.0000000000000002
     >>> x, TR = trlib.trlib_solve(H, g, .5, reentry=True, TR=TR)
-    0.50000000000005329
+    0.50000000000000011
     """
 
     if hasattr(hess, 'dot'):
         hmv = lambda x: hess.dot(x)
     else:
         hmv = hess
-    itmax = 2*grad.shape[0]
-    iwork_size, fwork_size, h_pointer = krylov_memory_size(itmax)
+
+    cdef long equality = 0
+    cdef long itmax_lanczos = 100
+    
+    cdef double tol_r_i = tol_rel_i
+    cdef double tol_a_i =  tol_abs_i
+    cdef double tol_r_b = tol_rel_b
+    cdef double tol_a_b =  tol_abs_b
+    cdef double zero = 2e-16
+    cdef double obj_lb = -1e20
+    
+    cdef long ctli = 0
+    cdef long cvx = convexify
+    cdef long eterm = earlyterm
+    
+    cdef double g_dot_g = 0.0
+    cdef double v_dot_g = 0.0
+    cdef double p_dot_Hp = 0.0
+    
+    cdef long refine = 1
+    cdef long verb = verbose
+    cdef long unicode = 1
+    
+    cdef long ret = 0
+    cdef long action = 0
+    cdef long it = 0
+    cdef long ityp = 0
+    cdef long itmax = 2*grad.shape[0]
+    cdef long init
+    cdef long iwork_size
+    cdef long fwork_size
+    cdef long h_pointer
+    
+    cdef double flt1 = 0.0
+    cdef double flt2 = 0.0
+    cdef double flt3 = 0.0
+    
+    prefix = "".encode('UTF-8')
+    
+    ctrlib.trlib_krylov_memory_size(itmax, &iwork_size, &fwork_size, &h_pointer)
+    
     if TR is None:
         TR = {}
     if not reentry:
@@ -245,24 +306,29 @@ def trlib_solve(hess, grad, radius, invM = lambda x: x, TR=None, reentry=False,
             TR['Hp'] = np.empty(grad.shape)
         if not 'Q' in TR:
             TR['Q'] = np.empty([itmax+1, grad.shape[0]])
+        if not 'timing' in TR:
+            TR['timing'] = np.zeros([ctrlib.trlib_krylov_timing_size()], dtype=np.int)
     else:
         if reentry != 'convex':
             init = ctrlib._TRLIB_CLS_HOTSTART
         else:
             init = ctrlib._TRLIB_CLS_HOTSTART_P
 
-    v_dot_g = 0.0; g_dot_g = 0.0; p_dot_Hp = 0.0
+    cdef long   [:] iwork_view  = TR['iwork']
+    cdef double [:] fwork_view  = TR['fwork']
+    cdef long   [:] timing_view = TR['timing']
+
     
     while True:
-        if verbose > 2:
-            print(TR['iwork'][:5])
-        ret, action, iter, ityp, flt1, flt2, flt3 = krylov_min(
-            init, radius, g_dot_g, v_dot_g, p_dot_Hp, TR['iwork'], TR['fwork'],
-            ctl_invariant=ctl_invariant, itmax=itmax, verbose=verbose,
-            convexify=convexify, earlyterm=earlyterm,
-            tol_rel_i=tol_rel_i, tol_abs_i=tol_abs_i, tol_rel_b=tol_rel_b, tol_abs_b=tol_abs_b)
-        if verbose > 2:
-            print(TR['iwork'][:5], ret, action, iter, ityp, flt1, flt2, flt3)
+        ret = ctrlib.trlib_krylov_min(init, radius, equality, itmax, itmax_lanczos,
+            tol_r_i, tol_a_i, tol_r_b, tol_a_b, zero, obj_lb,
+            ctli, cvx, eterm, g_dot_g, v_dot_g, p_dot_Hp,
+            &iwork_view[0] if TR['iwork'].shape[0] > 0 else NULL,
+            &fwork_view[0] if TR['fwork'].shape[0] > 0 else NULL,
+            refine, verb, unicode, prefix, <libc.stdio.FILE*> libc.stdio.stdout,
+            &timing_view[0] if TR['timing'].shape[0] > 0 else NULL,
+            &action, &it, &ityp, &flt1, &flt2, &flt3)
+
         init = 0
         if action == ctrlib._TRLIB_CLA_INIT:
             TR['s'][:] = 0.0
@@ -276,13 +342,13 @@ def trlib_solve(hess, grad, radius, invM = lambda x: x, TR=None, reentry=False,
             p_dot_Hp = np.dot(TR['p'], TR['Hp'])
             TR['Q'][0,:] = TR['v']/np.sqrt(v_dot_g)
         if action == ctrlib._TRLIB_CLA_RETRANSF:
-            TR['s'][:] = np.dot(TR['fwork'][h_pointer:h_pointer+iter+1], TR['Q'][:iter+1,:])
+            TR['s'][:] = np.dot(TR['fwork'][h_pointer:h_pointer+it+1], TR['Q'][:it+1,:])
         if action == ctrlib._TRLIB_CLA_UPDATE_STATIO:
             if ityp == ctrlib._TRLIB_CLT_CG:
                 TR['s'] += flt1 * TR['p']
         if action == ctrlib._TRLIB_CLA_UPDATE_GRAD:
             if ityp == ctrlib._TRLIB_CLT_CG:
-                TR['Q'][iter,:] = flt2*TR['v']
+                TR['Q'][it,:] = flt2*TR['v']
                 TR['gm'][:] = TR['g']
                 TR['g'] += flt1*TR['Hp']
             if ityp == ctrlib._TRLIB_CLT_L:
@@ -297,11 +363,11 @@ def trlib_solve(hess, grad, radius, invM = lambda x: x, TR=None, reentry=False,
             TR['Hp'][:] = hmv(TR['p'])
             p_dot_Hp = np.dot(TR['p'], TR['Hp'])
             if ityp == ctrlib._TRLIB_CLT_L:
-                TR['Q'][iter,:] = TR['p']
+                TR['Q'][it,:] = TR['p']
         if action == ctrlib._TRLIB_CLA_NEW_KRYLOV:
             # FIXME: adapt for M != I
             QQ, RR = np.linalg.qr(TR['Q'][:iter,:].transpose(), 'complete')
-            TR['g'][:] = QQ[:,iter]
+            TR['g'][:] = QQ[:,it]
             TR['gm'][:] = 0.0
             TR['v'][:] = invM(TR['g'])
             g_dot_g = np.dot(TR['g'], TR['g'])
@@ -309,7 +375,7 @@ def trlib_solve(hess, grad, radius, invM = lambda x: x, TR=None, reentry=False,
             TR['p'][:] = TR['v']/np.sqrt(v_dot_g)
             TR['Hp'][:] = hmv(TR['p'])
             p_dot_Hp = np.dot(TR['p'], TR['Hp'])
-            TR['Q'][iter,:] = TR['p']
+            TR['Q'][it,:] = TR['p']
         if action == ctrlib._TRLIB_CLA_CONV_HARD:
             # FIXME: adapt for M != I
             Ms = TR['s']
@@ -317,14 +383,14 @@ def trlib_solve(hess, grad, radius, invM = lambda x: x, TR=None, reentry=False,
             g_dot_g = np.dot(TR['g'], TR['g'])
             v_dot_g = np.dot(Hs+grad+flt1*Ms, invM(Hs+grad)+flt1*TR['s'])
         if action == ctrlib._TRLIB_CLA_OBJVAL:
-            obj = .5*np.dot(TR['s'], hmv(TR['s'])) + np.dot(TR['s'], grad)
+            g_dot_g = .5*np.dot(TR['s'], hmv(TR['s'])) + np.dot(TR['s'], grad)
         if ret < 10:
             break
     if ret < 0:
         print("Warning, status: %d" % ret, TR['iwork'][7], TR['iwork'][8])
         pass
     TR['ret'] = ret
-    TR['iter'] = iter
+    TR['iter'] = it
     TR['obj'] = TR['fwork'][8]
     TR['lam'] = TR['fwork'][7]
     return TR['s'], TR

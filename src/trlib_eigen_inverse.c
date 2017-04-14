@@ -1,3 +1,27 @@
+/* MIT License
+ *
+ * Copyright (c) 2016--2017 Felix Lenders
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ * 
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ * 
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ *
+ */
+
 #include "trlib.h"
 #include "trlib_private.h"
 
@@ -52,11 +76,13 @@ trlib_int_t trlib_eigen_inverse(
     
     // try with TRLIB_EIR_N_STARTVEC different start vectors and hope that it converges for one
     seeds[0] = time(NULL);
-    for( trlib_int_t jj = 1; jj < TRLIB_EIR_N_STARTVEC; ++jj ) { seeds[jj] = rand(); }
-    for( trlib_int_t jj = 0; jj < TRLIB_EIR_N_STARTVEC; ++jj ) {
+    trlib_int_t jj = 0;
+    trlib_int_t kk = 0;
+    for(jj = 1; jj < TRLIB_EIR_N_STARTVEC; ++jj ) { seeds[jj] = rand(); }
+    for(jj = 0; jj < TRLIB_EIR_N_STARTVEC; ++jj ) {
         *iter_inv = 0;
         srand((unsigned) seeds[jj]);
-        for( trlib_int_t kk = 0; kk < n; ++kk ) { eig[kk] = ((trlib_flt_t)rand()/(trlib_flt_t)RAND_MAX); }
+        for(kk = 0; kk < n; ++kk ) { eig[kk] = ((trlib_flt_t)rand()/(trlib_flt_t)RAND_MAX); }
 
         TRLIB_DNRM2(invnorm, &n, eig, &inc) invnorm = 1.0/invnorm;
         TRLIB_DSCAL(&n, &invnorm, eig, &inc) // normalize eig
@@ -84,11 +110,11 @@ trlib_int_t trlib_eigen_inverse(
     // no convergence with any of the starting values.
     // take the seed with least residual and redo computation
     trlib_int_t seedpivot = 0;
-    for(int jj = 0; jj < TRLIB_EIR_N_STARTVEC; ++jj) { if (residuals[jj] < residuals[seedpivot]) { seedpivot = jj; } }
+    for(jj = 0; jj < TRLIB_EIR_N_STARTVEC; ++jj) { if (residuals[jj] < residuals[seedpivot]) { seedpivot = jj; } }
 
     *iter_inv = 0;
     srand((unsigned) seeds[seedpivot]);
-    for( trlib_int_t kk = 0; kk < n; ++kk ) { eig[kk] = ((trlib_flt_t)rand()/(trlib_flt_t)RAND_MAX); }
+    for(kk = 0; kk < n; ++kk ) { eig[kk] = ((trlib_flt_t)rand()/(trlib_flt_t)RAND_MAX); }
 
     TRLIB_DNRM2(invnorm, &n, eig, &inc) invnorm = 1.0/invnorm;
     TRLIB_DSCAL(&n, &invnorm, eig, &inc) // normalize eig

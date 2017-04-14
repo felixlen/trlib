@@ -1,3 +1,27 @@
+/* MIT License
+ *
+ * Copyright (c) 2016--2017 Felix Lenders
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ * 
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ * 
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ *
+ */
+
 #include "trlib.h"
 #include "trlib_private.h"
 
@@ -581,7 +605,8 @@ trlib_int_t trlib_tri_factor_regularize_posdef(
     if (diag[0] <= tol_away) { regdiag[0] = security_step*tol_away; }
     diag_fac = diag[0] + regdiag[0];
 
-    for(int pivot = 0; pivot < n-1; ++pivot) {
+    trlib_int_t pivot = 0;
+    for(pivot = 0; pivot < n-1; ++pivot) {
         regdiag[pivot+1] = 0.0;
         if ( diag[pivot+1] - offdiag[pivot]*offdiag[pivot]/diag_fac <= tol_away * diag_fac ) {
             regdiag[pivot+1] = security_step * fabs(offdiag[pivot]*offdiag[pivot]/diag_fac - diag[pivot+1]);
