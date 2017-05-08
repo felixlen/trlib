@@ -11,3 +11,6 @@ if(TRLIB_BUILD_MEX)
     endif(Matlab_FOUND)
 endif(TRLIB_BUILD_MEX)
 
+add_custom_target( mex_zip 
+    COMMAND rm -rf trlib_mex.zip rm -rf trlib_mex && cp -r ../../sources trlib_mex && rm -r trlib_mex/trlib/trlib_types.h && cp ../../../include/trlib_types_mex.h trlib_mex/trlib/trlib_types.h && cp -r ../../../bindings/matlab/* trlib_mex && rm -r trlib_mex/CMakeLists.txt && sed -i 's,plhs \\[0\\] = \(mxArray \\*\) prhs \\[1\\]\\;,// plhs \\[0\\] = \(mxArray \\*\) prhs \\[1\\]\\;,g' trlib_mex/mex_trlib.c && sed -i 's,// plhs \\[0\\] = mxDuplicateArray\(prhs\\[1\\]\)\;,plhs \\[0\\] = mxDuplicateArray\(prhs\\[1\\]\)\;,g' trlib_mex/mex_trlib.c && zip -r trlib_mex.zip trlib_mex && rm -rf trlib_mex
+   )

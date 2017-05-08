@@ -37,9 +37,13 @@ const char *trlib_fields [] = {
     "verbose", "action", "iter", "ityp", "flt", "krylov_min_retval"
 };
 
-mxArray *mxCreateInt64Scalar (trlib_int_t value)
+mxArray *mxCreateIntScalar (trlib_int_t value)
 {
-    mxArray *res = mxCreateNumericMatrix (1, 1, mxINT64_CLASS, mxREAL);
+    mxArray *res;
+    if ( sizeof(mwSignedIndex) == 8 )
+        res = mxCreateNumericMatrix (1, 1, mxINT64_CLASS, mxREAL);
+    else
+        res = mxCreateNumericMatrix (1, 1, mxINT32_CLASS, mxREAL);
     trlib_int_t *res_val = mxGetData (res);
     *res_val = value;
     return res;
@@ -97,20 +101,30 @@ void mexFunction (int nlhs, mxArray *plhs [], int nrhs, const mxArray *prhs [])
 
     mxGetString (prhs [0], command, 2);
     command [1] = 0;
-    if (strcmp (command, "s") == 0) {
+    if (strcmp (command, "t") == 0) {
+        /* type of integer */
+        if (nrhs != 1)
+            mexErrMsgTxt ("mex_trlib (""t"", TR) needs exactly one argument");
+        plhs [0] = mxCreateIntScalar(sizeof(mwSignedIndex));
+    }
+    else if (strcmp (command, "s") == 0) {
         /* solve */
         if (nrhs != 2)
             mexErrMsgTxt ("mex_trlib (""s"", TR) needs exactly two arguments");
-
+        // this seems to work in Linux and Mac OS if compiled with gcc running by CMake
         plhs [0] = (mxArray *) prhs [1];
+        // if running Windows or MATLAB MEX Compiler is used, we have to deep copy
+        // plhs [0] = mxDuplicateArray(prhs[1]);
         call_krylov_min (plhs [0]);
     }
     else if (strcmp (command, "i") == 0) {
         /* initialize */
         if (nrhs != 2)
             mexErrMsgTxt ("mex_trlib (""i"", itmax) needs exactly two arguments");
-        if (!mxIsClass (prhs [1], "int64"))
+        if( sizeof(mwSignedIndex) == 8 && !mxIsClass (prhs [1], "int64"))
             mexErrMsgTxt ("second argument must be int64");
+        else if( sizeof(mwSignedIndex) == 4 && !mxIsClass (prhs [1], "int32"))
+            mexErrMsgTxt ("second argument must be int32");
 
         trlib_int_t iwork_size, fwork_size, h_pointer;
         trlib_int_t *itmax = (trlib_int_t *) mxGetData (prhs [1]);
@@ -129,33 +143,33 @@ void mexFunction (int nlhs, mxArray *plhs [], int nrhs, const mxArray *prhs [])
         dims [0] = 1;
         plhs [0] = mxCreateStructArray (2, dims, sizeof (trlib_fields) / sizeof (char *), 
                 trlib_fields);
-        mxSetField (plhs [0], 0, "init", mxCreateInt64Scalar (1));
+        mxSetField (plhs [0], 0, "init", mxCreateIntScalar (1));
         mxSetField (plhs [0], 0, "radius", mxCreateDoubleScalar (1.0));
-        mxSetField (plhs [0], 0, "equality", mxCreateInt64Scalar (0));
-        mxSetField (plhs [0], 0, "itmax", mxCreateInt64Scalar (*itmax));
-        mxSetField (plhs [0], 0, "itmax_lanczos", mxCreateInt64Scalar (100));
+        mxSetField (plhs [0], 0, "equality", mxCreateIntScalar (0));
+        mxSetField (plhs [0], 0, "itmax", mxCreateIntScalar (*itmax));
+        mxSetField (plhs [0], 0, "itmax_lanczos", mxCreateIntScalar (100));
         mxSetField (plhs [0], 0, "tol_rel_i", mxCreateDoubleScalar (-2.0));
         mxSetField (plhs [0], 0, "tol_abs_i", mxCreateDoubleScalar (0.0));
         mxSetField (plhs [0], 0, "tol_rel_b", mxCreateDoubleScalar (-3.0));
         mxSetField (plhs [0], 0, "tol_abs_b", mxCreateDoubleScalar (0.0));
         mxSetField (plhs [0], 0, "zero", mxCreateDoubleScalar (2.22e-16));
         mxSetField (plhs [0], 0, "obj_lo", mxCreateDoubleScalar (-1e20));
-        mxSetField (plhs [0], 0, "ctl_invariant", mxCreateInt64Scalar (0));
-        mxSetField (plhs [0], 0, "convexify", mxCreateInt64Scalar (1));
-        mxSetField (plhs [0], 0, "earlyterm", mxCreateInt64Scalar (1));
+        mxSetField (plhs [0], 0, "ctl_invariant", mxCreateIntScalar (0));
+        mxSetField (plhs [0], 0, "convexify", mxCreateIntScalar (1));
+        mxSetField (plhs [0], 0, "earlyterm", mxCreateIntScalar (1));
         mxSetField (plhs [0], 0, "g_dot_g", mxCreateDoubleScalar (0.0));
         mxSetField (plhs [0], 0, "v_dot_g", mxCreateDoubleScalar (0.0));
         mxSetField (plhs [0], 0, "p_dot_Hp", mxCreateDoubleScalar (0.0));
         mxSetField (plhs [0], 0, "iwork", iwork);
         mxSetField (plhs [0], 0, "fwork", fwork);
-        mxSetField (plhs [0], 0, "h_pointer", mxCreateInt64Scalar (h_pointer+1));
-        mxSetField (plhs [0], 0, "refine", mxCreateInt64Scalar (1));
-        mxSetField (plhs [0], 0, "verbose", mxCreateInt64Scalar (0));
-        mxSetField (plhs [0], 0, "action", mxCreateInt64Scalar (0));
-        mxSetField (plhs [0], 0, "iter", mxCreateInt64Scalar (0));
-        mxSetField (plhs [0], 0, "ityp", mxCreateInt64Scalar (0));
+        mxSetField (plhs [0], 0, "h_pointer", mxCreateIntScalar (h_pointer+1));
+        mxSetField (plhs [0], 0, "refine", mxCreateIntScalar (1));
+        mxSetField (plhs [0], 0, "verbose", mxCreateIntScalar (0));
+        mxSetField (plhs [0], 0, "action", mxCreateIntScalar (0));
+        mxSetField (plhs [0], 0, "iter", mxCreateIntScalar (0));
+        mxSetField (plhs [0], 0, "ityp", mxCreateIntScalar (0));
         mxSetField (plhs [0], 0, "flt", mxCreateDoubleMatrix (3, 1, mxREAL));
-        mxSetField (plhs [0], 0, "krylov_min_retval", mxCreateInt64Scalar (0));
+        mxSetField (plhs [0], 0, "krylov_min_retval", mxCreateIntScalar (0));
     }
     else
         mexErrMsgTxt ("Unknown trlib command");
