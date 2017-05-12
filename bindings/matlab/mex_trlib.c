@@ -112,9 +112,9 @@ void mexFunction (int nlhs, mxArray *plhs [], int nrhs, const mxArray *prhs [])
         if (nrhs != 2)
             mexErrMsgTxt ("mex_trlib (""s"", TR) needs exactly two arguments");
         // this seems to work in Linux and Mac OS if compiled with gcc running by CMake
-        plhs [0] = (mxArray *) prhs [1];
+        // plhs [0] = (mxArray *) prhs [1];
         // if running Windows or MATLAB MEX Compiler is used, we have to deep copy
-        // plhs [0] = mxDuplicateArray(prhs[1]);
+        plhs [0] = mxDuplicateArray(prhs[1]);
         call_krylov_min (plhs [0]);
     }
     else if (strcmp (command, "i") == 0) {
