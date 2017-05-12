@@ -255,7 +255,7 @@
  *  :param ctl_invariant: 
  *
  *                 - set to :c:macro:`TRLIB_CLC_NO_EXP_INV` if you want to search only in the first invariant Krylov subspace
- *                 - set to :c:macro:`TRLIB_CLC_EXP_INV_LOC` if you wnat to continue to expand the Krylov subspaces but terminate if there is convergence indication in the subspaces sampled so far.
+ *                 - set to :c:macro:`TRLIB_CLC_EXP_INV_LOC` if you want to continue to expand the Krylov subspaces but terminate if there is convergence indication in the subspaces sampled so far.
  *                 - set to :c:macro:`TRLIB_CLC_EXP_INV_GLO` if you want to continue to expand the Krylov subspaces even in the case of convergence to a local minimizer within in the subspaces sampled so far. Reverse communication continues as long as ctl_invariant is set to :c:macro:`TRLIB_CLC_EXP_INV_GLO`, so you should reset :c:data:`ctl_invariant` to either :c:macro:`TRLIB_CLC_EXP_INV_LOC` or :c:macro:`TRLIB_CLC_EXP_INV_LOC` if there is no reason to continue, for example because you cannot find a new nonzero random vector orthogonal to the sampled directions if :c:data:`action` is :c:macro:`TRLIB_CLA_NEW_KRYLOV`.
  *
  *  :type ctl_invariant: trlib_int_t, input
