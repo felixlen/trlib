@@ -538,13 +538,6 @@ trlib_int_t trlib_krylov_min_internal(
                 *ityp = TRLIB_CLT_L; *status = TRLIB_CLS_L_UPDATE_P; *flt1 = (*sigma)/sqrt(*v_g); *flt2 = 0.0; *action = TRLIB_CLA_UPDATE_DIR;
                 break;
             case TRLIB_CLS_L_UPDATE_P:
-                if ( fabs(p_dot_Hp) <= zero ) { // Krylov iteration breaks down
-                    // FIXME: continue with next invariant Krylov subspace
-                    if ( ctl_invariant <= TRLIB_CLC_EXP_INV_GLO ) {
-                        *ityp = TRLIB_CLT_CG; *action = TRLIB_CLA_RETRANSF;
-                        returnvalue = TRLIB_CLR_FAIL_HARD; break;
-                    }
-                }
                 delta[*ii] = p_dot_Hp;
                 *raymax = fmax(*raymax, p_dot_Hp); *raymin = fmin(*raymin, p_dot_Hp);
                 /* solve tridiagonal reduction
@@ -612,10 +605,12 @@ trlib_int_t trlib_krylov_min_internal(
                 *ityp = TRLIB_CLT_L;  *action = TRLIB_CLA_UPDATE_GRAD; *status = TRLIB_CLS_L_CMP_CONV;
                 break;
             case TRLIB_CLS_L_CMP_CONV:
-                if(isnan(v_dot_g)) { if (*interior) {*action = TRLIB_CLA_TRIVIAL;} else {*ityp = TRLIB_CLT_L; *action = TRLIB_CLA_RETRANSF;} returnvalue = TRLIB_CLR_FAIL_NUMERIC; break; } // exit if M^-1 indefinite
-                if (v_dot_g <= 0.0 && g_dot_g > 0.0) { if (*interior) {*action = TRLIB_CLA_TRIVIAL;} else {*ityp = TRLIB_CLT_L; *action = TRLIB_CLA_RETRANSF;} returnvalue = TRLIB_CLR_PCINDEF; break; } // exit if M^-1 indefinite
-                // FIXME: implement adding further invariant subspaces
-                if (g_dot_g <= zero) { if(*interior) {*action = TRLIB_CLA_TRIVIAL; } else {*ityp = TRLIB_CLT_L; *action = TRLIB_CLA_RETRANSF;} returnvalue = TRLIB_CLR_APPROX_HARD; }
+                if(isnan(v_dot_g)) { *ityp = TRLIB_CLT_L; *action = TRLIB_CLA_RETRANSF; returnvalue = TRLIB_CLR_FAIL_NUMERIC; break; } // exit if M^-1 indefinite
+                if (v_dot_g <= 0.0 && g_dot_g > 0.0) { *ityp = TRLIB_CLT_L; *action = TRLIB_CLA_RETRANSF; returnvalue = TRLIB_CLR_PCINDEF; break; } // exit if M^-1 indefinite
+                if (v_dot_g <= zero || g_dot_g <= zero) {
+                    // FIXME: implement adding further invariant subspaces
+                    *ityp = TRLIB_CLT_L; *action = TRLIB_CLA_RETRANSF; returnvalue = TRLIB_CLR_APPROX_HARD; break;
+                }
                 gamma[*ii] = sqrt(v_dot_g);
                 // convergence check after new gradient has been computed
                 // first get norm of new gradient

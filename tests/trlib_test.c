@@ -59,7 +59,7 @@ trlib_int_t trlib_test_malloc_qp(trlib_int_t qptype, trlib_int_t qpsolver, trlib
         trlib_int_t iwork_size, fwork_size, h_pointer;
         trlib_krylov_memory_size(itmax, &iwork_size, &fwork_size, &h_pointer);
         work->iwork = malloc(iwork_size*sizeof(trlib_int_t));
-        work->fwork = malloc(fwork_size*sizeof(trlib_flt_t));
+        work->fwork = calloc(fwork_size,sizeof(trlib_flt_t));
         work->g = malloc(n*sizeof(trlib_flt_t));
         work->gm = malloc(n*sizeof(trlib_flt_t));
         work->p = malloc(n*sizeof(trlib_flt_t));

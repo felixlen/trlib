@@ -22,6 +22,7 @@
 
 import numpy as np
 import scipy.sparse.linalg
+import warnings
 cimport ctrlib
 cimport libc.stdio
 cimport numpy as np
@@ -387,7 +388,7 @@ def trlib_solve(hess, grad, radius, invM = lambda x: x, TR=None, reentry=False,
         if ret < 10:
             break
     if ret < 0:
-        print("Warning, status: %d" % ret, TR['iwork'][7], TR['iwork'][8])
+        warnings.warn('trlib status {:d}'.format(ret), RuntimeWarning)
         pass
     TR['ret'] = ret
     TR['iter'] = it

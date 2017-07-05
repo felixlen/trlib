@@ -35,6 +35,7 @@ if(CHECK_FOUND)
         krylov_tri_diagonal_lanczos_trigger
         krylov_tri_diagonal_with_zeros
         krylov_lanczos_rosenbrock prepare_memory
+        krylov_zero_hessian
         )
     foreach(t ${TESTNAMES})
         add_executable("test_${t}" "test_${t}.c" "${CMAKE_CURRENT_SOURCE_DIR}/trlib_test.c" ${MESSAGEFILES})
