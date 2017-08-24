@@ -36,6 +36,7 @@ if(CHECK_FOUND)
         krylov_tri_diagonal_with_zeros
         krylov_lanczos_rosenbrock prepare_memory
         krylov_zero_hessian
+        krylov_2d_lanczos
         )
     foreach(t ${TESTNAMES})
         add_executable("test_${t}" "test_${t}.c" "${CMAKE_CURRENT_SOURCE_DIR}/trlib_test.c" ${MESSAGEFILES})
@@ -44,12 +45,15 @@ if(CHECK_FOUND)
         target_include_directories("test_${t}" PRIVATE "${CMAKE_BINARY_DIR}/include" "${CMAKE_CURRENT_BINARY_DIR}" ${CHECK_INCLUDE_DIRS})
         add_test("test_${t}" "${CMAKE_CURRENT_BINARY_DIR}/test_${t}")
 
-        add_custom_command(OUTPUT "test_${t}_valgrind.c" COMMAND sed "'/sr = srunner_create(s);/a    srunner_set_fork_status(sr, CK_NOFORK);'" "${CMAKE_CURRENT_SOURCE_DIR}/test_${t}.c" > "test_${t}_valgrind.c" DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/test_${t}.c")
-        add_executable("test_${t}_valgrind" "test_${t}_valgrind.c" "${CMAKE_CURRENT_SOURCE_DIR}/trlib_test.c" ${MESSAGEFILES})
-        set_property(TARGET "test_${t}_valgrind" PROPERTY C_STANDARD 11)
-        target_link_libraries("test_${t}_valgrind" trlib ${LIBS})
-        target_include_directories("test_${t}_valgrind" PRIVATE "${CMAKE_BINARY_DIR}/include" "${CMAKE_CURRENT_BINARY_DIR}" ${CHECK_INCLUDE_DIRS})
-        add_test("test_${t}_valgrind" valgrind  --leak-check=full --show-leak-kinds=all --show-reachable=yes --error-exitcode=1 --errors-for-leak-kinds=all "${CMAKE_CURRENT_BINARY_DIR}/test_${t}_valgrind")
+        if(APPLE)
+        else()
+            add_custom_command(OUTPUT "test_${t}_valgrind.c" COMMAND sed "'/sr = srunner_create(s);/a    srunner_set_fork_status(sr, CK_NOFORK);'" "${CMAKE_CURRENT_SOURCE_DIR}/test_${t}.c" > "test_${t}_valgrind.c" DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/test_${t}.c")
+            add_executable("test_${t}_valgrind" "test_${t}_valgrind.c" "${CMAKE_CURRENT_SOURCE_DIR}/trlib_test.c" ${MESSAGEFILES})
+            set_property(TARGET "test_${t}_valgrind" PROPERTY C_STANDARD 11)
+            target_link_libraries("test_${t}_valgrind" trlib ${LIBS})
+            target_include_directories("test_${t}_valgrind" PRIVATE "${CMAKE_BINARY_DIR}/include" "${CMAKE_CURRENT_BINARY_DIR}" ${CHECK_INCLUDE_DIRS})
+            add_test("test_${t}_valgrind" valgrind  --leak-check=full --show-leak-kinds=all --show-reachable=yes --error-exitcode=1 --errors-for-leak-kinds=all "${CMAKE_CURRENT_BINARY_DIR}/test_${t}_valgrind")
+        endif()
     endforeach(t)
 
 endif(CHECK_FOUND)
