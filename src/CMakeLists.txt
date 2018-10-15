@@ -3,40 +3,59 @@ find_package(LAPACK REQUIRED)
 
 configure_file("${CMAKE_CURRENT_SOURCE_DIR}/trlib_private.h.in" trlib_private.h)
 
-add_library(trlib SHARED 
-    ${CMAKE_SOURCE_DIR}/src/trlib_krylov.c 
-    ${CMAKE_SOURCE_DIR}/src/trlib_tri_factor.c 
-    ${CMAKE_SOURCE_DIR}/src/trlib_leftmost.c 
-    ${CMAKE_SOURCE_DIR}/src/trlib_eigen_inverse.c 
-    ${CMAKE_SOURCE_DIR}/src/trlib_quadratic_zero.c
-    trlib_private.h)
-target_include_directories(trlib PUBLIC ${CMAKE_CURRENT_BINARY_DIR})
-target_include_directories(trlib PUBLIC "${CMAKE_BINARY_DIR}/include")
-target_link_libraries(trlib ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES})
+add_library(trlib SHARED
+  ${CMAKE_SOURCE_DIR}/src/trlib_krylov.c
+  ${CMAKE_SOURCE_DIR}/src/trlib_tri_factor.c
+  ${CMAKE_SOURCE_DIR}/src/trlib_leftmost.c
+  ${CMAKE_SOURCE_DIR}/src/trlib_eigen_inverse.c
+  ${CMAKE_SOURCE_DIR}/src/trlib_quadratic_zero.c
+  trlib_private.h)
+
+# trlib_private.h
+target_include_directories(trlib
+  PRIVATE
+  "${CMAKE_CURRENT_BINARY_DIR}")
+
+target_include_directories(trlib
+  PUBLIC
+  $<BUILD_INTERFACE:${CMAKE_BINARY_DIR}/include>
+  $<INSTALL_INTERFACE:include>)
+
+target_link_libraries(trlib ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES} m)
 set_property(TARGET trlib PROPERTY C_STANDARD 11)
 
 if(APPLE)
-    set_property(TARGET trlib PROPERTY INSTALL_NAME_DIR "${CMAKE_INSTALL_PREFIX}/lib")
+  set_property(TARGET trlib PROPERTY INSTALL_NAME_DIR "${CMAKE_INSTALL_PREFIX}/lib")
 endif(APPLE)
-install(TARGETS trlib DESTINATION lib)
+
+install(TARGETS trlib
+  EXPORT trlib-config
+  DESTINATION lib)
+
+install(EXPORT trlib-config
+  NAMESPACE "trlib::"
+  DESTINATION "lib/cmake/trlib")
+
+install(FILES "${CMAKE_CURRENT_BINARY_DIR}/trlib_private.h"
+  DESTINATION "include/trlib")
 
 # upon request collect all files needed for compilation in folder sources
-install ( FILES ${CMAKE_SOURCE_DIR}/src/trlib_krylov.c 
-                ${CMAKE_SOURCE_DIR}/src/trlib_tri_factor.c 
-                ${CMAKE_SOURCE_DIR}/src/trlib_leftmost.c 
-                ${CMAKE_SOURCE_DIR}/src/trlib_eigen_inverse.c 
+install ( FILES ${CMAKE_SOURCE_DIR}/src/trlib_krylov.c
+                ${CMAKE_SOURCE_DIR}/src/trlib_tri_factor.c
+                ${CMAKE_SOURCE_DIR}/src/trlib_leftmost.c
+                ${CMAKE_SOURCE_DIR}/src/trlib_eigen_inverse.c
                 ${CMAKE_SOURCE_DIR}/src/trlib_quadratic_zero.c
                 ${CMAKE_BINARY_DIR}/src/trlib_private.h
-                DESTINATION "${CMAKE_BINARY_DIR}/sources" )
+                DESTINATION "share/trlib/src" )
 
 #find_package(HDF5)
 #find_package(SuiteSparse OPTIONAL_COMPONENTS CHOLMOD)
 #if(HDF5_FOUND AND SuiteSparse_FOUND)
 #    configure_file("${CMAKE_CURRENT_SOURCE_DIR}/trlib_driver.c.in" "${CMAKE_CURRENT_BINARY_DIR}/trlib_driver.c")
 #    if(APPLE)
-#	set (ARGP_STATIC_LIBRARY "/opt/local/lib/libargp.a")
+#       set (ARGP_STATIC_LIBRARY "/opt/local/lib/libargp.a")
 #    else(APPLE)
-#	set (ARGP_STATIC_LIBRARY "")
+#       set (ARGP_STATIC_LIBRARY "")
 #    endif(APPLE)
 #    add_executable(driver ${CMAKE_CURRENT_BINARY_DIR}/trlib_driver.c)
 #    set_property(TARGET driver PROPERTY C_STANDARD 11)
