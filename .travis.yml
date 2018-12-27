@@ -1,5 +1,5 @@
 sudo: required
-dist: trusty
+dist: xenial
 
 language: c
 compiler:
@@ -8,7 +8,7 @@ compiler:
 
 before_install:
     - sudo apt-get -qq update
-    - sudo apt-get -y install check python-dev python-numpy python-scipy cython python3-dev python3-numpy python3-scipy cython3 valgrind
+    - sudo apt-get -y install libblas-dev liblapack-dev check python-dev python-numpy python-scipy cython python3-dev python3-numpy python3-scipy cython3 valgrind
 
 before_script:
     - mkdir build

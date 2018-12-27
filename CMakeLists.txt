@@ -1,8 +1,5 @@
-cmake_minimum_required (VERSION 2.8.11)
-project (TRLIB)
-
-set (TRLIB_VERSION_MAJOR 0)
-set (TRLIB_VERSION_MINOR 1)
+cmake_minimum_required (VERSION 3.1)
+project (TRLIB VERSION 0.1)
 
 option(TRLIB_MEASURE_TIME OFF)
 option(TRLIB_MEASURE_SUBTIME OFF)
