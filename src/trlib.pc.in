@@ -6,5 +6,6 @@ Name: @PROJECT_NAME@
 Description: @PROJECT_DESCRIPTION@
 Version: @PROJECT_VERSION@
 Cflags: -I${includedir}
-Libs: -L${libdir} -ltrlib -lm
+Libs: -L${libdir} -ltrlib
+Libs.private: -lm
 Requires.private: blas lapack
