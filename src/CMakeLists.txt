@@ -3,6 +3,10 @@ find_package(LAPACK REQUIRED)
 
 configure_file("${CMAKE_CURRENT_SOURCE_DIR}/trlib_private.h.in" trlib_private.h)
 
+configure_file("${CMAKE_CURRENT_SOURCE_DIR}/trlib.pc.in"
+  "${CMAKE_BINARY_DIR}/trlib.pc"
+  @ONLY)
+
 add_library(trlib SHARED
   ${CMAKE_SOURCE_DIR}/src/trlib_krylov.c
   ${CMAKE_SOURCE_DIR}/src/trlib_tri_factor.c
@@ -35,6 +39,9 @@ install(TARGETS trlib
 install(EXPORT trlib-config
   NAMESPACE "trlib::"
   DESTINATION "lib/cmake/trlib")
+
+install(FILES "${CMAKE_BINARY_DIR}/trlib.pc"
+  DESTINATION "share/pkgconfig")
 
 install(FILES "${CMAKE_CURRENT_BINARY_DIR}/trlib_private.h"
   DESTINATION "include/trlib")

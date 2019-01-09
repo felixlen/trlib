@@ -1,6 +1,8 @@
 cmake_minimum_required (VERSION 3.1)
 project (TRLIB VERSION 0.1)
 
+set(PROJECT_DESCRIPTION "Trust Region Subproblem Solver Library")
+
 option(TRLIB_MEASURE_TIME OFF)
 option(TRLIB_MEASURE_SUBTIME OFF)
 option(TRLIB_TEST_PLOT OFF)
