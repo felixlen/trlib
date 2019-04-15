@@ -587,7 +587,10 @@ trlib_int_t trlib_krylov_min_internal(
                 /* convergence check is logical at this position, *but* requires gamma(ii+1).
                    wait until gradient has been updated */
                 // compute g^L(ii+1)
-                if(*ii < 2) { 
+                if(*ii == 0) {
+                    *flt1 = -delta[*ii]; *flt2 = -1.0; *flt3 = 1.0;
+                }
+                else if(*ii < 2) {
                     *flt1 = -delta[*ii]/gamma[*ii-1]; *flt2 = -gamma[*ii-1]; *flt3 = 1.0;
                 }
                 else {
@@ -595,12 +598,27 @@ trlib_int_t trlib_krylov_min_internal(
                 }
                 // in the case that we just switched to Lanczos, we have to use different coefficients
                 if (*ii == *lanczos_switch && *nirblk == 1) {
-                    *flt1 = -delta[*ii]/sqrt(*v_g)*(*sigma); *flt2 = -gamma[*ii-1]*(*cgl); *flt3 = gamma[*ii-1]/sqrt(*v_g);
+                    if(*ii == 0)
+                    {
+                        *flt1 = -delta[*ii]/sqrt(*v_g)*(*sigma); *flt2 = -1.0*(*cgl); *flt3 = 1.0/sqrt(*v_g);
+                    }
+                    else
+                    {
+                        *flt1 = -delta[*ii]/sqrt(*v_g)*(*sigma); *flt2 = -gamma[*ii-1]*(*cgl); *flt3 = gamma[*ii-1]/sqrt(*v_g);
+                    }
                     *cgl = 1.0; *cglm = 1.0;
                 }
                 // as well in the case that we have a new irreducible block
                 if (*ii == irblk[*nirblk-1]) {
-                    *flt1 = -delta[*ii]/gamma[*ii-1]; *flt2 = 0; *flt3 = 1.0;
+                    if(*ii == 0)
+                    {
+                        *flt1 = -delta[*ii];
+                    }
+                    else
+                    {
+                        *flt1 = -delta[*ii]/gamma[*ii-1];
+                    }
+                    *flt2 = 0; *flt3 = 1.0;
                 }
                 *ityp = TRLIB_CLT_L;  *action = TRLIB_CLA_UPDATE_GRAD; *status = TRLIB_CLS_L_CMP_CONV;
                 break;
