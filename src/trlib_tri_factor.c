@@ -538,14 +538,13 @@ trlib_int_t trlib_tri_factor_get_regularization(
 
             // first get the vector ds/n
             TRLIB_DCOPY(&n, sol, &inc, aux, &inc) // aux <-- sol
-            dn = -1.0/(*norm_sol); // scaling for right hand side
-            TRLIB_DSCAL(&n, &dn, aux, &inc) // aux <-- -sol/||norm_sol||
-            TRLIB_DPTTRS(&n, &inc, diag_fac, offdiag_fac, aux, &n, &info_fac) // aux <-- -(T+lam I)^-1 sol / ||sol||
+            TRLIB_DPTTRS(&n, &inc, diag_fac, offdiag_fac, aux, &n, &info_fac) // aux <-- (T+lam I)^-1 sol
             if (info_fac != 0) { TRLIB_PRINTLN_2("Failure on backsolve for h") TRLIB_RETURN(TRLIB_TTR_FAIL_LINSOLVE) }
             if (refine) { TRLIB_DPTRFS(&n, &inc, diag_lam, offdiag, diag_fac, offdiag_fac, sol, &n, aux, &n, &ferr, &berr, work, &info_fac) } //refine aux wrt sol!
             if (info_fac != 0) { TRLIB_PRINTLN_2("Failure on iterative refinement for h") TRLIB_RETURN(TRLIB_TTR_FAIL_LINSOLVE) }
 
-            TRLIB_DDOT(dn, &n, sol, &inc, aux, &inc); // dn <---  - g^T * (T+lam I)^-2 sol / ||sol|| = - sol^T * (T+lam I)^-1 sol / ||sol||
+            TRLIB_DDOT(dn, &n, sol, &inc, aux, &inc); // dn <---  g^T * (T+lam I)^-2 sol = sol^T * (T+lam I)^-1 sol
+            dn = -dn / (*norm_sol); // dn <---  - sol^T * (T+lam I)^-1 sol / ||sol||
 
             // compute step correction
             dlam = (*lam*(*norm_sol)-*norm_sol*(*norm_sol)*sigma) / (*lam*dn - *norm_sol);
