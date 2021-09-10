@@ -53,7 +53,7 @@ def krylov_min(long init, double radius, double g_dot_g, double v_dot_g, double 
         long ctl_invariant=0, long convexify=1, long earlyterm=1,
         double tol_rel_i = -2.0, double tol_abs_i = 0.0,
         double tol_rel_b = -3.0, double tol_abs_b = 0.0,
-        double zero = np.finfo(np.float).eps, double obj_lo=-1e20, long verbose=0, refine = True,
+        double zero = np.finfo(float).eps, double obj_lo=-1e20, long verbose=0, refine = True,
         long[::1] timing = None, prefix=""):
     cdef long [:] timing_b
     if timing is None:
@@ -79,7 +79,7 @@ def krylov_timing_size():
     return ctrlib.trlib_krylov_timing_size()
 
 def leftmost_irreducible(double[::1] diag, double [::1] offdiag,
-        long warm, double leftmost_minor, long itmax = 500, double tol_abs = np.finfo(np.float).eps**.75,
+        long warm, double leftmost_minor, long itmax = 500, double tol_abs = np.finfo(float).eps**.75,
         long verbose=0, long [::1] timing = None, prefix=""):
     cdef long [:] timing_b
     if timing is None:
@@ -95,7 +95,7 @@ def leftmost_irreducible(double[::1] diag, double [::1] offdiag,
 
 def tri_min(long [::1] irblk, double [::1] diag, double [::1] offdiag,
         double [::1] neglin, double radius, long itmax = 500,
-        double tol_rel = np.finfo(np.float).eps, double tol_newton_tiny = 1e-2*np.finfo(np.float).eps**.5,
+        double tol_rel = np.finfo(float).eps, double tol_newton_tiny = 1e-2*np.finfo(float).eps**.5,
         long pos_def = False, equality = False,
         warm0 = False, double lam0 = 0.0, warm = False, double lam = 0.0,
         warm_leftmost = False,long ileftmost = 0, double [::1] leftmost = None,
