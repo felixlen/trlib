@@ -57,7 +57,7 @@ def krylov_min(long init, double radius, double g_dot_g, double v_dot_g, double 
         long[::1] timing = None, prefix=""):
     cdef long [:] timing_b
     if timing is None:
-        ttiming = np.zeros([ctrlib.trlib_krylov_timing_size()], dtype=np.int)
+        ttiming = np.zeros([ctrlib.trlib_krylov_timing_size()], dtype=int)
         timing_b = ttiming
     else:
         timing_b = timing
@@ -83,7 +83,7 @@ def leftmost_irreducible(double[::1] diag, double [::1] offdiag,
         long verbose=0, long [::1] timing = None, prefix=""):
     cdef long [:] timing_b
     if timing is None:
-        ttiming = np.zeros([ctrlib.trlib_krylov_timing_size()], dtype=np.int)
+        ttiming = np.zeros([ctrlib.trlib_krylov_timing_size()], dtype=int)
         timing_b = ttiming
     else:
         timing_b = timing
@@ -149,7 +149,7 @@ def tri_min(long [::1] irblk, double [::1] diag, double [::1] offdiag,
     else:
         fwork_b = fwork
     if timing is None:
-        ttiming = np.zeros([ctrlib.trlib_tri_timing_size()], dtype=np.int)
+        ttiming = np.zeros([ctrlib.trlib_tri_timing_size()], dtype=int)
         timing_b = ttiming
     else:
         timing_b = timing
@@ -292,7 +292,7 @@ def trlib_solve(hess, grad, radius, invM = lambda x: x, TR=None, reentry=False,
             TR['fwork'] = np.empty([fwork_size])
         krylov_prepare_memory(itmax, TR['fwork'])
         if not 'iwork' in TR:
-            TR['iwork'] = np.empty([iwork_size], dtype=np.int)
+            TR['iwork'] = np.empty([iwork_size], dtype=int)
         if not 's' in TR:
             TR['s'] = np.empty(grad.shape)
         if not 'g' in TR:
@@ -308,7 +308,7 @@ def trlib_solve(hess, grad, radius, invM = lambda x: x, TR=None, reentry=False,
         if not 'Q' in TR:
             TR['Q'] = np.empty([itmax+1, grad.shape[0]])
         if not 'timing' in TR:
-            TR['timing'] = np.zeros([ctrlib.trlib_krylov_timing_size()], dtype=np.int)
+            TR['timing'] = np.zeros([ctrlib.trlib_krylov_timing_size()], dtype=int)
     else:
         if reentry != 'convex':
             init = ctrlib._TRLIB_CLS_HOTSTART
