@@ -1,6 +1,7 @@
 enable_testing()
 find_package(BLAS REQUIRED)
 find_package(LAPACK REQUIRED)
+include(FindPkgConfig)
 find_package(Check)
 if(CHECK_FOUND)
     #find_package(Protobuf)

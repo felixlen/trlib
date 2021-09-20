@@ -13,8 +13,6 @@
 #  For details see the accompanying COPYING-CMAKE-SCRIPTS file.
 
 
-INCLUDE( FindPkgConfig )
-
 IF ( Check_FIND_REQUIRED )
 	SET( _pkgconfig_REQUIRED "REQUIRED" )
 ELSE( Check_FIND_REQUIRED )
