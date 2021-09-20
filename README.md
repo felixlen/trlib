@@ -1,6 +1,6 @@
 # TRLIB
 
-[![Build Status](https://travis-ci.org/felixlen/trlib.svg?branch=master)](https://travis-ci.org/felixlen/trlib)
+[![Build Status](https://github.com/felixlen/trlib/actions/workflows/cmake.yml/badge.svg)](https://github.com/felixlen/trlib/actions/workflows/cmake.yml)
 [![doc](http://readthedocs.org/projects/trlib/badge/?version=latest)](http://trlib.readthedocs.io/en/latest/?badge=latest)
 
 This is a library that provides various methods related to the [trust region subproblem](https://de.wikipedia.org/wiki/Trust-Region-Verfahren#Bemerkung_zur_L.C3.B6sung_des_quadratischen_Problems).
