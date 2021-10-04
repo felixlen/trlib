@@ -1,3 +1,5 @@
+include(CMakePackageConfigHelpers)
+
 find_package(BLAS REQUIRED)
 find_package(LAPACK REQUIRED)
 
@@ -54,6 +56,17 @@ install ( FILES ${CMAKE_SOURCE_DIR}/src/trlib_krylov.c
                 ${CMAKE_SOURCE_DIR}/src/trlib_quadratic_zero.c
                 ${CMAKE_BINARY_DIR}/src/trlib_private.h
                 DESTINATION "share/trlib/src" )
+
+write_basic_package_version_file(
+  "${CMAKE_BINARY_DIR}/trlib-config-version.cmake"
+  VERSION ${PROJECT_VERSION}
+  COMPATIBILITY ExactVersion
+)
+
+install(
+  FILES "${CMAKE_BINARY_DIR}/trlib-config-version.cmake"
+  DESTINATION "lib/cmake/trlib"
+)
 
 #find_package(HDF5)
 #find_package(SuiteSparse OPTIONAL_COMPONENTS CHOLMOD)
