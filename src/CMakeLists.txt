@@ -17,6 +17,10 @@ add_library(trlib SHARED
   ${CMAKE_SOURCE_DIR}/src/trlib_quadratic_zero.c
   trlib_private.h)
 
+set_target_properties(trlib
+  PROPERTIES
+  VERSION ${PROJECT_VERSION})
+
 # trlib_private.h
 target_include_directories(trlib
   PRIVATE
