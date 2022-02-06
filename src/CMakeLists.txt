@@ -1,4 +1,5 @@
 include(CMakePackageConfigHelpers)
+include(GNUInstallDirs)
 
 find_package(BLAS REQUIRED)
 find_package(LAPACK REQUIRED)
@@ -44,13 +45,13 @@ install(TARGETS trlib
 
 install(EXPORT trlib-config
   NAMESPACE "trlib::"
-  DESTINATION "lib/cmake/trlib")
+  DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/trlib")
 
 install(FILES "${CMAKE_BINARY_DIR}/trlib.pc"
-  DESTINATION "share/pkgconfig")
+  DESTINATION "${CMAKE_INSTALL_DATAROOTDIR}/pkgconfig")
 
 install(FILES "${CMAKE_CURRENT_BINARY_DIR}/trlib_private.h"
-  DESTINATION "include/trlib")
+  DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/trlib")
 
 # upon request collect all files needed for compilation in folder sources
 install ( FILES ${CMAKE_SOURCE_DIR}/src/trlib_krylov.c
@@ -59,7 +60,7 @@ install ( FILES ${CMAKE_SOURCE_DIR}/src/trlib_krylov.c
                 ${CMAKE_SOURCE_DIR}/src/trlib_eigen_inverse.c
                 ${CMAKE_SOURCE_DIR}/src/trlib_quadratic_zero.c
                 ${CMAKE_BINARY_DIR}/src/trlib_private.h
-                DESTINATION "share/trlib/src" )
+                DESTINATION "${CMAKE_INSTALL_DATAROOTDIR}/trlib/src" )
 
 write_basic_package_version_file(
   "${CMAKE_BINARY_DIR}/trlib-config-version.cmake"
@@ -69,7 +70,7 @@ write_basic_package_version_file(
 
 install(
   FILES "${CMAKE_BINARY_DIR}/trlib-config-version.cmake"
-  DESTINATION "lib/cmake/trlib"
+  DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/trlib"
 )
 
 #find_package(HDF5)
