@@ -34,6 +34,8 @@ target_include_directories(trlib
 target_link_libraries(trlib ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES} m)
 set_property(TARGET trlib PROPERTY C_STANDARD 11)
 
+add_library("trlib::trlib" ALIAS trlib)
+
 if(APPLE)
   set_property(TARGET trlib PROPERTY INSTALL_NAME_DIR "${CMAKE_INSTALL_PREFIX}/lib")
 endif(APPLE)
