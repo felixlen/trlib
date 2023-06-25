@@ -1,7 +1,7 @@
 if(TRLIB_BUILD_MEX)
     find_package(Matlab)
     if(Matlab_FOUND)
-        include_directories("${CMAKE_BINARY_DIR}/include")
+        include_directories("${PROJECT_BINARY_DIR}/include")
         matlab_add_mex(NAME mex_trlib SRC mex_trlib.c LINK_TO trlib)
         configure_file("${CMAKE_CURRENT_SOURCE_DIR}/trlib.m"                "${CMAKE_CURRENT_BINARY_DIR}/trlib.m")
         configure_file("${CMAKE_CURRENT_SOURCE_DIR}/trlib_options.m"        "${CMAKE_CURRENT_BINARY_DIR}/trlib_options.m")

@@ -10,7 +10,7 @@ option(TRLIB_BUILD_PYTHON2 OFF)
 option(TRLIB_BUILD_PYTHON3 OFF)
 option(TRLIB_BUILD_MEX OFF)
 
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/CMakeModules/")
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${PROJECT_SOURCE_DIR}/CMakeModules/")
 
 add_subdirectory(include)
 add_subdirectory(src)
