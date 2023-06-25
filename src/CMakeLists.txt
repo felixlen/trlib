@@ -15,8 +15,7 @@ add_library(trlib SHARED
   ${PROJECT_SOURCE_DIR}/src/trlib_tri_factor.c
   ${PROJECT_SOURCE_DIR}/src/trlib_leftmost.c
   ${PROJECT_SOURCE_DIR}/src/trlib_eigen_inverse.c
-  ${PROJECT_SOURCE_DIR}/src/trlib_quadratic_zero.c
-  trlib_private.h)
+  ${PROJECT_SOURCE_DIR}/src/trlib_quadratic_zero.c)
 
 set_target_properties(trlib
   PROPERTIES
