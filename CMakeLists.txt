@@ -1,5 +1,5 @@
 cmake_minimum_required (VERSION 3.1)
-project (TRLIB VERSION 0.3)
+project (TRLIB VERSION 0.4)
 
 set(PROJECT_DESCRIPTION "Trust Region Subproblem Solver Library")
 
