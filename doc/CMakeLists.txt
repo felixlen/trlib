@@ -8,23 +8,23 @@ configure_file("${CMAKE_CURRENT_SOURCE_DIR}/cexample.rst.in"     "${CMAKE_CURREN
 configure_file("${CMAKE_CURRENT_SOURCE_DIR}/references.rst.in"   "${CMAKE_CURRENT_BINARY_DIR}/references.rst")
 
 add_custom_command(OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/capi_krylov.rst"
-    COMMAND python "${CMAKE_CURRENT_SOURCE_DIR}/extractdoc.py" "${CMAKE_BINARY_DIR}/include/trlib/trlib_krylov.h" "${CMAKE_CURRENT_BINARY_DIR}/capi_krylov.rst" "API trlib_krylov"
-    DEPENDS "${CMAKE_BINARY_DIR}/include/trlib/trlib_krylov.h")
+    COMMAND python "${CMAKE_CURRENT_SOURCE_DIR}/extractdoc.py" "${PROJECT_BINARY_DIR}/include/trlib/trlib_krylov.h" "${CMAKE_CURRENT_BINARY_DIR}/capi_krylov.rst" "API trlib_krylov"
+    DEPENDS "${PROJECT_BINARY_DIR}/include/trlib/trlib_krylov.h")
 add_custom_command(OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/capi_tri_factor.rst"
-    COMMAND python "${CMAKE_CURRENT_SOURCE_DIR}/extractdoc.py" "${CMAKE_BINARY_DIR}/include/trlib/trlib_tri_factor.h" "${CMAKE_CURRENT_BINARY_DIR}/capi_tri_factor.rst" "API trlib_tri_factor"
-    DEPENDS "${CMAKE_BINARY_DIR}/include/trlib/trlib_tri_factor.h")
+    COMMAND python "${CMAKE_CURRENT_SOURCE_DIR}/extractdoc.py" "${PROJECT_BINARY_DIR}/include/trlib/trlib_tri_factor.h" "${CMAKE_CURRENT_BINARY_DIR}/capi_tri_factor.rst" "API trlib_tri_factor"
+    DEPENDS "${PROJECT_BINARY_DIR}/include/trlib/trlib_tri_factor.h")
 add_custom_command(OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/capi_leftmost.rst"
-    COMMAND python "${CMAKE_CURRENT_SOURCE_DIR}/extractdoc.py" "${CMAKE_BINARY_DIR}/include/trlib/trlib_leftmost.h" "${CMAKE_CURRENT_BINARY_DIR}/capi_leftmost.rst" "API trlib_leftmost"
-    DEPENDS "${CMAKE_BINARY_DIR}/include/trlib/trlib_leftmost.h")
+    COMMAND python "${CMAKE_CURRENT_SOURCE_DIR}/extractdoc.py" "${PROJECT_BINARY_DIR}/include/trlib/trlib_leftmost.h" "${CMAKE_CURRENT_BINARY_DIR}/capi_leftmost.rst" "API trlib_leftmost"
+    DEPENDS "${PROJECT_BINARY_DIR}/include/trlib/trlib_leftmost.h")
 add_custom_command(OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/capi_eigen_inverse.rst"
-    COMMAND python "${CMAKE_CURRENT_SOURCE_DIR}/extractdoc.py" "${CMAKE_BINARY_DIR}/include/trlib/trlib_eigen_inverse.h" "${CMAKE_CURRENT_BINARY_DIR}/capi_eigen_inverse.rst" "API trlib_eigen_inverse"
-    DEPENDS "${CMAKE_BINARY_DIR}/include/trlib/trlib_eigen_inverse.h")
+    COMMAND python "${CMAKE_CURRENT_SOURCE_DIR}/extractdoc.py" "${PROJECT_BINARY_DIR}/include/trlib/trlib_eigen_inverse.h" "${CMAKE_CURRENT_BINARY_DIR}/capi_eigen_inverse.rst" "API trlib_eigen_inverse"
+    DEPENDS "${PROJECT_BINARY_DIR}/include/trlib/trlib_eigen_inverse.h")
 add_custom_command(OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/capi_quadratic_zero.rst"
-    COMMAND python "${CMAKE_CURRENT_SOURCE_DIR}/extractdoc.py" "${CMAKE_BINARY_DIR}/include/trlib/trlib_quadratic_zero.h" "${CMAKE_CURRENT_BINARY_DIR}/capi_quadratic_zero.rst" "API trlib_quadratic_zero"
-    DEPENDS "${CMAKE_BINARY_DIR}/include/trlib/trlib_quadratic_zero.h")
+    COMMAND python "${CMAKE_CURRENT_SOURCE_DIR}/extractdoc.py" "${PROJECT_BINARY_DIR}/include/trlib/trlib_quadratic_zero.h" "${CMAKE_CURRENT_BINARY_DIR}/capi_quadratic_zero.rst" "API trlib_quadratic_zero"
+    DEPENDS "${PROJECT_BINARY_DIR}/include/trlib/trlib_quadratic_zero.h")
 add_custom_command(OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/capi_types.rst"
-    COMMAND python "${CMAKE_CURRENT_SOURCE_DIR}/extractdoc.py" "${CMAKE_BINARY_DIR}/include/trlib/trlib_types.h" "${CMAKE_CURRENT_BINARY_DIR}/capi_types.rst" "API trlib_types"
-    DEPENDS "${CMAKE_BINARY_DIR}/include/trlib/trlib_types.h")
+    COMMAND python "${CMAKE_CURRENT_SOURCE_DIR}/extractdoc.py" "${PROJECT_BINARY_DIR}/include/trlib/trlib_types.h" "${CMAKE_CURRENT_BINARY_DIR}/capi_types.rst" "API trlib_types"
+    DEPENDS "${PROJECT_BINARY_DIR}/include/trlib/trlib_types.h")
 
 add_custom_target(doc 
     COMMAND sphinx-build -b html -d "${CMAKE_CURRENT_BINARY_DIR}/doctrees" ${CMAKE_CURRENT_BINARY_DIR} "${CMAKE_CURRENT_BINARY_DIR}/html" 

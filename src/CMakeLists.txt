@@ -7,16 +7,15 @@ find_package(LAPACK REQUIRED)
 configure_file("${CMAKE_CURRENT_SOURCE_DIR}/trlib_private.h.in" trlib_private.h)
 
 configure_file("${CMAKE_CURRENT_SOURCE_DIR}/trlib.pc.in"
-  "${CMAKE_BINARY_DIR}/trlib.pc"
+  "${PROJECT_BINARY_DIR}/trlib.pc"
   @ONLY)
 
 add_library(trlib SHARED
-  ${CMAKE_SOURCE_DIR}/src/trlib_krylov.c
-  ${CMAKE_SOURCE_DIR}/src/trlib_tri_factor.c
-  ${CMAKE_SOURCE_DIR}/src/trlib_leftmost.c
-  ${CMAKE_SOURCE_DIR}/src/trlib_eigen_inverse.c
-  ${CMAKE_SOURCE_DIR}/src/trlib_quadratic_zero.c
-  trlib_private.h)
+  ${PROJECT_SOURCE_DIR}/src/trlib_krylov.c
+  ${PROJECT_SOURCE_DIR}/src/trlib_tri_factor.c
+  ${PROJECT_SOURCE_DIR}/src/trlib_leftmost.c
+  ${PROJECT_SOURCE_DIR}/src/trlib_eigen_inverse.c
+  ${PROJECT_SOURCE_DIR}/src/trlib_quadratic_zero.c)
 
 set_target_properties(trlib
   PROPERTIES
@@ -29,11 +28,13 @@ target_include_directories(trlib
 
 target_include_directories(trlib
   PUBLIC
-  $<BUILD_INTERFACE:${CMAKE_BINARY_DIR}/include>
+  $<BUILD_INTERFACE:${PROJECT_BINARY_DIR}/include>
   $<INSTALL_INTERFACE:include>)
 
 target_link_libraries(trlib ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES} m)
 set_property(TARGET trlib PROPERTY C_STANDARD 11)
+
+add_library("trlib::trlib" ALIAS trlib)
 
 if(APPLE)
   set_property(TARGET trlib PROPERTY INSTALL_NAME_DIR "${CMAKE_INSTALL_PREFIX}/lib")
@@ -47,29 +48,29 @@ install(EXPORT trlib-config
   NAMESPACE "trlib::"
   DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/trlib")
 
-install(FILES "${CMAKE_BINARY_DIR}/trlib.pc"
+install(FILES "${PROJECT_BINARY_DIR}/trlib.pc"
   DESTINATION "${CMAKE_INSTALL_DATAROOTDIR}/pkgconfig")
 
 install(FILES "${CMAKE_CURRENT_BINARY_DIR}/trlib_private.h"
   DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/trlib")
 
 # upon request collect all files needed for compilation in folder sources
-install ( FILES ${CMAKE_SOURCE_DIR}/src/trlib_krylov.c
-                ${CMAKE_SOURCE_DIR}/src/trlib_tri_factor.c
-                ${CMAKE_SOURCE_DIR}/src/trlib_leftmost.c
-                ${CMAKE_SOURCE_DIR}/src/trlib_eigen_inverse.c
-                ${CMAKE_SOURCE_DIR}/src/trlib_quadratic_zero.c
-                ${CMAKE_BINARY_DIR}/src/trlib_private.h
+install ( FILES ${PROJECT_SOURCE_DIR}/src/trlib_krylov.c
+                ${PROJECT_SOURCE_DIR}/src/trlib_tri_factor.c
+                ${PROJECT_SOURCE_DIR}/src/trlib_leftmost.c
+                ${PROJECT_SOURCE_DIR}/src/trlib_eigen_inverse.c
+                ${PROJECT_SOURCE_DIR}/src/trlib_quadratic_zero.c
+                ${PROJECT_BINARY_DIR}/src/trlib_private.h
                 DESTINATION "${CMAKE_INSTALL_DATAROOTDIR}/trlib/src" )
 
 write_basic_package_version_file(
-  "${CMAKE_BINARY_DIR}/trlib-config-version.cmake"
+  "${PROJECT_BINARY_DIR}/trlib-config-version.cmake"
   VERSION ${PROJECT_VERSION}
   COMPATIBILITY ExactVersion
 )
 
 install(
-  FILES "${CMAKE_BINARY_DIR}/trlib-config-version.cmake"
+  FILES "${PROJECT_BINARY_DIR}/trlib-config-version.cmake"
   DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/trlib"
 )
 

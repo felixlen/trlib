@@ -215,7 +215,7 @@ if(SuiteSparse_FOUND)
   set(SuiteSparse_LIBRARIES ${SUITESPARSE_LIBRARY})
   set(SuiteSparse_INCLUDE_DIRS ${SUITESPARSE_INCLUDE_DIR})
   # log result
-  file(APPEND ${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/CMakeOutput.log
+  file(APPEND ${PROJECT_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/CMakeOutput.log
     "Determining location of SuiteSparse succeded:\n"
     "Include directory: ${SuiteSparse_INCLUDE_DIRS}\n"
     "Library directory: ${SuiteSparse_LIBRARIES}\n\n")
@@ -229,7 +229,7 @@ if(SuiteSparse_FOUND)
   #  CACHE STRING "Libraries used by DUNE when linking SuiteSparse programs")
 else()
   # log errornous result
-  file(APPEND ${CMAKE_BINARY_DIR}${CMAKES_FILES_DIRECTORY}/CMakeError.log
+  file(APPEND ${PROJECT_BINARY_DIR}${CMAKES_FILES_DIRECTORY}/CMakeError.log
     "Determing location of SuiteSparse failed:\n"
     "Include directory: ${SuiteSparse_INCLUDE_DIRS}\n"
     "Library directory: ${SuiteSparse_LIBRARIES}\n\n")
