@@ -35,7 +35,7 @@
 #include <string.h>
 #include <time.h>
 
-#ifdef _WIN32
+#if defined(_WIN32) && !defined(TRLIB_BLAS_LAPACK_UNDERSCORE_SUFFIX)
     // blas
     void daxpy(trlib_int_t *n, trlib_flt_t *alpha, trlib_flt_t *x, trlib_int_t *incx, trlib_flt_t *y, trlib_int_t *incy);
     void dscal(trlib_int_t *n, trlib_flt_t *alpha, trlib_flt_t *x, trlib_int_t *incx);
@@ -80,7 +80,7 @@
     #define TRLIB_DURATION_SUB(X, Y, Z)
 #endif
 #define TRLIB_RETURN(X) { TRLIB_DURATION(verystart, end, timing[0]) return X; }
-#ifdef _WIN32
+#if defined(_WIN32) && !defined(TRLIB_BLAS_LAPACK_UNDERSCORE_SUFFIX)
     #define TRLIB_DCOPY(...) { TRLIB_TIC(start) dcopy(__VA_ARGS__); TRLIB_DURATION_SUB(start, end, timing[1]) }
     #define TRLIB_DAXPY(...) { TRLIB_TIC(start) daxpy(__VA_ARGS__); TRLIB_DURATION_SUB(start, end, timing[2]) }
     #define TRLIB_DSCAL(...) { TRLIB_TIC(start) dscal(__VA_ARGS__); TRLIB_DURATION_SUB(start, end, timing[3]) }
