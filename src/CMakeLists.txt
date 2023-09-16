@@ -31,7 +31,10 @@ target_include_directories(trlib
   $<BUILD_INTERFACE:${PROJECT_BINARY_DIR}/include>
   $<INSTALL_INTERFACE:include>)
 
-target_link_libraries(trlib ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES} m)
+target_link_libraries(trlib ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES})
+if(NOT WIN32)
+  target_link_libraries(trlib m)
+endif()
 set_property(TARGET trlib PROPERTY C_STANDARD 11)
 
 add_library("trlib::trlib" ALIAS trlib)
@@ -40,9 +43,15 @@ if(APPLE)
   set_property(TARGET trlib PROPERTY INSTALL_NAME_DIR "${CMAKE_INSTALL_PREFIX}/lib")
 endif(APPLE)
 
+if(MSVC)
+  set_property(TARGET trlib PROPERTY WINDOWS_EXPORT_ALL_SYMBOLS ON)
+endif()
+
 install(TARGETS trlib
   EXPORT trlib-config
-  DESTINATION lib)
+  LIBRARY DESTINATION lib
+  ARCHIVE DESTINATION lib
+  RUNTIME DESTINATION bin)
 
 install(EXPORT trlib-config
   NAMESPACE "trlib::"
