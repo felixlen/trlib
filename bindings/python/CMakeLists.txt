@@ -15,7 +15,7 @@ foreach(PY_VER "2" "3")
             if(PY_VER EQUAL "2")
                 execute_process(COMMAND ${PYTHON_EXECUTABLE} -c "import distutils.sysconfig; print(distutils.sysconfig.get_config_vars()['SO'])" OUTPUT_VARIABLE PY_SO)
             elseif(PY_VER EQUAL "3")
-                execute_process(COMMAND ${PYTHON_EXECUTABLE} -c "import distutils.sysconfig; print(distutils.sysconfig.get_config_vars()['EXT_SUFFIX'])" OUTPUT_VARIABLE PY_SO)
+                execute_process(COMMAND ${PYTHON_EXECUTABLE} -c "import sysconfig; print(sysconfig.get_config_vars()['EXT_SUFFIX'])" OUTPUT_VARIABLE PY_SO)
             endif(PY_VER EQUAL "2")
             string(STRIP ${PY_SO} PY_SO)
 
