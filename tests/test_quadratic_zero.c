@@ -2,7 +2,7 @@
 #include "trlib_test.h"
 #include "trlib/trlib_quadratic_zero.h"
 
-START_TEST (test_well_behaved_seperated)
+START_TEST (test_well_behaved_separated)
 {
     trlib_flt_t tol = TRLIB_EPS_POW_75;
     trlib_flt_t c_lin = -5.0;
@@ -16,7 +16,7 @@ START_TEST (test_well_behaved_seperated)
 }
 END_TEST
 
-START_TEST (test_well_behaved_tiny_seperation)
+START_TEST (test_well_behaved_tiny_separation)
 {
     trlib_flt_t tol = TRLIB_EPS_POW_75;
     trlib_flt_t c_lin = -1.0-1.0-10.0*TRLIB_EPS;
@@ -50,8 +50,8 @@ Suite *quadratic_zero_suite(void)
     TCase *tc_core;
     s = suite_create("Quadratic Zero");
     tc_core = tcase_create("Core");
-    tcase_add_test(tc_core, test_well_behaved_seperated);
-    tcase_add_test(tc_core, test_well_behaved_tiny_seperation);
+    tcase_add_test(tc_core, test_well_behaved_separated);
+    tcase_add_test(tc_core, test_well_behaved_tiny_separation);
     tcase_add_test(tc_core, test_ill_behaved);
     suite_add_tcase(s, tc_core);
     return s;

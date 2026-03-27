@@ -168,7 +168,7 @@ int main( int argc, char** argv ) {
 
     status = H5Fclose(file_id);
 
-    // expand hessian to full hessian since this makes hessian vector products compuationally less memory expensive
+    // expand hessian to full hessian since this makes hessian vector products computationally less memory expensive
     // first pass: count number of nonzeros
     trlib_int_t nnz_complete = 0;
     for(trlib_int_t ii = 0; ii < n; ++ii) {
@@ -188,7 +188,7 @@ int main( int argc, char** argv ) {
         ptr_complete[ii] = count;
         // get missing strict lower tridiagonal part of row, have to search in upper part
         for(trlib_int_t jj = 0; jj < ii; ++jj) {
-            // search in jj-th row for occurence of column ii
+            // search in jj-th row for occurrence of column ii
             for(trlib_int_t kk = h_sym_csr_ptr[jj]; kk < h_sym_csr_ptr[jj+1]; ++kk) {
                 if( h_sym_csr_idx[kk] == ii ) {
                     val_complete[count] = h_sym_csr_val[kk];

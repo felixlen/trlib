@@ -126,7 +126,7 @@ START_TEST (test_simple)
         printf("*   KKT residual:    %15e%24s*\n", kkt_res, "");
         printf("*************************************************************\n\n");
 
-        ck_assert_msg(fabs(pos_def_res) <= tol, "%s: Expected positive semidefinite regularized hessian, got multiplier %e, pertubation needed %e", "", lam, pos_def_res);
+        ck_assert_msg(fabs(pos_def_res) <= tol, "%s: Expected positive semidefinite regularized hessian, got multiplier %e, perturbation needed %e", "", lam, pos_def_res);
         ck_assert_msg(tr_res >= -tol, "%s: Expected satisfaction of trust region constraint, residual %e", "", tr_res);
         ck_assert_msg(fabs((tr_res)*lam) <= tol, "%s: Expected satisfaction of complementary, violation %e, trust region residual %e, multiplier %e", "", (tr_res)*lam, tr_res, lam);
         ck_assert_msg(fabs(kkt_res) <= tol, "%s: Expected satisfaction of KKT condition, residual %e", "", kkt_res);
