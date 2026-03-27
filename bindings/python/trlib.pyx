@@ -221,7 +221,7 @@ def trlib_solve(hess, grad, radius, invM = lambda x: x, TR=None, reentry=False,
         trust-region instance data `TR`, needed for warmstart.
         
             - TR['ret'] gives return code of trlib_krylov_min,
-            - TR['obj'] gives objective funtion value,
+            - TR['obj'] gives objective function value,
             - TR['lam'] lagrange multiplier
 
     Examples:
@@ -406,7 +406,7 @@ def umin(obj, grad, hessvec, x, tol=1e-5, eta1=1e-2, eta2=.95, gamma1=.5, gamma2
 
     with slight modification:
         - check for descent
-        - aggresive trust region reduction upon failed step if next iteration will have the same subproblem solution
+        - aggressive trust region reduction upon failed step if next iteration will have the same subproblem solution
         
         
     Parameters

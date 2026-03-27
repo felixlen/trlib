@@ -500,7 +500,7 @@ void trlib_test_print_result(struct trlib_test_qp *qp, char *name, trlib_flt_t t
     if (qp->qpsolver == TRLIB_TEST_SOLVER_KRYLOV) { printf("*   ons residual:    %15e%24s*\n", qp->orth_res, ""); }
     printf("*************************************************************\n\n");
 
-    // let us do a simple lanczos iteration ourselve and compare directions
+    // let us do a simple lanczos iteration ourselves and compare directions
     if (qp->qpsolver == TRLIB_TEST_SOLVER_KRYLOV) {
         trlib_int_t n, inc = 1;
         struct trlib_test_work_krylov * work = (struct trlib_test_work_krylov *)qp->work;
@@ -582,7 +582,7 @@ void trlib_test_print_result(struct trlib_test_qp *qp, char *name, trlib_flt_t t
         }
     #endif
 
-    ck_assert_msg(fabs(qp->pos_def_res) <= tol, "%s: Expected positive semidefinite regularized hessian, got multiplier %e, pertubation needed %e", name, qp->lam, qp->pos_def_res);
+    ck_assert_msg(fabs(qp->pos_def_res) <= tol, "%s: Expected positive semidefinite regularized hessian, got multiplier %e, perturbation needed %e", name, qp->lam, qp->pos_def_res);
     if(qp->equality){
         ck_assert_msg(fabs(qp->tr_res) <= tol, "%s: Expected satisfaction of trust region constraint, residual %e", name, qp->tr_res);
     }

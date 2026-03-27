@@ -38,7 +38,7 @@
 
 find_package(BLAS QUIET)
 
-# look for desired componenents
+# look for desired components
 set(SUITESPARSE_COMPONENTS ${SuiteSparse_FIND_COMPONENTS})
 
 # resolve inter-component dependencies
@@ -63,7 +63,7 @@ find_library(SUITESPARSE_CONFIG_LIB
   PATH_SUFFIXES "lib" "lib32" "lib64" "Lib"
   NO_DEFAULT_PATH
 )
-# now also include the deafult paths
+# now also include the default paths
 find_library(SUITESPARSE_CONFIG_LIB
   NAMES "suitesparseconfig"
   PATH_SUFFIXES "lib" "lib32" "lib64" "Lib"
@@ -92,7 +92,7 @@ foreach(_component ${SUITESPARSE_COMPONENTS})
     PATH_SUFFIXES "lib" "lib32" "lib64" "${_component}" "${_component}/Lib"
     NO_DEFAULT_PATH
   )
-  #now  also include the deafult paths
+  #now  also include the default paths
   find_library(${_component}_LIBRARY
     NAMES "${_componentLower}"
     PATH_SUFFIXES "lib" "lib32" "lib64" "${_component}" "${_component}/Lib"
@@ -150,7 +150,7 @@ endif()
 
 # UMFPack requires AMD, can depend on CHOLMOD
 if(UMFPACK_LIBRARY)
-  # check wether cholmod was found
+  # check whether cholmod was found
   if(CHOLMOD_LIBRARY)
     list(APPEND UMFPACK_LIBRARY ${CHOLMOD_LIBRARY})
   else()
@@ -162,7 +162,7 @@ if(UMFPACK_LIBRARY)
   list(REVERSE UMFPACK_LIBRARY)
 endif()
 
-# check wether everything was found
+# check whether everything was found
 foreach(_component ${SUITESPARSE_COMPONENTS})
   # variable used for component handling
   set(SuiteSparse_${_component}_FOUND (${_component}_LIBRARY AND ${_component}_INCLUDE_DIR))
@@ -216,7 +216,7 @@ if(SuiteSparse_FOUND)
   set(SuiteSparse_INCLUDE_DIRS ${SUITESPARSE_INCLUDE_DIR})
   # log result
   file(APPEND ${PROJECT_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/CMakeOutput.log
-    "Determining location of SuiteSparse succeded:\n"
+    "Determining location of SuiteSparse succeeded:\n"
     "Include directory: ${SuiteSparse_INCLUDE_DIRS}\n"
     "Library directory: ${SuiteSparse_LIBRARIES}\n\n")
   set(SuiteSparse_COMPILER_FLAGS)
@@ -228,9 +228,9 @@ if(SuiteSparse_FOUND)
   #set(SuiteSparse_DUNE_LIBRARIES ${BLAS_LIBRARIES} ${SuiteSparse_LIBRARIES}
   #  CACHE STRING "Libraries used by DUNE when linking SuiteSparse programs")
 else()
-  # log errornous result
+  # log erroneous result
   file(APPEND ${PROJECT_BINARY_DIR}${CMAKES_FILES_DIRECTORY}/CMakeError.log
-    "Determing location of SuiteSparse failed:\n"
+    "Determining location of SuiteSparse failed:\n"
     "Include directory: ${SuiteSparse_INCLUDE_DIRS}\n"
     "Library directory: ${SuiteSparse_LIBRARIES}\n\n")
 endif()

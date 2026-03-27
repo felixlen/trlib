@@ -109,7 +109,7 @@ trlib_int_t trlib_leftmost_irreducible(
           by eigenvalue interlacing theorem desired value <= provided leftmost
        on coldstart, start close lower bound as hopefully this is a good estimation */
     if ( warm ) {
-        // provided leftmost is an upper bound and a pole of Parlett-Reid Value, thus pertub a bit
+        // provided leftmost is an upper bound and a pole of Parlett-Reid Value, thus perturb a bit
         up = fmin(up, leftmost_minor); *leftmost = leftmost_minor - .1*(up-low); //*leftmost = leftmost_minor - TRLIB_EPS_POW_4;
     }  
     else { leftmost_minor = 0.0; *leftmost = low + .1*(up-low); }; // ensure sanity on leftmost_minor and start with lower bound
@@ -118,7 +118,7 @@ trlib_int_t trlib_leftmost_irreducible(
 
     while (1) {
         /* iterate to obtain Parlett-Reid last pivot value of -leftmost == 0.0
-           this iteration uses a safeguard bracket [low, up] such that alway low <= leftmost <= up
+           this iteration uses a safeguard bracket [low, up] such that always low <= leftmost <= up
            note that T - t*I is positive definite for t <= desired leftmost
            steps of iteration:
           
